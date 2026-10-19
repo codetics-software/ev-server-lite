@@ -8,7 +8,7 @@ export function CodeticsMark({ className }: { className?: string }) {
       alt=""
       width={35}
       height={28}
-      className={cn("h-7 w-9 shrink-0", className)}
+      className={cn("h-7 w-auto shrink-0", className)}
     />
   );
 }

@@ -18,9 +18,9 @@ export function StationConnectors({ connectors }: { connectors: StationConnector
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Connector</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Error</TableHead>
+          <TableHead>Connecteur</TableHead>
+          <TableHead>État</TableHead>
+          <TableHead>Erreur</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

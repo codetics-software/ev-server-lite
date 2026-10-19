@@ -2,15 +2,15 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/u
 import type { NetworkOverview } from "./overview-types";
 
 const statusLabels: Record<string, string> = {
-  Available: "Available",
-  Preparing: "Preparing",
-  Charging: "Charging",
-  SuspendedEV: "Paused by vehicle",
-  SuspendedEVSE: "Paused by station",
-  Finishing: "Finishing",
-  Reserved: "Reserved",
-  Unavailable: "Unavailable",
-  Faulted: "Faulted",
+  Available: "Disponible",
+  Preparing: "Préparation",
+  Charging: "Recharge en cours",
+  SuspendedEV: "Suspendu par le véhicule",
+  SuspendedEVSE: "Suspendu par la borne",
+  Finishing: "Fin de recharge",
+  Reserved: "Réservé",
+  Unavailable: "Indisponible",
+  Faulted: "En défaut",
 };
 
 export function ConnectorAvailability({
@@ -23,15 +23,15 @@ export function ConnectorAvailability({
   return (
     <section className="operational-panel" aria-labelledby="connector-heading">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="connector-heading">Connector status</h2>
-        <span className="text-xs text-muted-foreground tabular-nums">{total} connectors</span>
+        <h2 id="connector-heading">État des connecteurs</h2>
+        <span className="text-xs text-muted-foreground tabular-nums">{total} connecteurs</span>
       </div>
       {!total ? (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>No connector reports yet</EmptyTitle>
+            <EmptyTitle>Aucun connecteur déclaré</EmptyTitle>
             <EmptyDescription>
-              Provision a station and connect it to receive its connector states.
+              Ajoutez une borne et connectez-la pour recevoir l’état de ses connecteurs.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -52,7 +52,7 @@ export function ConnectorAvailability({
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        Last reported state. A connector state is independent of the station’s connection.
+        Dernier état reçu. La connexion de la borne est indiquée séparément.
       </p>
     </section>
   );

@@ -24,7 +24,9 @@ export function useApi<T>(path: string, revision = 0) {
         }
       } catch (failure) {
         if (active) {
-          setError(failure instanceof Error ? failure : new Error("Unable to load data"));
+          setError(
+            failure instanceof Error ? failure : new Error("Impossible de charger les données."),
+          );
         }
       } finally {
         if (active) {

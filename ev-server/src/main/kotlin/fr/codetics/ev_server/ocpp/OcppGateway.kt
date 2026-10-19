@@ -1,8 +1,8 @@
 package fr.codetics.ev_server.ocpp
 
 import fr.codetics.ev_server.core.Database
-import fr.codetics.ev_server.persistence.StationKey
-import fr.codetics.ev_server.persistence.StationRepository
+import fr.codetics.ev_server.models.entities.StationKey
+import fr.codetics.ev_server.repositories.StationRepository
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import org.springframework.scheduling.annotation.Scheduled
@@ -16,7 +16,7 @@ class OcppGateway(
     private val db: Database,
     private val service: OcppService,
     private val stations: StationRepository,
-    private val queue: OcppCommandQueue
+    private val queue: OcppCommandQueue,
 ) : TextWebSocketHandler(), SubProtocolCapable {
     private val sessions = ConcurrentHashMap<StationIdentity, WebSocketSession>()
 
@@ -70,23 +70,31 @@ class OcppGateway(
             when (frame[0].intValue()) {
                 2 -> {
                     if (frame.size() != 4 || !frame[2].isString) {
-                        throw OcppFault("FormationViolation", "Invalid CALL")
+                        throw OcppFault("FormationViolation", "Appel OCPP invalide.")
                     }
-                    val response = service.call(station.tenant, station.station, id, frame[2].asText(), frame[3])
+                    val response =
+                        service.call(
+                            station.tenant,
+                            station.station,
+                            id,
+                            frame[2].asText(),
+                            frame[3],
+                        )
                     send(session, response)
                 }
-                3, 4 -> {
+                3,
+                4 -> {
                     queue.complete(station, frame)
                 }
                 else -> {
-                    throw OcppFault("ProtocolError", "Unsupported frame type")
+                    throw OcppFault("ProtocolError", "Type de trame non pris en charge.")
                 }
             }
         } catch (fault: OcppFault) {
             sendError(session, id, fault.code, fault.message)
         } catch (_: Exception) {
             if (id.isNotBlank()) {
-                sendError(session, id, "InternalError", "Message could not be processed")
+                sendError(session, id, "InternalError", "Le message n’a pas pu être traité.")
             } else {
                 session.close(CloseStatus.BAD_DATA)
             }
@@ -94,11 +102,16 @@ class OcppGateway(
     }
 
     private fun validateFrame(frame: JsonNode) {
-        if (!frame.isArray || frame.size() !in 3..5 || !frame[0].isIntegralNumber || !frame[1].isString) {
-            throw OcppFault("FormationViolation", "Invalid OCPP frame")
+        if (
+            !frame.isArray ||
+                frame.size() !in 3..5 ||
+                !frame[0].isIntegralNumber ||
+                !frame[1].isString
+        ) {
+            throw OcppFault("FormationViolation", "Trame OCPP invalide.")
         }
         if (frame[1].asText().isBlank() || frame[1].asText().length > 36) {
-            throw OcppFault("FormationViolation", "Invalid message ID")
+            throw OcppFault("FormationViolation", "Identifiant de message invalide.")
         }
     }
 
@@ -123,12 +136,21 @@ class OcppGateway(
 
             pending.forEach { command ->
                 try {
-                    send(session, db.encode(listOf(2, command.id.toString(), command.action, db.decode(command.request))))
+                    send(
+                        session,
+                        db.encode(
+                            listOf(
+                                2,
+                                command.id.toString(),
+                                command.action,
+                                db.decode(command.request),
+                            )
+                        ),
+                    )
                 } catch (_: Exception) {
                     queue.fail(command)
                 }
             }
         }
     }
-
 }

@@ -2,22 +2,23 @@ package fr.codetics.ev_server.ocpp
 
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.sha256
-import fr.codetics.ev_server.persistence.ChargingTokenKey
-import fr.codetics.ev_server.persistence.ChargingTokenRepository
-import fr.codetics.ev_server.persistence.ConnectorEntity
-import fr.codetics.ev_server.persistence.ConnectorKey
-import fr.codetics.ev_server.persistence.ConnectorRepository
-import fr.codetics.ev_server.persistence.MeterValueEntity
-import fr.codetics.ev_server.persistence.MeterValueRepository
-import fr.codetics.ev_server.persistence.OcppCallEntity
-import fr.codetics.ev_server.persistence.OcppCallKey
-import fr.codetics.ev_server.persistence.OcppCallRepository
-import fr.codetics.ev_server.persistence.StationEntity
-import fr.codetics.ev_server.persistence.StationKey
-import fr.codetics.ev_server.persistence.StationRepository
-import fr.codetics.ev_server.persistence.TransactionEntity
-import fr.codetics.ev_server.persistence.TransactionRepository
-import fr.codetics.ev_server.persistence.UserRepository
+import fr.codetics.ev_server.models.entities.ChargingTokenKey
+import fr.codetics.ev_server.models.entities.ConnectorEntity
+import fr.codetics.ev_server.models.entities.ConnectorKey
+import fr.codetics.ev_server.models.entities.MeterValueEntity
+import fr.codetics.ev_server.models.entities.OcppCallEntity
+import fr.codetics.ev_server.models.entities.OcppCallKey
+import fr.codetics.ev_server.models.entities.StationEntity
+import fr.codetics.ev_server.models.entities.StationKey
+import fr.codetics.ev_server.models.entities.TransactionEntity
+import fr.codetics.ev_server.repositories.ChargingTokenRepository
+import fr.codetics.ev_server.repositories.ConnectorRepository
+import fr.codetics.ev_server.repositories.MeterValueRepository
+import fr.codetics.ev_server.repositories.OcppCallRepository
+import fr.codetics.ev_server.repositories.StationRepository
+import fr.codetics.ev_server.repositories.TransactionRepository
+import fr.codetics.ev_server.repositories.UserRepository
+import fr.codetics.ev_server.services.billing.ChargingPaymentLifecycle
 import java.time.Instant
 import java.util.UUID
 import org.springframework.stereotype.Service
@@ -32,17 +33,19 @@ class OcppService(
     private val tokens: ChargingTokenRepository,
     private val transactions: TransactionRepository,
     private val meters: MeterValueRepository,
-    private val users: UserRepository
+    private val users: UserRepository,
+    private val payments: ChargingPaymentLifecycle,
 ) {
     fun call(tenant: UUID, station: String, id: String, action: String, payload: JsonNode): String {
         OcppValidation.validate(action, payload)
 
         return db.atomic {
-            val device = stations.findForUpdate(StationKey(tenant, station))
-                ?: throw OcppFault("SecurityError", "Unknown station")
+            val device =
+                stations.findForUpdate(StationKey(tenant, station))
+                    ?: throw OcppFault("SecurityError", "Borne inconnue.")
 
             if (!device.enabled) {
-                throw OcppFault("SecurityError", "Station is disabled")
+                throw OcppFault("SecurityError", "La borne est désactivée.")
             }
 
             val key = OcppCallKey(tenant, station, id)
@@ -51,7 +54,10 @@ class OcppService(
 
             if (previous != null) {
                 if (previous.requestHash != hash) {
-                    throw OcppFault("ProtocolError", "Message ID was reused with a different request")
+                    throw OcppFault(
+                        "ProtocolError",
+                        "Cet identifiant de message a déjà été utilisé pour une autre demande.",
+                    )
                 }
                 return@atomic previous.response
             }
@@ -60,12 +66,7 @@ class OcppService(
             val result = handle(device, action, payload)
             val response = db.encode(listOf(3, id, result))
             calls.save(
-                OcppCallEntity(
-                    key = key,
-                    action = action,
-                    requestHash = hash,
-                    response = response
-                )
+                OcppCallEntity(key = key, action = action, requestHash = hash, response = response)
             )
             stations.save(device)
             response
@@ -86,14 +87,14 @@ class OcppService(
                 mapOf(
                     "status" to "Accepted",
                     "currentTime" to Instant.now().toString(),
-                    "interval" to 60
+                    "interval" to 60,
                 )
             }
             "Heartbeat" -> {
                 mapOf("currentTime" to Instant.now().toString())
             }
             "Authorize" -> {
-                authorization(tenant, payload.path("idTag").asText())
+                authorization(tenant, identity, payload.path("idTag").asText())
             }
             "StatusNotification" -> {
                 updateStatus(station, payload)
@@ -119,26 +120,34 @@ class OcppService(
             "DataTransfer" -> {
                 mapOf("status" to "UnknownVendorId")
             }
-            "DiagnosticsStatusNotification", "FirmwareStatusNotification" -> {
+            "DiagnosticsStatusNotification",
+            "FirmwareStatusNotification" -> {
                 db.audit(tenant, "station:$identity", action, payload.path("status").asText())
                 emptyMap<String, Any>()
             }
             else -> {
-                throw OcppFault("NotSupported", "Unsupported action")
+                throw OcppFault("NotSupported", "Action non prise en charge.")
             }
         }
     }
 
-    private fun authorization(tenant: UUID, uid: String): Map<String, Any> {
-        return mapOf("idTagInfo" to mapOf("status" to authorize(tenant, uid)))
+    private fun authorization(tenant: UUID, station: String, uid: String): Map<String, Any> {
+        return mapOf("idTagInfo" to mapOf("status" to authorize(tenant, station, uid)))
     }
 
-    private fun authorize(tenant: UUID, uid: String): String {
-        val token = tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null)
-            ?: return "Invalid"
-        val userDisabled = token.userId?.let { id ->
-            users.findByTenantIdAndId(tenant, id)?.enabled != true
-        } ?: false
+    private fun authorize(
+        tenant: UUID,
+        station: String,
+        uid: String,
+        connector: Int? = null,
+    ): String {
+        payments.authorization(tenant, station, connector, uid)?.let {
+            return it
+        }
+        val token = tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null) ?: return "Invalid"
+        val userDisabled =
+            token.userId?.let { id -> users.findByTenantIdAndId(tenant, id)?.enabled != true }
+                ?: false
 
         if (!token.enabled || userDisabled) {
             return "Blocked"
@@ -177,30 +186,35 @@ class OcppService(
         val number = payload.path("connectorId").intValue()
         connector(station, number)
 
-        if (transactions.existsByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(tenant, identity, number)) {
-            throw OcppFault("GenericError", "Connector already has an active transaction")
+        if (
+            transactions.existsByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(
+                tenant,
+                identity,
+                number,
+            )
+        ) {
+            throw OcppFault("GenericError", "Une session est déjà en cours sur ce connecteur.")
         }
 
         val uid = payload.path("idTag").asText()
-        val status = authorize(tenant, uid)
+        val status = authorize(tenant, identity, uid, number)
         val token = tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null)
-        val transaction = transactions.saveAndFlush(
-            TransactionEntity(
-                tenantId = tenant,
-                stationId = identity,
-                connectorId = number,
-                tokenUid = uid,
-                userId = token?.userId,
-                startedAt = Instant.parse(payload.path("timestamp").asText()),
-                meterStartWh = payload.path("meterStart").decimalValue(),
-                authorizationStatus = status
+        val transaction =
+            transactions.saveAndFlush(
+                TransactionEntity(
+                    tenantId = tenant,
+                    stationId = identity,
+                    connectorId = number,
+                    tokenUid = uid,
+                    userId = token?.userId,
+                    startedAt = Instant.parse(payload.path("timestamp").asText()),
+                    meterStartWh = payload.path("meterStart").decimalValue(),
+                    authorizationStatus = status,
+                )
             )
-        )
 
-        return mapOf(
-            "transactionId" to transaction.id,
-            "idTagInfo" to mapOf("status" to status)
-        )
+        payments.started(transaction)
+        return mapOf("transactionId" to transaction.id, "idTagInfo" to mapOf("status" to status))
     }
 
     private fun stop(station: StationEntity, payload: JsonNode): Map<String, Any> {
@@ -209,7 +223,7 @@ class OcppService(
         val meterStop = payload.path("meterStop").decimalValue()
 
         if (stoppedAt.isBefore(transaction.startedAt)) {
-            throw OcppFault("PropertyConstraintViolation", "Stop precedes start")
+            throw OcppFault("PropertyConstraintViolation", "La fin de session précède son début.")
         }
 
         if (transaction.stoppedAt == null) {
@@ -219,38 +233,95 @@ class OcppService(
             transactions.save(transaction)
 
             if (payload.has("transactionData")) {
-                saveMeters(station, transaction.connectorId, transaction.id, payload.path("transactionData"))
+                saveMeters(
+                    station,
+                    transaction.connectorId,
+                    transaction.id,
+                    payload.path("transactionData"),
+                )
             }
-        } else if (transaction.stoppedAt != stoppedAt || transaction.meterStopWh?.compareTo(meterStop) != 0) {
-            throw OcppFault("PropertyConstraintViolation", "Final transaction values cannot be overwritten")
+        } else if (
+            transaction.stoppedAt != stoppedAt || transaction.meterStopWh?.compareTo(meterStop) != 0
+        ) {
+            throw OcppFault(
+                "PropertyConstraintViolation",
+                "Les valeurs finales de la session ne peuvent pas être remplacées.",
+            )
         }
 
         val uid = payload.get("idTag")?.asText() ?: transaction.tokenUid
-        return authorization(station.key.tenantId, uid)
+        payments.stopped(transaction)
+        return authorization(station.key.tenantId, station.key.stationId, uid)
     }
 
-    private fun verifyTransaction(station: StationEntity, id: Int, connector: Int? = null): TransactionEntity {
-        val transaction = transactions.findByTenantIdAndStationIdAndId(station.key.tenantId, station.key.stationId, id)
-            ?: throw OcppFault("PropertyConstraintViolation", "Unknown transaction")
+    private fun verifyTransaction(
+        station: StationEntity,
+        id: Int,
+        connector: Int? = null,
+    ): TransactionEntity {
+        val transaction =
+            transactions.findByTenantIdAndStationIdAndId(
+                station.key.tenantId,
+                station.key.stationId,
+                id,
+            ) ?: throw OcppFault("PropertyConstraintViolation", "Session inconnue.")
 
         if (connector != null && transaction.connectorId != connector) {
-            throw OcppFault("PropertyConstraintViolation", "Transaction belongs to a different connector")
+            throw OcppFault(
+                "PropertyConstraintViolation",
+                "La session appartient à un autre connecteur.",
+            )
         }
 
         return transaction
     }
 
-    private fun saveMeters(station: StationEntity, connector: Int, transaction: Int?, values: JsonNode) {
-        val readings = values.toList().map { reading ->
-            MeterValueEntity(
-                tenantId = station.key.tenantId,
-                stationId = station.key.stationId,
-                connectorId = connector,
-                transactionId = transaction,
-                sampledAt = Instant.parse(reading.path("timestamp").asText()),
-                samples = db.encode(reading.path("sampledValue"))
-            )
-        }
+    private fun saveMeters(
+        station: StationEntity,
+        connector: Int,
+        transaction: Int?,
+        values: JsonNode,
+    ) {
+        val readings =
+            values.toList().map { reading ->
+                MeterValueEntity(
+                    tenantId = station.key.tenantId,
+                    stationId = station.key.stationId,
+                    connectorId = connector,
+                    transactionId = transaction,
+                    sampledAt = Instant.parse(reading.path("timestamp").asText()),
+                    samples = db.encode(reading.path("sampledValue")),
+                )
+            }
         meters.saveAll(readings)
+        if (transaction != null) {
+            val active = verifyTransaction(station, transaction, connector)
+            values.forEach { reading ->
+                reading.path("sampledValue").forEach { sample ->
+                    if (
+                        sample.path("measurand").asText("Energy.Active.Import.Register") ==
+                            "Energy.Active.Import.Register" &&
+                            sample.path("format").asText("Raw") == "Raw" &&
+                            !sample.has("phase") &&
+                            sample.path("location").asText("Outlet") == "Outlet"
+                    ) {
+                        val value =
+                            sample
+                                .path("value")
+                                .asText()
+                                .takeIf { it.length <= 30 }
+                                ?.toBigDecimalOrNull()
+                        val unit = sample.path("unit").asText("Wh")
+                        if (value != null && value.signum() >= 0 && unit in setOf("Wh", "kWh")) {
+                            payments.observed(
+                                active,
+                                if (unit == "kWh") value * java.math.BigDecimal(1000) else value,
+                                Instant.parse(reading.path("timestamp").asText()),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -1,38 +1,45 @@
-# EV Supervision Lite
+# Codetics Supervision Lite
 
-EV supervision built by **Kevin Vavelin, Codetics**.
+Une supervision de recharge volontairement légère : un serveur **Kotlin / Spring Boot**, un tableau de bord **Next.js**, une base **PostgreSQL**. Développée par Kevin Vavelin, [Codetics](https://codetics.fr).
 
-A Kotlin Spring Boot server with PostgreSQL persistence and a Next.js dashboard
-built with shadcn/ui. Vehicles are optional throughout the charging workflow.
+Le produit couvre les bornes et connecteurs, les commandes OCPP 1.6, les sessions, les utilisateurs et badges RFID, les sites, les tarifs et le paiement public par QR code. L’enregistrement d’un véhicule reste facultatif. Pour des besoins de supervision plus avancés, contactez Codetics.
 
-For better EV supervision, contact **[Codetics](https://codetics.fr)**.
+## Organisation
 
-## Projects
+```text
+ev-server/src/main/kotlin/fr/codetics/ev_server/
+  controllers/     Points d’entrée HTTP par domaine
+  services/        Règles de gestion par domaine
+  models/          Entités persistées et modèles des échanges
+  repositories/    Accès aux données JPA
+  security/        Comptes, sessions et autorisations
+  ocpp/            Échanges avec les bornes et file de commandes
+  ocpi/            Interfaces d’itinérance OCPI 2.1.1
+  stripe/          Adaptateur Stripe
+  core/            Configuration et utilitaires communs
 
-| Project | Stack | Purpose |
-| --- | --- | --- |
-| `ev-server` | Kotlin, Spring Boot 4.1, Spring Security, Spring Data JPA | Accounts, station communication, operations API and roaming |
-| `ev-dashboard` | Next.js 16, React, TypeScript, shadcn/ui | Supervision workspace and operator controls |
+ev-dashboard/
+  app/             Routes et mises en page Next.js
+  features/        Écrans, composants et logique par fonctionnalité
+  components/ui/   Composants d’interface partagés
+  lib/             Client HTTP, formats et libellés français
+```
 
-Production uses PostgreSQL and Flyway migrations. Hibernate validates the schema;
-it does not modify production tables. Application queries use JPA repositories,
-Criteria specifications and parameterized JPQL. No runtime native SQL is used.
+## Démarrage local
 
-## Local development
+Prérequis : **Java 25 ou supérieur**, **Node.js 22 ou supérieur**. Maven est fourni par le projet.
 
-Requirements: Java 25 or later, Node.js 22 or later, and the included Maven wrapper.
-
-For an isolated H2 test workspace, run the server with the `local` profile:
+Dans un premier terminal :
 
 ```sh
 cd ev-server
 SPRING_PROFILES_ACTIVE=local \
 BOOTSTRAP_EMAIL=admin@example.test \
-BOOTSTRAP_PASSWORD='replace-with-a-long-local-test-password' \
+BOOTSTRAP_PASSWORD='une-phrase-de-passe-locale-a-remplacer' \
 ./mvnw spring-boot:run
 ```
 
-In a second terminal:
+Dans un deuxième terminal :
 
 ```sh
 cd ev-dashboard
@@ -40,77 +47,73 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000/auth/login`, enter workspace `codetics` and the
-bootstrap account credentials. Bootstrap only creates an administrator when the
-database contains no users. Remove bootstrap credentials after initial setup.
-The H2 profile uses an in-memory database and loses its data when stopped.
+Ouvrez `http://localhost:3000/auth/login`. L’identifiant de l’espace initial est `codetics`. Le profil `local` utilise une base H2 en mémoire : ses données disparaissent à l’arrêt. Le compte initial est créé uniquement lorsque la base ne contient aucun utilisateur. Retirez ensuite ses identifiants de la configuration.
 
-## PostgreSQL
+## Déploiement
 
-Create a dedicated database and role. Configure these environment variables:
+Le serveur s’exécute comme une application Java classique ; le tableau de bord comme une application Node.js Next.js. Aucune plateforme d’hébergement particulière n’est imposée.
 
-```dotenv
-DATABASE_URL=jdbc:postgresql://localhost:5432/ev_supervision
-DATABASE_USER=ev_supervision
-DATABASE_PASSWORD=replace-with-a-secret
-APP_PUBLIC_URL=https://supervision.example.com
-COOKIE_SECURE=true
+```sh
+cd ev-server
+./mvnw verify
+java -jar target/ev-server-0.0.1-SNAPSHOT.jar
 ```
 
-Start without the `local` profile. Use HTTPS at the public reverse proxy. The
-dashboard's `EV_SERVER_URL` points to the private Spring server and must remain
-server-side. Set dashboard `APP_PUBLIC_URL` to the same public dashboard origin.
+```sh
+cd ev-dashboard
+npm ci
+npm run build
+npm run start
+```
 
-## Authentication
+Copiez les exemples [du serveur](ev-server/.env.example) et [du tableau de bord](ev-dashboard/.env.example) dans la configuration de votre hébergeur. Spring Boot ne charge pas automatiquement un fichier `.env` : transmettez ces valeurs comme variables d’environnement.
 
-Spring Security provides CSRF protection, role checks, OAuth/OIDC validation and
-the security filter chains. Application sessions use random opaque credentials,
-stored as hashes in the database and sent in HttpOnly cookies. New passwords use
-Spring Security PBKDF2; legacy BCrypt verification remains available. Reset and
-verification links are single-use and expire after 30 minutes.
+En production, utilisez PostgreSQL et HTTPS. Flyway applique les migrations ; Hibernate vérifie le schéma sans modifier les tables. Le mandataire inverse doit transmettre les connexions WebSocket OCPP au serveur Java. `EV_SERVER_URL` reste une variable privée du tableau de bord.
 
-Roles are Administrator, Operator, Viewer and Driver. Every operational lookup
-is scoped to the authenticated tenant. Driver session queries also require
-ownership. CPO/eMSP are OCPI market roles, distinct from user permissions.
+## Espaces clients
 
-Google, Microsoft and Apple sign-in are optional. See
-[docs/authentication.md](docs/authentication.md) for configuration, account linking,
-Apple's callback requirements and credential rotation. Provider credentials must
-be supplied through environment variables; none are bundled.
+Tous les espaces partagent la même application et peuvent utiliser la même adresse web. La connexion demande explicitement l’identifiant de l’espace. Le serveur déduit l’espace autorisé de la session, jamais du nom de domaine ni d’un identifiant d’espace envoyé avec une opération métier.
 
-Self registration is disabled by default. Enable `SIGNUP_ENABLED=true` and set
-`PUBLIC_TENANT` only when intentionally accepting new Driver accounts. Configure
-SMTP and `MAIL_ENABLED=true` for verification and reset delivery.
+Les rôles sont **administrateur**, **exploitant**, **lecteur** et **conducteur**. Les conducteurs consultent leurs propres sessions. Chaque espace possède ses bornes, ses utilisateurs, ses badges, ses tarifs et son compte Stripe.
 
-## Station communication
+La création d’espaces depuis `/auth/create-workspace` s’active avec `WORKSPACE_SIGNUP_ENABLED=true`, `MAIL_ENABLED=true` et un serveur SMTP. Le premier administrateur doit vérifier son adresse électronique. L’inscription libre de conducteurs dans l’espace défini par `PUBLIC_TENANT` est une option séparée, désactivée par défaut.
 
-Provision a station from the dashboard. Store the one-time station password.
-Connect using OCPP 1.6 JSON over WebSocket with subprotocol `ocpp1.6`:
+## Paiement public et QR code
+
+1. Créez un tarif en euros dans **Tarifs**.
+2. Dans **Paiements**, connectez le compte Stripe de l’espace et terminez la vérification chez Stripe. Activez les paiements publics.
+3. Dans **Points de charge publics**, associez une borne, un connecteur physique et un tarif. Publiez le portail et téléchargez son QR code.
+4. Le QR ouvre `/charge/{espace}/{point-de-charge}`. Le conducteur branche son véhicule, choisit un crédit entre 5 € et 100 € et paie via Stripe Checkout, sans créer de compte.
+
+Les encaissements sont effectués directement sur le compte connecté de chaque espace. Le serveur attend une notification Stripe signée confirmant le paiement avant de demander le démarrage. Seul le message de démarrage de la borne confirme une recharge en cours.
+
+Le tarif est figé au début de la demande. À la fin réelle de la recharge, le serveur calcule le montant à partir des mesures de la borne, plafonne la facturation au crédit payé et rembourse le solde. Un refus de démarrage ou l’absence de démarrage sous cinq minutes entraîne un remboursement intégral. Les reprises utilisent des clés d’idempotence Stripe.
+
+À l’épuisement du crédit, le serveur demande l’arrêt. Cette commande dépend de la connexion et de la réponse de la borne : elle ne constitue pas une coupure physique garantie. Si la borne ne confirme pas l’arrêt, la session reste en attente du relevé final. Un remboursement refusé est signalé dans **Paiements** pour intervention de l’exploitant.
+
+Configurez `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et une clé `APP_ENCRYPTION_KEY` de 32 octets aléatoires encodés en Base64. Dans Stripe, créez une destination de notifications **pour les comptes connectés**, vers l’adresse publique `/api/backend/api/v1/stripe/webhook`, avec ces événements :
 
 ```text
-wss://your-server/ocpp/{workspace}/{stationIdentity}
-Authorization: Basic <base64(stationIdentity:stationPassword)>
+checkout.session.completed
+checkout.session.async_payment_succeeded
+checkout.session.async_payment_failed
+checkout.session.expired
 ```
 
-The implemented transaction flow handles authorization, start, timestamped meter
-values, status, heartbeat and stop messages. Responses are cached by station and
-message ID for idempotent replay. Outbound commands are persisted, correlated,
-deadline-bound and exposed in Command activity. Their responses do not by
-themselves prove that a charging session began.
+L’adresse peut aussi viser directement `/api/v1/stripe/webhook` sur le serveur Java si celui-ci est exposé. Utilisez des clés et une destination de test pour les essais, puis les équivalents de production. Les paiements réels nécessitent un compte Stripe actif et une borne compatible ; les tests locaux utilisent un adaptateur réservé aux tests.
 
-Only verified protocol coverage may be treated as supported. SOAP, complete
-schema validation and complete roaming workflows remain acceptance items; see
-the delivery status before connecting real stations or partners.
+## Connexion des bornes
 
-## Roaming
+Ajoutez une borne dans le tableau de bord et conservez son mot de passe, affiché une seule fois. Configurez OCPP 1.6 JSON, le sous-protocole `ocpp1.6` et l’authentification Basic :
 
-OCPI 2.1.1 discovery, credential exchange and object storage interfaces are
-implemented. Configure an OCPI partner and a Base64-encoded 32-byte
-`APP_ENCRYPTION_KEY` before provisioning credentials. Partner secrets are encrypted
-with AES-GCM. The remote origin is pinned to the administrator-configured URL.
-Keep the encryption key outside the database and back it up separately.
+```text
+wss://adresse-du-serveur/ocpp/{espace}/{identifiant-borne}
+Authorization: Basic <base64(identifiant-borne:mot-de-passe)>
+```
 
-## Verification and documentation
+Les commandes sont persistées et suivies jusqu’à la réponse ou au dépassement de leur délai. Une réponse positive à une commande de démarrage ne prouve pas que le véhicule recharge.
+
+## Vérifications et documentation
 
 ```sh
 cd ev-server
@@ -120,18 +123,14 @@ cd ev-server
 ```sh
 cd ev-dashboard
 npm run lint
+npm run format:check
 npm run build
 ```
 
-The administrator-only OpenAPI document is at `/api/v1/openapi` on the Spring
-server. Architecture and data ownership are documented in
-[docs/architecture.md](docs/architecture.md). Local H2 verification does not prove
-PostgreSQL migration compatibility or interoperability certification.
+Les essais locaux couvrent les droits, l’isolation des espaces, les échanges de session et le cycle de paiement avec un adaptateur Stripe de test. Ils ne remplacent pas les essais PostgreSQL, Stripe et bornes de l’installation cible.
 
-Dashboard PNG captures belong in `screenshots/`.
+Consultez [l’architecture](docs/architecture.md), [l’authentification](docs/authentication.md) et les [captures d’écran en français](screenshots/README.md). La description de l’API est réservée aux administrateurs à `/api/v1/openapi` sur le serveur Java.
 
-## License and attribution
+## Licence
 
-Original Codetics code uses the [Codetics Attribution License 1.0](LICENSE), which
-requires visible author credit. Retain `NOTICE` and applicable third-party
-licenses when distributing. The dashboard includes the required author credit.
+Le code original est distribué sous la [licence d’attribution Codetics](LICENSE). Conservez le crédit visible à Kevin Vavelin, Codetics, ainsi que `NOTICE` et les licences des dépendances. Les textes juridiques tiers conservent leur version d’origine.

@@ -3,8 +3,9 @@ package fr.codetics.ev_server.ocpi
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.randomToken
 import fr.codetics.ev_server.core.sha256
-import fr.codetics.ev_server.persistence.PartnerEntity
-import fr.codetics.ev_server.persistence.PartnerRepository
+import fr.codetics.ev_server.models.entities.PartnerEntity
+import fr.codetics.ev_server.repositories.PartnerRepository
+import fr.codetics.ev_server.security.SecretVault
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -18,7 +19,7 @@ class OcpiCredentials(
     private val vault: SecretVault,
     @param:Value("\${app.ocpi.public-url}") private val publicUrl: String,
     @param:Value("\${app.ocpi.country-code}") private val country: String,
-    @param:Value("\${app.ocpi.party-id}") private val party: String
+    @param:Value("\${app.ocpi.party-id}") private val party: String,
 ) {
     fun exchange(partner: PartnerEntity, method: String, body: JsonNode?): Any {
         when (method) {
@@ -29,8 +30,13 @@ class OcpiCredentials(
             }
             "DELETE" -> {
                 return db.atomic {
-                    val locked = partners.findForUpdate(partner.id)
-                        ?: throw OcpiFault(2001, "Partner unavailable", HttpStatus.FORBIDDEN)
+                    val locked =
+                        partners.findForUpdate(partner.id)
+                            ?: throw OcpiFault(
+                                2001,
+                                "Partenaire indisponible.",
+                                HttpStatus.FORBIDDEN,
+                            )
                     requireRegistered(locked)
                     locked.registered = false
                     locked.enabled = false
@@ -44,7 +50,7 @@ class OcpiCredentials(
         }
 
         if ((method == "POST" && partner.registered) || (method == "PUT" && !partner.registered)) {
-            throw OcpiFault(2001, "Invalid registration state", HttpStatus.METHOD_NOT_ALLOWED)
+            throw OcpiFault(2001, "État d’enregistrement invalide.", HttpStatus.METHOD_NOT_ALLOWED)
         }
 
         require(body != null && body.isObject)
@@ -55,23 +61,35 @@ class OcpiCredentials(
         require(body.path("business_details").path("name").isString)
 
         val versions = transport.request(partner, body.path("url").asText(), token = token)
-        val version = versions.firstOrNull { entry ->
-            entry.path("version").asText() == "2.1.1"
-        } ?: throw OcpiFault(3001, "Remote partner does not publish OCPI 2.1.1")
+        val version =
+            versions.firstOrNull { entry -> entry.path("version").asText() == "2.1.1" }
+                ?: throw OcpiFault(3001, "Le partenaire distant ne publie pas OCPI 2.1.1.")
         val details = transport.request(partner, version.path("url").asText(), token = token)
         val endpoints = details.path("endpoints")
         require(endpoints.isArray && !endpoints.isEmpty)
 
         endpoints.forEach { endpoint ->
-            transport.validateRemote(endpoint.path("url").asText(), requireNotNull(partner.remoteUrl))
+            transport.validateRemote(
+                endpoint.path("url").asText(),
+                requireNotNull(partner.remoteUrl),
+            )
         }
 
         return db.atomic {
-            val locked = partners.findForUpdate(partner.id)
-                ?: throw OcpiFault(2001, "Partner unavailable", HttpStatus.FORBIDDEN)
+            val locked =
+                partners.findForUpdate(partner.id)
+                    ?: throw OcpiFault(2001, "Partenaire indisponible.", HttpStatus.FORBIDDEN)
 
-            if (locked.tokenHash != partner.tokenHash || locked.registered != partner.registered || !locked.enabled) {
-                throw OcpiFault(2001, "Credentials changed; retry with current credentials", HttpStatus.CONFLICT)
+            if (
+                locked.tokenHash != partner.tokenHash ||
+                    locked.registered != partner.registered ||
+                    !locked.enabled
+            ) {
+                throw OcpiFault(
+                    2001,
+                    "Les identifiants ont changé. Réessayez avec les identifiants actuels.",
+                    HttpStatus.CONFLICT,
+                )
             }
 
             val newToken = randomToken()
@@ -89,7 +107,7 @@ class OcpiCredentials(
 
     private fun requireRegistered(partner: PartnerEntity) {
         if (!partner.registered) {
-            throw OcpiFault(2001, "Not registered", HttpStatus.METHOD_NOT_ALLOWED)
+            throw OcpiFault(2001, "Non enregistré.", HttpStatus.METHOD_NOT_ALLOWED)
         }
     }
 
@@ -99,10 +117,7 @@ class OcpiCredentials(
             "url" to "${publicUrl.trimEnd('/')}/ocpi/$role/versions",
             "country_code" to country,
             "party_id" to party,
-            "business_details" to mapOf(
-                "name" to "Codetics",
-                "website" to "https://codetics.fr"
-            )
+            "business_details" to mapOf("name" to "Codetics", "website" to "https://codetics.fr"),
         )
     }
 }

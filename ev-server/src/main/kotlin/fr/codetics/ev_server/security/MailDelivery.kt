@@ -1,10 +1,10 @@
 package fr.codetics.ev_server.security
 
 import fr.codetics.ev_server.core.Database
-import fr.codetics.ev_server.persistence.AccessTokenRepository
-import fr.codetics.ev_server.persistence.AuthAttemptRepository
-import fr.codetics.ev_server.persistence.AuthChallengeRepository
-import fr.codetics.ev_server.persistence.MailRepository
+import fr.codetics.ev_server.repositories.AccessTokenRepository
+import fr.codetics.ev_server.repositories.AuthAttemptRepository
+import fr.codetics.ev_server.repositories.AuthChallengeRepository
+import fr.codetics.ev_server.repositories.MailRepository
 import java.time.Instant
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
@@ -22,13 +22,17 @@ class MailDelivery(
     private val tokens: AccessTokenRepository,
     private val attempts: AuthAttemptRepository,
     @param:Value("\${app.mail-enabled}") private val enabled: Boolean,
-    @param:Value("\${app.mail-from}") private val from: String
+    @param:Value("\${app.mail-from}") private val from: String,
 ) {
     @Scheduled(fixedDelay = 30000)
     fun deliver() {
         db.atomic {
             if (enabled) {
-                outbox.findAllBySentAtIsNullAndAttemptsLessThanOrderByCreatedAt(5, PageRequest.of(0, 10))
+                outbox
+                    .findAllBySentAtIsNullAndAttemptsLessThanOrderByCreatedAt(
+                        5,
+                        PageRequest.of(0, 10),
+                    )
                     .forEach { message ->
                         try {
                             val email = SimpleMailMessage()

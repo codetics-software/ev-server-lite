@@ -13,10 +13,10 @@ import { StationDetail } from "@/features/stations/station-detail";
 import { api } from "@/lib/api";
 import type { Row, User } from "@/lib/api-types";
 import { display } from "@/lib/format";
+import { fieldLabel } from "@/lib/labels";
 import { useState } from "react";
 import { endpoint } from "../config/endpoint";
 import { fields } from "../config/form-fields";
-import { resourceName } from "../config/resource-names";
 
 type Props = {
   section: string;
@@ -39,7 +39,6 @@ export function ResourceDetails({
 }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
-  const name = resourceName(section);
   const entries = record ? { ...record, ...((record.data as Row) ?? {}) } : {};
 
   async function remove() {
@@ -53,7 +52,7 @@ export function ResourceDetails({
       onDeleted();
       onClose();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : `Unable to delete ${name}`);
+      setError(failure instanceof Error ? failure.message : "Impossible de supprimer cet élément.");
     } finally {
       setDeleting(false);
     }
@@ -72,7 +71,7 @@ export function ResourceDetails({
       <DialogContent className="max-h-[85svh] overflow-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {String(record?.name ?? record?.uid ?? record?.action ?? `${title} details`)}
+            {display(record?.name ?? record?.uid ?? record?.action ?? `Détails · ${title}`)}
           </DialogTitle>
           <DialogDescription>{title}</DialogDescription>
         </DialogHeader>
@@ -85,8 +84,7 @@ export function ResourceDetails({
               .map(([key, value]) => (
                 <div key={key} className="grid gap-1 border-b pb-3 text-sm sm:grid-cols-3">
                   <dt className="text-muted-foreground">
-                    {fields[section]?.find((field) => field.key === key)?.label ??
-                      key.replaceAll("_", " ").replace(/([a-z])([A-Z])/g, "$1 $2")}
+                    {fields[section]?.find((field) => field.key === key)?.label ?? fieldLabel(key)}
                   </dt>
                   <dd className="min-w-0 break-words sm:col-span-2">{display(value)}</dd>
                 </div>
@@ -96,7 +94,7 @@ export function ResourceDetails({
         {canDelete && (
           <div className="flex flex-col gap-3 border-t pt-4">
             <p className="text-sm text-muted-foreground">
-              Permanently delete {String(record?.name ?? `this ${name}`)}.
+              Supprimer définitivement {String(record?.name ?? "cet élément")}.
             </p>
             {error && (
               <Alert variant="destructive">
@@ -104,7 +102,7 @@ export function ResourceDetails({
               </Alert>
             )}
             <Button variant="destructive" disabled={deleting} onClick={remove}>
-              {deleting ? "Deleting…" : `Delete ${name}`}
+              {deleting ? "Suppression…" : "Supprimer"}
             </Button>
           </div>
         )}

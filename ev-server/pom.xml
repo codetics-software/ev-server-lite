@@ -11,7 +11,7 @@
   <artifactId>ev-server</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>EV Supervision Lite</name>
-  <description>EV supervision built by Kevin Vavelin, Codetics</description>
+  <description>Supervision de recharge par Kevin Vavelin, Codetics</description>
   <url>https://codetics.fr</url>
   <licenses>
     <license>
@@ -37,6 +37,16 @@
     <kotlin.version>2.3.21</kotlin.version>
   </properties>
   <dependencies>
+    <dependency>
+      <groupId>com.stripe</groupId>
+      <artifactId>stripe-java</artifactId>
+      <version>34.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.zxing</groupId>
+      <artifactId>core</artifactId>
+      <version>3.5.3</version>
+    </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>

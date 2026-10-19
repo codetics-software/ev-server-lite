@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api, type Row } from "@/lib/api";
 import { useState, type FormEvent } from "react";
 
+import { valueLabel } from "@/lib/labels";
 import { commands } from "./station-commands";
 
 export function StationCommandForm({ station }: { station: string }) {
@@ -34,16 +35,24 @@ export function StationCommandForm({ station }: { station: string }) {
       const parsed = JSON.parse(payload);
 
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        throw new Error("Enter a JSON object for the command payload.");
+        throw new Error("Renseignez un objet JSON pour les paramètres de la commande.");
       }
 
       const result = await api<Row>(`stations/${encodeURIComponent(station)}/commands`, {
         method: "POST",
         body: JSON.stringify({ action, payload: parsed }),
       });
-      setMessage(`Command queued: ${result.id}. Follow its response in Command activity.`);
+      setMessage(
+        `Commande enregistrée : ${result.id}. Consultez sa réponse dans le suivi des commandes.`,
+      );
     } catch (error) {
-      setFailure(error instanceof Error ? error.message : "Unable to queue command");
+      setFailure(
+        error instanceof SyntaxError
+          ? "Le format JSON des paramètres est invalide."
+          : error instanceof Error
+            ? error.message
+            : "Impossible d’envoyer la commande.",
+      );
     } finally {
       setPending(false);
     }
@@ -53,7 +62,7 @@ export function StationCommandForm({ station }: { station: string }) {
     <form onSubmit={submit}>
       <FieldGroup>
         <Field>
-          <FieldLabel>OCPP 1.6 command</FieldLabel>
+          <FieldLabel>Commande OCPP 1.6</FieldLabel>
           <Select
             value={action}
             onValueChange={(value) => {
@@ -69,8 +78,8 @@ export function StationCommandForm({ station }: { station: string }) {
             <SelectContent>
               <SelectGroup>
                 {Object.keys(commands).map((name) => (
-                  <SelectItem key={name} value={name}>
-                    {name}
+                  <SelectItem key={valueLabel(name)} value={valueLabel(name)}>
+                    {valueLabel(name)}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -78,7 +87,7 @@ export function StationCommandForm({ station }: { station: string }) {
           </Select>
         </Field>
         <Field>
-          <FieldLabel htmlFor="command-payload">Command payload</FieldLabel>
+          <FieldLabel htmlFor="command-payload">Paramètres de la commande</FieldLabel>
           <Textarea
             id="command-payload"
             className="min-h-32 font-mono"
@@ -87,13 +96,13 @@ export function StationCommandForm({ station }: { station: string }) {
             required
           />
           <FieldDescription>
-            Review the target connector and parameters before sending. A response confirms the
-            station received the command; session activity confirms charging.
+            Vérifiez le connecteur et les paramètres avant l’envoi. La réponse confirme la réception
+            de la commande ; le suivi de session confirme le démarrage de la recharge.
           </FieldDescription>
         </Field>
         {message && (
           <Alert>
-            <AlertTitle>Queued</AlertTitle>
+            <AlertTitle>En attente d’envoi</AlertTitle>
             <AlertDescription>{message}</AlertDescription>
           </Alert>
         )}
@@ -103,7 +112,7 @@ export function StationCommandForm({ station }: { station: string }) {
           </Alert>
         )}
         <Button type="submit" disabled={pending}>
-          {pending ? "Queueing…" : "Send command"}
+          {pending ? "Envoi…" : "Envoyer la commande"}
         </Button>
       </FieldGroup>
     </form>

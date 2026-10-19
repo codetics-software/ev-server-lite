@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useApi } from "@/hooks/use-api";
 import { api, type User } from "@/lib/api";
+import { display } from "@/lib/format";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -25,7 +26,7 @@ export function AccountView({ user }: { user: User }) {
       });
       window.location.assign(result.url);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Unable to link account");
+      setError(failure instanceof Error ? failure.message : "Impossible d’associer ce compte.");
     }
   }
 
@@ -37,8 +38,8 @@ export function AccountView({ user }: { user: User }) {
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">My account</h1>
-        <p className="text-sm text-muted-foreground">Your identity and sign-in options.</p>
+        <h1 className="text-3xl font-semibold tracking-tight">Mon compte</h1>
+        <p className="text-sm text-muted-foreground">Votre identité et vos moyens de connexion.</p>
       </div>
       <Card>
         <CardHeader>
@@ -46,25 +47,27 @@ export function AccountView({ user }: { user: User }) {
           <CardDescription>{user.email}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <Badge variant="secondary">{user.role}</Badge>
-          <p className="break-all text-xs text-muted-foreground">Workspace ID: {user.tenantId}</p>
+          <Badge variant="secondary">{display(user.role)}</Badge>
+          <p className="break-all text-xs text-muted-foreground">
+            Identifiant de l’espace : {user.tenantId}
+          </p>
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Connected identities</CardTitle>
-          <CardDescription>Link a provider while signed in to this account.</CardDescription>
+          <CardTitle>Comptes associés</CardTitle>
+          <CardDescription>Associez un compte externe à votre compte actuel.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {providers?.length ? (
             providers.map((provider) => (
               <Button key={provider.id} variant="outline" onClick={() => link(provider.id)}>
-                Connect {provider.name}
+                Associer {provider.name}
               </Button>
             ))
           ) : (
             <p className="text-sm text-muted-foreground">
-              Your administrator has not enabled additional sign-in providers.
+              Votre administrateur n’a pas activé de fournisseur de connexion supplémentaire.
             </p>
           )}
           {error && (
@@ -75,7 +78,7 @@ export function AccountView({ user }: { user: User }) {
         </CardContent>
       </Card>
       <Button variant="destructive" onClick={revoke}>
-        Sign out on all devices
+        Déconnecter tous les appareils
       </Button>
     </div>
   );

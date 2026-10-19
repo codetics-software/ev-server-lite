@@ -4,19 +4,19 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.randomToken
 import fr.codetics.ev_server.core.sha256
-import fr.codetics.ev_server.persistence.AccessTokenEntity
-import fr.codetics.ev_server.persistence.AccessTokenRepository
-import fr.codetics.ev_server.persistence.AuthChallengeEntity
-import fr.codetics.ev_server.persistence.AuthChallengeRepository
-import fr.codetics.ev_server.persistence.MailEntity
-import fr.codetics.ev_server.persistence.MailRepository
-import fr.codetics.ev_server.persistence.OAuthIdentityEntity
-import fr.codetics.ev_server.persistence.OAuthIdentityKey
-import fr.codetics.ev_server.persistence.OAuthIdentityRepository
-import fr.codetics.ev_server.persistence.TenantEntity
-import fr.codetics.ev_server.persistence.TenantRepository
-import fr.codetics.ev_server.persistence.UserEntity
-import fr.codetics.ev_server.persistence.UserRepository
+import fr.codetics.ev_server.models.entities.AccessTokenEntity
+import fr.codetics.ev_server.models.entities.AuthChallengeEntity
+import fr.codetics.ev_server.models.entities.MailEntity
+import fr.codetics.ev_server.models.entities.OAuthIdentityEntity
+import fr.codetics.ev_server.models.entities.OAuthIdentityKey
+import fr.codetics.ev_server.models.entities.TenantEntity
+import fr.codetics.ev_server.models.entities.UserEntity
+import fr.codetics.ev_server.repositories.AccessTokenRepository
+import fr.codetics.ev_server.repositories.AuthChallengeRepository
+import fr.codetics.ev_server.repositories.MailRepository
+import fr.codetics.ev_server.repositories.OAuthIdentityRepository
+import fr.codetics.ev_server.repositories.TenantRepository
+import fr.codetics.ev_server.repositories.UserRepository
 import java.time.Instant
 import java.util.UUID
 import org.springframework.beans.factory.annotation.Value
@@ -41,7 +41,7 @@ class AccountService(
     @param:Value("\${app.token-hours}") private val tokenHours: Long,
     @param:Value("\${app.signup-enabled}") private val signupEnabled: Boolean,
     @param:Value("\${app.public-tenant}") private val publicTenant: String,
-    @param:Value("\${app.public-url}") private val publicUrl: String
+    @param:Value("\${app.public-url}") private val publicUrl: String,
 ) {
     private val dummyPassword = passwords.encode(randomToken())
 
@@ -51,7 +51,7 @@ class AccountService(
             tenantId = user.tenantId,
             email = user.email,
             name = user.displayName,
-            role = user.role
+            role = user.role,
         )
     }
 
@@ -95,17 +95,18 @@ class AccountService(
         limit("login:$tenant:$normalizedEmail")
 
         val organization = tenants.findBySlugAndActiveTrue(tenant)
-        val user = organization?.let {
-            users.findByTenantIdAndEmail(it.id, normalizedEmail)
-        }
+        val user = organization?.let { users.findByTenantIdAndEmail(it.id, normalizedEmail) }
         val passwordMatches = passwords.matches(password, user?.passwordHash ?: dummyPassword)
 
         if (!passwordMatches || user == null || !user.enabled) {
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials")
+            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Identifiants incorrects.")
         }
 
         if (!user.emailVerified) {
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Verify your email before signing in")
+            throw ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Vérifiez votre adresse électronique avant de vous connecter.",
+            )
         }
 
         return principal(user)
@@ -116,11 +117,7 @@ class AccountService(
         val expiresAt = Instant.now().plusSeconds(tokenHours.coerceIn(1, 24) * 3600)
 
         tokens.save(
-            AccessTokenEntity(
-                tokenHash = sha256(raw),
-                userId = user.id,
-                expiresAt = expiresAt
-            )
+            AccessTokenEntity(tokenHash = sha256(raw), userId = user.id, expiresAt = expiresAt)
         )
         db.audit(user.tenantId, user.id.toString(), "AUTH_SIGN_IN", user.id.toString())
 
@@ -140,13 +137,16 @@ class AccountService(
 
     fun validatePassword(password: String) {
         require(password.length in 16..128) {
-            "Use a password containing between 16 and 128 characters"
+            "Le mot de passe doit contenir entre 16 et 128 caractères."
         }
     }
 
     fun register(email: String, name: String, password: String) {
         if (!signupEnabled || publicTenant.isBlank()) {
-            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Self registration is disabled")
+            throw ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "L’inscription libre est désactivée.",
+            )
         }
 
         validatePassword(password)
@@ -158,14 +158,15 @@ class AccountService(
             val existing = users.findByTenantIdAndEmail(tenant, email.lowercase())
 
             if (existing == null) {
-                val user = users.save(
-                    UserEntity(
-                        tenantId = tenant,
-                        email = email.lowercase(),
-                        displayName = name,
-                        passwordHash = passwords.encode(password)
+                val user =
+                    users.save(
+                        UserEntity(
+                            tenantId = tenant,
+                            email = email.lowercase(),
+                            displayName = name,
+                            passwordHash = passwords.encode(password),
+                        )
                     )
-                )
                 challenge(user, "VERIFY")
             }
 
@@ -191,7 +192,9 @@ class AccountService(
     private fun challenge(user: UserEntity, kind: String) {
         val raw = randomToken()
         val path = if (kind == "RESET") "reset-password" else "verify-email"
-        val action = if (kind == "RESET") "reset password" else "verify email"
+        val action =
+            if (kind == "RESET") "Réinitialiser le mot de passe"
+            else "Vérifier l’adresse électronique"
 
         challenges.deleteAllByUserIdAndKind(user.id, kind)
         challenges.save(
@@ -199,14 +202,14 @@ class AccountService(
                 tokenHash = sha256(raw),
                 userId = user.id,
                 kind = kind,
-                expiresAt = Instant.now().plusSeconds(1800)
+                expiresAt = Instant.now().plusSeconds(1800),
             )
         )
         mail.save(
             MailEntity(
                 recipient = user.email,
-                subject = "EV Supervision Lite — $action",
-                body = "$publicUrl/auth/$path?token=$raw\n\nThis link expires in 30 minutes."
+                subject = "Codetics Supervision — $action",
+                body = "$publicUrl/auth/$path?token=$raw\n\nCe lien expire dans 30 minutes.",
             )
         )
     }
@@ -221,8 +224,15 @@ class AccountService(
         return db.atomic {
             val challenge = challenges.findForConsumption(sha256(raw))
 
-            if (challenge == null || challenge.kind != kind || !challenge.expiresAt.isAfter(Instant.now())) {
-                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Link is invalid or expired")
+            if (
+                challenge == null ||
+                    challenge.kind != kind ||
+                    !challenge.expiresAt.isAfter(Instant.now())
+            ) {
+                throw ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Ce lien est invalide ou a expiré.",
+                )
             }
 
             val user = users.findById(challenge.userId).orElseThrow()
@@ -241,8 +251,12 @@ class AccountService(
     }
 
     fun tenantBySlug(slug: String): UUID {
-        val tenant = tenants.findBySlugAndActiveTrue(slug)
-            ?: throw ResponseStatusException(HttpStatus.FORBIDDEN, "Tenant is unavailable")
+        val tenant =
+            tenants.findBySlugAndActiveTrue(slug)
+                ?: throw ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "L’espace client est indisponible.",
+                )
 
         return tenant.id
     }
@@ -253,7 +267,7 @@ class AccountService(
         email: String?,
         name: String?,
         verified: Boolean,
-        linkUser: UUID?
+        linkUser: UUID?,
     ): AppPrincipal {
         return db.atomic {
             val key = OAuthIdentityKey(issuer, subject)
@@ -261,18 +275,22 @@ class AccountService(
 
             if (existing != null) {
                 if (linkUser != null && existing.userId != linkUser) {
-                    throw ResponseStatusException(HttpStatus.CONFLICT, "Provider account is already linked")
+                    throw ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Ce compte externe est déjà associé.",
+                    )
                 }
 
                 return@atomic findUser(existing.userId)
-                    ?: throw ResponseStatusException(HttpStatus.FORBIDDEN, "Account disabled")
+                    ?: throw ResponseStatusException(HttpStatus.FORBIDDEN, "Compte désactivé.")
             }
 
-            val user = if (linkUser != null) {
-                findUser(linkUser) ?: throw ResponseStatusException(HttpStatus.FORBIDDEN)
-            } else {
-                provisionOAuthUser(email, name, verified)
-            }
+            val user =
+                if (linkUser != null) {
+                    findUser(linkUser) ?: throw ResponseStatusException(HttpStatus.FORBIDDEN)
+                } else {
+                    provisionOAuthUser(email, name, verified)
+                }
 
             identities.save(OAuthIdentityEntity(key, user.id))
             db.audit(user.tenantId, user.id.toString(), "OAUTH_LINK", issuer)
@@ -284,7 +302,7 @@ class AccountService(
         if (!signupEnabled || publicTenant.isBlank() || email.isNullOrBlank() || !verified) {
             throw ResponseStatusException(
                 HttpStatus.FORBIDDEN,
-                "Link this provider from an existing account, or enable verified self registration"
+                "Associez ce fournisseur depuis un compte existant ou activez l’inscription avec vérification.",
             )
         }
 
@@ -294,18 +312,19 @@ class AccountService(
         if (users.findByTenantIdAndEmail(tenant, email.lowercase()) != null) {
             throw ResponseStatusException(
                 HttpStatus.CONFLICT,
-                "Sign in to your existing account and link this provider"
+                "Connectez-vous à votre compte existant pour associer ce fournisseur.",
             )
         }
 
-        val user = users.save(
-            UserEntity(
-                tenantId = tenant,
-                email = email.lowercase(),
-                displayName = (name ?: email).take(200),
-                emailVerified = true
+        val user =
+            users.save(
+                UserEntity(
+                    tenantId = tenant,
+                    email = email.lowercase(),
+                    displayName = (name ?: email).take(200),
+                    emailVerified = true,
+                )
             )
-        )
 
         return principal(user)
     }
@@ -313,7 +332,7 @@ class AccountService(
 
 fun validateEmail(email: String) {
     require(email.length <= 320 && email.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))) {
-        "Provide a valid email address"
+        "Renseignez une adresse électronique valide."
     }
 }
 
@@ -326,7 +345,7 @@ class Bootstrap(
     private val users: UserRepository,
     @param:Value("\${app.bootstrap.email}") private val email: String,
     @param:Value("\${app.bootstrap.password}") private val password: String,
-    @param:Value("\${app.bootstrap.tenant}") private val slug: String
+    @param:Value("\${app.bootstrap.tenant}") private val slug: String,
 ) : ApplicationRunner {
     override fun run(args: ApplicationArguments) {
         if (email.isBlank()) {
@@ -339,17 +358,18 @@ class Bootstrap(
 
         db.atomic {
             if (users.count() == 0L) {
-                val tenant = tenants.findBySlugAndActiveTrue(slug)
-                    ?: tenants.save(TenantEntity(slug = slug, name = "Codetics"))
+                val tenant =
+                    tenants.findBySlugAndActiveTrue(slug)
+                        ?: tenants.save(TenantEntity(slug = slug, name = "Codetics"))
 
                 users.save(
                     UserEntity(
                         tenantId = tenant.id,
                         email = email.trim().lowercase(),
-                        displayName = "Administrator",
+                        displayName = "Administrateur",
                         passwordHash = passwords.encode(password),
                         role = "ADMIN",
-                        emailVerified = true
+                        emailVerified = true,
                     )
                 )
             }

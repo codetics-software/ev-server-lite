@@ -29,7 +29,9 @@ export function WorkspaceSidebar({ user, section }: { user: User; section: strin
   const [error, setError] = useState("");
   const [signingOut, setSigningOut] = useState(false);
   const visible = navigationFor(user);
-  const groups = [...new Set(visible.map((item) => item.group))];
+  const groups = ["Espace client", "Exploitation", "Réseau", "Gestion", "Administration"].filter(
+    (group) => visible.some((item) => item.group === group),
+  );
   const initials = user.name
     .trim()
     .split(/\s+/)
@@ -45,7 +47,7 @@ export function WorkspaceSidebar({ user, section }: { user: User; section: strin
       await api("auth/signout", { method: "POST" });
       router.replace("/auth/login");
     } catch {
-      setError("Sign out failed. Try again.");
+      setError("La déconnexion a échoué. Réessayez.");
       setSigningOut(false);
     }
   }
@@ -61,7 +63,7 @@ export function WorkspaceSidebar({ user, section }: { user: User; section: strin
           <CodeticsMark />
           <span>
             <span className="block text-base font-semibold tracking-tight">Codetics</span>
-            <span className="block text-xs text-muted-foreground">Supervision</span>
+            <span className="block text-xs text-sidebar-foreground/70">Supervision</span>
           </span>
         </Link>
       </SidebarHeader>
@@ -105,12 +107,14 @@ export function WorkspaceSidebar({ user, section }: { user: User; section: strin
           </Avatar>
           <Link href="/account" className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium">{user.name}</span>
-            <span className="block text-xs text-muted-foreground">{roleLabels[user.role]}</span>
+            <span className="block text-xs text-sidebar-foreground/70">
+              {roleLabels[user.role]}
+            </span>
           </Link>
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Sign out"
+            aria-label="Se déconnecter"
             disabled={signingOut}
             onClick={signOut}
           >

@@ -18,13 +18,12 @@ fun requestToken(request: HttpServletRequest): String? {
     return request.cookies?.find { cookie -> cookie.name == "EV_SESSION" }?.value
 }
 
-internal class AccountAuthenticationFilter(
-    private val accounts: AccountService
-) : OncePerRequestFilter() {
+internal class AccountAuthenticationFilter(private val accounts: AccountService) :
+    OncePerRequestFilter() {
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
-        chain: FilterChain
+        chain: FilterChain,
     ) {
         val user = requestToken(request)?.let(accounts::authenticateToken)
 

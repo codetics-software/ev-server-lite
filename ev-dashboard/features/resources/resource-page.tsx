@@ -31,12 +31,12 @@ export function ResourcePage({ section, user }: { section: string; user: User })
   const title = sections.find((item) => item.id === section)?.label ?? section;
   const name = resourceName(section);
   const tableColumns: readonly ResourceColumn[] = columns[section] ?? [
-    ["name", "Name"],
+    ["name", "Nom"],
     ...(fields[section] ?? [])
       .filter((field) => field.key !== "name")
       .slice(0, 2)
       .map((field): ResourceColumn => [`data.${field.key}`, field.label]),
-    ["updated_at", "Updated"],
+    ["updated_at", "Mise à jour"],
   ];
 
   function edit(record: Row | null) {
@@ -54,20 +54,20 @@ export function ResourcePage({ section, user }: { section: string; user: User })
         {access.canCreate && fields[section] && (
           <Button onClick={() => edit(null)}>
             <IconPlus data-icon="inline-start" />
-            Add {name}
+            Ajouter {name}
           </Button>
         )}
       </div>
       {list.error && (
         <Alert variant="destructive">
-          <AlertTitle>Unable to load {title.toLowerCase()}</AlertTitle>
+          <AlertTitle>Impossible de charger {title.toLowerCase()}</AlertTitle>
           <AlertDescription>{list.error.message}</AlertDescription>
         </Alert>
       )}
       <section className="flex min-w-0 flex-col gap-5" aria-label={title}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground tabular-nums">
-            {list.total.toLocaleString()} {title.toLowerCase()}
+            {list.total.toLocaleString("fr-FR")} {title.toLowerCase()}
           </p>
           <ResourceToolbar
             search={list.search}
@@ -85,15 +85,15 @@ export function ResourcePage({ section, user }: { section: string; user: User })
             <EmptyHeader>
               <EmptyTitle>
                 {list.search
-                  ? `No matching ${title.toLowerCase()}`
-                  : `No ${title.toLowerCase()} yet`}
+                  ? `Aucun résultat pour « ${list.search} »`
+                  : "Aucun élément enregistré"}
               </EmptyTitle>
               <EmptyDescription>
                 {list.search
-                  ? "Try another search on this page."
+                  ? "Essayez une autre recherche dans cette page."
                   : access.canCreate && fields[section]
-                    ? `Add a ${name} to get started.`
-                    : `There are no ${title.toLowerCase()} to display.`}
+                    ? `Utilisez le bouton « Ajouter ${name} » pour commencer.`
+                    : "Aucun élément à afficher."}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

@@ -4,217 +4,273 @@ import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 
-async function main() {
-  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-  const ready = await fetch("http://127.0.0.1:3000/api/backend/api/v1/auth/providers");
-  assert.equal(ready.ok, true, "The local H2 test harness must be ready before capturing");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const origin = process.env.CAPTURE_ORIGIN || "http://127.0.0.1:3000";
+const output = path.join(root, "screenshots");
+const captures = [];
+const failures = [];
+const browser = await chromium.launch({
+  executablePath:
+    process.env.PLAYWRIGHT_CHROME_PATH ||
+    (process.platform === "darwin"
+      ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+      : undefined),
+  headless: true,
+});
+
+async function request(page, resource, method = "GET", data) {
+  const headers = { Origin: origin };
+  if (method !== "GET") {
+    const response = await page.request.get(`${origin}/api/backend/api/v1/auth/csrf`);
+    const csrf = await response.json();
+    headers[csrf.headerName] = csrf.token;
+  }
+  const response = await page.request.fetch(`${origin}/api/backend/api/v1/${resource}`, {
+    method,
+    headers,
+    data,
+  });
+  assert.equal(response.ok(), true, `La requête ${resource} a échoué : ${response.status()}`);
+  return response.json();
+}
+
+async function capture(page, name) {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  assert.equal(await page.locator("html").getAttribute("lang"), "fr");
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+    false,
+    `Débordement horizontal : ${name}`,
+  );
+  const primary = await page
+    .locator("html")
+    .evaluate((element) => getComputedStyle(element).getPropertyValue("--primary").trim());
+  assert.equal(primary, "#164737", "Le thème vert doit être conservé.");
+  const text = await page.locator("body").innerText();
+  assert.doesNotMatch(
+    text,
+    /\b(Sign in|Sign out|Workspace|Charging stations|Charging sessions|No records|Save record|Connected|Offline|Administrator|Driver|Please wait|Close)\b/,
+    `Texte anglais : ${name}`,
+  );
+  assert.match(
+    await page.locator("body").evaluate((element) => getComputedStyle(element).fontFamily),
+    /Source Sans 3/,
+  );
+  await page.screenshot({ path: path.join(output, `${name}.png`), fullPage: true });
+  captures.push(name);
+  console.log(`Capture : ${name}`);
+}
+
+async function login(page, credentials, role) {
+  await page.goto(`${origin}/auth/login`);
+  await page.getByLabel("Espace client", { exact: true }).fill(credentials.tenant);
+  await page.getByLabel("Adresse électronique", { exact: true }).fill(credentials.roles[role]);
+  await page.getByLabel("Mot de passe", { exact: true }).fill(credentials.password);
+  await page.getByRole("button", { name: "Se connecter", exact: true }).click();
+  await page
+    .getByRole("heading", {
+      name: role === "DRIVER" ? "Sessions de recharge" : "Vue d’ensemble du réseau",
+      exact: true,
+    })
+    .waitFor();
+}
+
+async function workspacePage(page, route, heading) {
+  await page.goto(`${origin}/${route}`);
+  await page.getByRole("heading", { name: heading, exact: true }).waitFor();
+}
+
+try {
+  await fs.mkdir(output, { recursive: true });
+  const ready = await fetch(`${origin}/api/backend/api/v1/public/workspaces/options`);
+  assert.equal(ready.ok, true, "Le serveur local de test doit être disponible.");
   const credentials = JSON.parse(
     await fs.readFile(path.join(root, ".local/browser-credentials.json"), "utf8"),
   );
-  const output = path.join(root, "screenshots");
-  await fs.mkdir(output, { recursive: true });
-  const browser = await chromium.launch({
-    executablePath:
-      process.env.PLAYWRIGHT_CHROME_PATH ||
-      (process.platform === "darwin"
-        ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-        : undefined),
-    headless: true,
-  });
-  const failures = [];
-  const captures = [];
-
-  async function backendRequest(page, resource, method = "GET", data) {
-    const headers = { Origin: "http://127.0.0.1:3000" };
-
-    if (method !== "GET") {
-      const response = await page.request.get("http://127.0.0.1:3000/api/backend/api/v1/auth/csrf");
-      const csrf = await response.json();
-      headers[csrf.headerName] = csrf.token;
-    }
-
-    const response = await page.request.fetch(
-      `http://127.0.0.1:3000/api/backend/api/v1/${resource}`,
-      {
-        method,
-        headers,
-        data,
-      },
-    );
-    assert.equal(response.ok(), true, `Unexpected response for ${resource}`);
-    return response.json();
-  }
-
-  async function capture(page, name) {
-    await page.evaluate(async () => {
-      await document.fonts.ready;
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  for (const role of process.env.CAPTURE_ROLES?.split(",") || [
+    "ADMIN",
+    "OPERATOR",
+    "VIEWER",
+    "DRIVER",
+  ]) {
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 1000 },
+      locale: "fr-FR",
     });
-    await page.screenshot({
-      path: path.join(output, name + ".png"),
-      fullPage: true,
-    });
-    assert.equal(
-      await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth),
-      false,
-      name + " overflows",
-    );
-    captures.push(name);
-  }
+    const page = await context.newPage();
+    page.on("pageerror", (error) => failures.push(error.message));
+    await page.goto(`${origin}/auth/login`);
+    await page.locator("main[aria-busy=false]").waitFor();
+    if (role === "ADMIN") await capture(page, "01-connexion");
+    await login(page, credentials, role);
 
-  try {
-    for (const role of ["ADMIN", "OPERATOR", "VIEWER", "DRIVER"]) {
-      const context = await browser.newContext({
-        viewport: { width: 1512, height: 1050 },
-      });
-      const page = await context.newPage();
-      page.on("pageerror", (error) => failures.push(error.message));
-      page.on("console", (message) => {
-        if (message.type() === "error") {
-          failures.push(message.text());
-        }
-      });
-      await page.goto("http://127.0.0.1:3000/auth/login");
-
-      await page.locator("main[aria-busy=false]").waitFor({ timeout: 60000 });
-      if (role === "ADMIN") {
-        await capture(page, "Anonymous - Sign In");
-      }
-
-      await page.getByLabel("Workspace", { exact: true }).fill(credentials.tenant);
-      await page.getByLabel("Email address").fill(credentials.roles[role]);
-      await page.getByLabel("Password", { exact: true }).fill(credentials.password);
-      await page.getByRole("button", { name: "Sign in", exact: true }).click();
-      await page.waitForURL(role === "DRIVER" ? "**/transactions" : "http://127.0.0.1:3000/", {
-        timeout: 60000,
-      });
+    if (role === "ADMIN") {
+      await page.locator(".overview-metrics").waitFor();
+      await capture(page, "02-reseau-ordinateur");
+      await workspacePage(page, "stations", "Bornes de recharge");
+      await page.getByText("Paris · Atelier", { exact: true }).waitFor();
+      await capture(page, "03-bornes");
       await page
-        .getByRole("heading", {
-          name: role === "DRIVER" ? "Charging sessions" : "Your network, at a glance.",
-          exact: true,
-        })
-        .waitFor();
+        .getByRole("row")
+        .filter({ hasText: "Paris · Atelier" })
+        .getByRole("button", { name: "Consulter", exact: true })
+        .click();
+      await page.getByText("Commande OCPP 1.6", { exact: true }).waitFor();
+      await capture(page, "04-detail-borne");
+      await page.getByRole("button", { name: "Fermer", exact: true }).click();
+
+      const tokens = await request(page, "tokens");
+      const token = tokens.find((item) => item.uid === "TEST-DRIVER");
+      const expiry = new Date(Date.now() + 86400000).toISOString();
+      await request(page, "tokens", "POST", {
+        uid: token.uid,
+        userId: token.user_id,
+        enabled: true,
+        expiresAt: expiry,
+      });
+      await workspacePage(page, "tokens", "Badges et accès");
       await page
-        .locator("[data-slot=skeleton]")
-        .waitFor({ state: "detached", timeout: 30000 })
-        .catch(() => {});
+        .getByRole("row")
+        .filter({ hasText: "TEST-DRIVER" })
+        .getByRole("button", { name: "Modifier", exact: true })
+        .click();
+      assert.equal(
+        await page.getByLabel("Identifiant de l’utilisateur (facultatif)").inputValue(),
+        token.user_id,
+      );
+      assert.equal(
+        new Date(await page.getByLabel("Expiration (facultative)").inputValue()).valueOf(),
+        new Date(expiry).valueOf(),
+      );
+      await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
+      await page.getByRole("dialog").waitFor({ state: "hidden" });
+      const saved = (await request(page, "tokens")).find((item) => item.uid === token.uid);
+      assert.equal(saved.user_id, token.user_id);
+      assert.equal(new Date(saved.expires_at).valueOf(), new Date(expiry).valueOf());
 
-      if (role === "ADMIN") {
-        await capture(page, "Administrator - Overview");
-        await page.goto("http://127.0.0.1:3000/stations");
-        await page.getByText("Paris · Atelier", { exact: true }).waitFor();
-        await capture(page, "Administrator - Charging Stations");
-        const tokens = await backendRequest(page, "tokens");
-        const token = tokens.find((item) => item.uid === "TEST-DRIVER");
-        const expiry = new Date(Date.now() + 86400000).toISOString();
-        await backendRequest(page, "tokens", "POST", {
-          uid: token.uid,
-          userId: token.user_id,
-          enabled: true,
-          expiresAt: expiry,
-        });
-        await page.goto("http://127.0.0.1:3000/tokens");
-        const tokenRow = page.getByRole("row").filter({ hasText: "TEST-DRIVER" });
-        await tokenRow.getByRole("button", { name: "Edit", exact: true }).click();
-        assert.equal(await page.getByLabel("User ID (optional)").inputValue(), token.user_id);
-        const shownExpiry = await page.getByLabel("Expiry (optional)").inputValue();
-        assert.equal(new Date(shownExpiry).valueOf(), new Date(expiry).valueOf());
-        await page.getByRole("button", { name: "Save record", exact: true }).click();
-        await page.getByRole("dialog").waitFor({ state: "hidden" });
-        const savedTokens = await backendRequest(page, "tokens");
-        const savedToken = savedTokens.find((item) => item.uid === "TEST-DRIVER");
-        assert.equal(savedToken.user_id, token.user_id);
-        assert.equal(new Date(savedToken.expires_at).valueOf(), new Date(expiry).valueOf());
-
-        const previousAssets = await backendRequest(page, "records/assets");
-        for (const asset of previousAssets.items) {
-          if (asset.name === "Browser verification meter") {
-            await backendRequest(page, `records/assets/${asset.id}`, "DELETE");
-          }
-        }
-        await page.goto("http://127.0.0.1:3000/assets");
-        await page.getByText("Campus — solar array", { exact: true }).waitFor();
-        await page.getByRole("button", { name: "Add record", exact: true }).click();
-        await page.getByLabel("Asset name", { exact: true }).fill("Browser verification meter");
-        await page.getByLabel("Power (kW)", { exact: true }).fill("22");
-        await page.getByRole("button", { name: "Save record", exact: true }).click();
-        await page.getByRole("dialog").waitFor({ state: "hidden" });
-        await page.getByText("Browser verification meter", { exact: true }).waitFor();
-        await capture(page, "Administrator - Assets");
-        await page.goto("http://127.0.0.1:3000/users");
-        await page.getByText("Operator account", { exact: true }).waitFor();
-        await capture(page, "Administrator - People and Roles");
-        await page.setViewportSize({ width: 390, height: 844 });
-        await page.goto("http://127.0.0.1:3000/");
-        await page
-          .getByRole("heading", {
-            name: "Your network, at a glance.",
-            exact: true,
-          })
-          .waitFor();
-        await capture(page, "Administrator - Mobile Overview");
+      const previousAssets = await request(page, "records/assets");
+      for (const asset of previousAssets.items.filter(
+        (item) => item.name === "Compteur de vérification",
+      )) {
+        await request(page, `records/assets/${asset.id}`, "DELETE");
       }
-
-      if (role === "OPERATOR") {
-        await page.goto("http://127.0.0.1:3000/stations");
-        await page.getByText("Paris · Atelier", { exact: true }).waitFor();
-        assert.equal(
-          await page.getByRole("button", { name: "Add record", exact: true }).count(),
-          0,
-        );
-        await capture(page, "Operator - Charging Stations");
+      await workspacePage(page, "assets", "Équipements");
+      await page.getByRole("button", { name: "Ajouter un équipement", exact: true }).click();
+      await page
+        .getByLabel("Nom de l’équipement", { exact: true })
+        .fill("Compteur de vérification");
+      await page.getByLabel("Puissance (kW)", { exact: true }).fill("22");
+      await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
+      await page.getByRole("dialog").waitFor({ state: "hidden" });
+      await page.getByText("Compteur de vérification", { exact: true }).waitFor();
+      await capture(page, "05-equipements");
+      for (const [route, heading, file] of [
+        ["users", "Utilisateurs et rôles", "06-utilisateurs"],
+        ["pricing-definitions", "Tarifs", "07-tarifs"],
+        ["payments", "Paiements", "08-paiements"],
+        ["evses", "Points de charge publics", "09-points-publics"],
+      ]) {
+        await workspacePage(page, route, heading);
+        if (route === "payments")
+          await page.getByText("Prêt à encaisser", { exact: true }).waitFor();
+        else await page.getByRole("row").nth(1).waitFor();
+        await capture(page, file);
       }
-
-      if (role === "VIEWER" || role === "DRIVER") {
-        await page.goto("http://127.0.0.1:3000/transactions");
-        await page.getByRole("heading", { name: "Charging sessions", exact: true }).waitFor();
-        await page.getByRole("cell", { name: "CDT-1001", exact: true }).waitFor();
-        await capture(page, role === "VIEWER" ? "Viewer - Sessions" : "Driver - My Sessions");
-        assert.equal(
-          await page.getByRole("link", { name: "People & roles", exact: true }).count(),
-          0,
-        );
+      const evses = await request(page, "evses");
+      const qr = await page.request.get(`${origin}/api/backend/api/v1/evses/${evses[0].id}/qr`);
+      assert.equal(qr.ok(), true);
+      assert.match(await qr.text(), /^<svg/);
+      assert.equal(evses[0].portalUrl, `${origin}/charge/codetics/${credentials.publicEvse}`);
+      for (const [width, name] of [
+        [768, "10-reseau-tablette"],
+        [390, "11-reseau-mobile"],
+      ]) {
+        await page.setViewportSize({ width, height: 844 });
+        await workspacePage(page, "", "Vue d’ensemble du réseau");
+        await page.locator(".overview-metrics").waitFor();
+        await capture(page, name);
       }
-
-      await context.close();
-    }
-
-    assert.deepEqual(failures, []);
-    await fs.writeFile(
-      path.join(root, "docs/browser-results.json"),
-      JSON.stringify(
-        {
-          executedAt: new Date().toISOString(),
-          backend: "Spring Security + Spring MVC + JPA through a MockMvc stdio test transport",
-          database: "H2 in PostgreSQL compatibility mode",
-          fixtures: "Synthetic local data; OCPP transactions created through OcppService",
-          assertions: [
-            "Authenticated login for four roles",
-            "Role-based navigation and station creation controls",
-            "Asset creation through the dashboard form",
-            "Token edits preserve owner and expiry",
-            "Desktop and mobile overflow checks",
-            "No browser page errors",
-          ],
-          screenshots: captures,
-          pageErrors: failures,
+      await page
+        .getByRole("button", { name: "Afficher ou masquer la navigation", exact: true })
+        .click();
+      await page.getByRole("dialog").waitFor();
+      await capture(page, "12-navigation-mobile");
+      await page.keyboard.press("Escape");
+      await page.goto(evses[0].portalUrl);
+      await page.getByRole("button", { name: "Payer et démarrer", exact: true }).waitFor();
+      assert.equal(
+        await page.getByRole("button", { name: "Payer et démarrer", exact: true }).isEnabled(),
+        true,
+      );
+      await capture(page, "13-portail-recharge-mobile");
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await capture(page, "14-portail-recharge-ordinateur");
+      // Le prestataire de test est injecté uniquement dans le serveur local H2.
+      await page.route("https://checkout.stripe.com/test/**", (route) =>
+        route.fulfill({
+          contentType: "text/html",
+          body: "<html lang='fr'><body>Paiement de test</body></html>",
+        }),
+      );
+      await page.getByRole("button", { name: "Payer et démarrer", exact: true }).click();
+      await page.waitForURL("https://checkout.stripe.com/test/**");
+      const orderId = new URL(page.url()).pathname.split("/").at(-1);
+      const notification = await page.request.post(`${origin}/api/backend/api/v1/stripe/webhook`, {
+        headers: { "Stripe-Signature": "signature-de-test" },
+        data: {
+          id: `evt_${orderId}`,
+          account: "acct_demo",
+          type: "checkout.session.completed",
+          data: {
+            id: `cs_${orderId}`,
+            metadata: { charging_order_id: orderId },
+            payment_status: "paid",
+            amount_total: 2000,
+            currency: "eur",
+            payment_intent: `pi_${orderId}`,
+          },
         },
-        null,
-        2,
-      ),
-    );
-    console.log(
-      JSON.stringify({
-        screenshots: captures.length,
-        pageErrors: failures.length,
-      }),
-    );
-  } finally {
-    await browser.close();
+      });
+      assert.equal(notification.status(), 204);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(`${evses[0].portalUrl}/sessions/${orderId}`);
+      await page.getByRole("heading", { name: "Démarrage demandé", exact: true }).waitFor();
+      assert.equal(
+        await page.getByRole("button", { name: "Arrêter la recharge", exact: true }).count(),
+        0,
+      );
+      await capture(page, "18-session-paiement-mobile");
+    } else if (role === "OPERATOR") {
+      await workspacePage(page, "stations", "Bornes de recharge");
+      await page.getByText("Paris · Atelier", { exact: true }).waitFor();
+      assert.equal(
+        await page.getByRole("button", { name: "Ajouter une borne", exact: true }).count(),
+        0,
+      );
+      await capture(page, "15-exploitant-bornes");
+    } else {
+      await workspacePage(page, "transactions", "Sessions de recharge");
+      await page
+        .getByText("CDT-1001", { exact: true })
+        .waitFor({ timeout: 10000 })
+        .catch(async (error) => {
+          console.log((await page.locator("body").innerText()).slice(0, 4000));
+          console.log(JSON.stringify(await request(page, "transactions?offset=0&limit=50")));
+          throw error;
+        });
+      assert.equal(
+        await page.getByRole("link", { name: "Utilisateurs et rôles", exact: true }).count(),
+        0,
+      );
+      await capture(page, role === "VIEWER" ? "16-lecteur-sessions" : "17-conducteur-sessions");
+    }
+    await context.close();
   }
+  assert.deepEqual(failures, []);
+  console.log(JSON.stringify({ captures: captures.length, erreurs: failures.length }));
+} finally {
+  await browser.close();
 }
-
-main().catch((error) => {
-  console.error(error.message);
-  process.exitCode = 1;
-});

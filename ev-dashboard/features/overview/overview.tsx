@@ -20,11 +20,11 @@ export function Overview() {
     <>
       <div className="page-heading">
         <div>
-          <h1>Network overview</h1>
+          <h1>Vue d’ensemble du réseau</h1>
           <p>
             {data
-              ? `${data.stations.online} of ${data.stations.total} stations connected${offline ? ` · ${offline} offline` : ""}.`
-              : "Station connections, connector states and session activity."}
+              ? `${data.stations.online} bornes connectées sur ${data.stations.total}${offline ? ` · ${offline} hors ligne` : ""}.`
+              : "Connexion des bornes, état des connecteurs et activité des sessions."}
           </p>
         </div>
         <Button
@@ -33,12 +33,12 @@ export function Overview() {
           disabled={loading}
         >
           <IconRefresh data-icon="inline-start" />
-          Refresh
+          Actualiser
         </Button>
       </div>
       {error && (
         <Alert variant="destructive">
-          <AlertTitle>Unable to refresh the network overview</AlertTitle>
+          <AlertTitle>Impossible d’actualiser la vue du réseau</AlertTitle>
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       )}
@@ -50,25 +50,25 @@ export function Overview() {
           <div className="grid items-start gap-6 xl:grid-cols-[1.6fr_1fr]">
             <ConnectorAvailability connectors={data.connectors} />
             <section className="operational-panel" aria-labelledby="operations-heading">
-              <h2 id="operations-heading">Operations</h2>
+              <h2 id="operations-heading">Exploitation</h2>
               <Link className="operation-link" href="/stations">
                 <div>
-                  <strong>Charging stations</strong>
-                  <span>Inspect connectivity and send station commands.</span>
+                  <strong>Bornes de recharge</strong>
+                  <span>Consultez les connexions et commandez vos bornes à distance.</span>
                 </div>
                 <IconArrowUpRight aria-hidden="true" />
               </Link>
               <Link className="operation-link" href="/transactions">
                 <div>
-                  <strong>Charging sessions</strong>
-                  <span>Review start and stop times and measured energy.</span>
+                  <strong>Sessions de recharge</strong>
+                  <span>Retrouvez les horaires de recharge et l’énergie mesurée.</span>
                 </div>
                 <IconArrowUpRight aria-hidden="true" />
               </Link>
               <Link className="operation-link" href="/commands">
                 <div>
-                  <strong>Command activity</strong>
-                  <span>Check delivery, responses and timeouts.</span>
+                  <strong>Suivi des commandes</strong>
+                  <span>Suivez les envois, les réponses et les délais dépassés.</span>
                 </div>
                 <IconArrowUpRight aria-hidden="true" />
               </Link>

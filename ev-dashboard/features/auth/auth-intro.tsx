@@ -10,25 +10,27 @@ export function AuthIntro() {
       </Link>
       <div className="flex max-w-sm flex-col gap-6">
         <div>
-          <h1>Charging network supervision.</h1>
-          <p>Stations, charging sessions and remote operations in one workspace.</p>
+          <h1>Supervisez votre réseau de recharge.</h1>
+          <p>Vos bornes, vos sessions et vos commandes à distance dans un même espace.</p>
         </div>
         <dl className="flex flex-col gap-5 text-sm">
           <div>
-            <dt className="font-medium">Station operations</dt>
+            <dt className="font-medium">Gestion des bornes</dt>
             <dd className="mt-1 text-muted-foreground">
-              Connections, connector states and OCPP commands.
+              Connexions, état des connecteurs et commandes OCPP.
             </dd>
           </div>
           <div>
-            <dt className="font-medium">Session history</dt>
+            <dt className="font-medium">Historique des sessions</dt>
             <dd className="mt-1 text-muted-foreground">
-              Authorization, timestamps and measured energy.
+              Autorisations, horaires et énergie mesurée.
             </dd>
           </div>
           <div>
-            <dt className="font-medium">Your network</dt>
-            <dd className="mt-1 text-muted-foreground">Sites, people and charging access.</dd>
+            <dt className="font-medium">Votre réseau</dt>
+            <dd className="mt-1 text-muted-foreground">
+              Sites, utilisateurs et accès à la recharge.
+            </dd>
           </div>
         </dl>
       </div>

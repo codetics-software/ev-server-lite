@@ -14,24 +14,25 @@ import org.springframework.stereotype.Component
 class OAuthSignInHandler(
     private val accounts: AccountService,
     @param:Value("\${app.cookie-secure}") private val secure: Boolean,
-    @param:Value("\${app.public-url}") private val publicUrl: String
+    @param:Value("\${app.public-url}") private val publicUrl: String,
 ) : AuthenticationSuccessHandler {
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
         response: HttpServletResponse,
-        authentication: Authentication
+        authentication: Authentication,
     ) {
         try {
             val identity = authentication.principal as OidcUser
             val linkedUser = linkingAccount(request)
-            val user = accounts.oauth(
-                issuer = identity.issuer.toString(),
-                subject = requireNotNull(identity.subject),
-                email = identity.email,
-                name = identity.fullName,
-                verified = identity.claims["email_verified"]?.toString() == "true",
-                linkUser = linkedUser
-            )
+            val user =
+                accounts.oauth(
+                    issuer = identity.issuer.toString(),
+                    subject = requireNotNull(identity.subject),
+                    email = identity.email,
+                    name = identity.fullName,
+                    verified = identity.claims["email_verified"]?.toString() == "true",
+                    linkUser = linkedUser,
+                )
 
             request.getSession(false)?.invalidate()
             SecurityContextHolder.clearContext()
@@ -50,7 +51,7 @@ class OAuthSignInHandler(
         val tokenHash = session.getAttribute("LINK_TOKEN") as? String
 
         require(tokenHash != null && accounts.authenticateTokenHash(tokenHash)?.id == user) {
-            "The original account session is no longer valid"
+            "La session d’origine du compte n’est plus valide."
         }
 
         return user

@@ -1,6 +1,6 @@
 package fr.codetics.ev_server.ocpi
 
-import fr.codetics.ev_server.persistence.PartnerEntity
+import fr.codetics.ev_server.models.entities.PartnerEntity
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.time.Instant
@@ -24,7 +24,7 @@ fun ocpi(data: Any? = null, status: Int = 1000, message: String = "Success"): Ma
         "data" to data,
         "status_code" to status,
         "status_message" to message,
-        "timestamp" to Instant.now().toString()
+        "timestamp" to Instant.now().toString(),
     )
 }
 
@@ -33,12 +33,14 @@ fun ocpi(data: Any? = null, status: Int = 1000, message: String = "Success"): Ma
 class OcpiErrors {
     @ExceptionHandler(OcpiFault::class)
     fun fault(error: OcpiFault): ResponseEntity<Any> {
-        return ResponseEntity.status(error.http).body(ocpi(status = error.status, message = error.message))
+        return ResponseEntity.status(error.http)
+            .body(ocpi(status = error.status, message = error.message))
     }
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun invalid(): ResponseEntity<Any> {
-        return ResponseEntity.badRequest().body(ocpi(status = 2001, message = "Invalid OCPI parameters"))
+        return ResponseEntity.badRequest()
+            .body(ocpi(status = 2001, message = "Paramètres OCPI invalides."))
     }
 }
 
@@ -48,16 +50,20 @@ class OcpiController(
     private val transport: OcpiTransport,
     private val credentials: OcpiCredentials,
     private val catalog: OcpiCatalog,
-    @param:Value("\${app.ocpi.public-url}") private val publicUrl: String
+    @param:Value("\${app.ocpi.public-url}") private val publicUrl: String,
 ) {
-    private fun partner(role: String, request: HttpServletRequest, registered: Boolean = true): PartnerEntity {
+    private fun partner(
+        role: String,
+        request: HttpServletRequest,
+        registered: Boolean = true,
+    ): PartnerEntity {
         if (role !in setOf("cpo", "emsp")) {
-            throw OcpiFault(2001, "Unknown role", HttpStatus.NOT_FOUND)
+            throw OcpiFault(2001, "Rôle inconnu.", HttpStatus.NOT_FOUND)
         }
         val partner = transport.authenticate(request.getHeader("Authorization"), role)
 
         if (registered && !partner.registered) {
-            throw OcpiFault(2001, "Partner is not registered", HttpStatus.FORBIDDEN)
+            throw OcpiFault(2001, "Le partenaire n’est pas enregistré.", HttpStatus.FORBIDDEN)
         }
 
         return partner
@@ -76,9 +82,10 @@ class OcpiController(
     @GetMapping("/2.1.1", "/2.1.1/")
     fun endpoints(@PathVariable role: String, request: HttpServletRequest): Any {
         partner(role, request, false)
-        val endpoints = (catalog.modules + "credentials").sorted().map { module ->
-            mapOf("identifier" to module, "url" to "${base(role)}/2.1.1/$module/")
-        }
+        val endpoints =
+            (catalog.modules + "credentials").sorted().map { module ->
+                mapOf("identifier" to module, "url" to "${base(role)}/2.1.1/$module/")
+            }
 
         return ocpi(mapOf("version" to "2.1.1", "endpoints" to endpoints))
     }
@@ -86,12 +93,12 @@ class OcpiController(
     @RequestMapping(
         "/2.1.1/credentials",
         "/2.1.1/credentials/",
-        method = [RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE]
+        method = [RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE],
     )
     fun credentials(
         @PathVariable role: String,
         request: HttpServletRequest,
-        @RequestBody(required = false) body: JsonNode?
+        @RequestBody(required = false) body: JsonNode?,
     ): Any {
         val partner = partner(role, request, false)
         return credentials.exchange(partner, request.method, body)
@@ -101,7 +108,14 @@ class OcpiController(
         "/2.1.1/{module}",
         "/2.1.1/{module}/",
         "/2.1.1/{module}/{*objectPath}",
-        method = [RequestMethod.GET, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.POST, RequestMethod.DELETE]
+        method =
+            [
+                RequestMethod.GET,
+                RequestMethod.PUT,
+                RequestMethod.PATCH,
+                RequestMethod.POST,
+                RequestMethod.DELETE,
+            ],
     )
     fun objects(
         @PathVariable role: String,
@@ -109,7 +123,7 @@ class OcpiController(
         @PathVariable(required = false) objectPath: String?,
         request: HttpServletRequest,
         response: HttpServletResponse,
-        @RequestBody(required = false) body: JsonNode?
+        @RequestBody(required = false) body: JsonNode?,
     ): Any {
         val partner = partner(role, request)
         return catalog.handle(partner, module, objectPath.orEmpty(), request, response, body)

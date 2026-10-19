@@ -21,7 +21,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
       credentials: "same-origin",
     });
     if (!response.ok) {
-      throw new ApiError(response.status, "Unable to establish a secure session");
+      throw new ApiError(response.status, "Impossible d’établir une session sécurisée.");
     }
     const csrf = await response.json();
     headers.set(csrf.headerName, csrf.token);
@@ -38,8 +38,8 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
       response.status,
       problem?.detail ||
         (response.status === 403
-          ? "Your role does not allow this action."
-          : "The request could not be completed."),
+          ? "Votre rôle ne permet pas cette action."
+          : "La demande n’a pas pu aboutir."),
     );
   }
   return response.json();

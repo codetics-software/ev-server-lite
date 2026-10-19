@@ -33,7 +33,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-8" aria-busy={loading}>
         {error ? (
           <Alert variant="destructive">
-            <AlertTitle>Unable to open your workspace</AlertTitle>
+            <AlertTitle>Impossible d’ouvrir votre espace</AlertTitle>
             <AlertDescription>{error.message}</AlertDescription>
           </Alert>
         ) : (
@@ -56,10 +56,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           <header className="flex h-12 shrink-0 items-center justify-between gap-4 px-5 lg:px-7">
             <div className="flex min-w-0 items-center gap-3">
               <SidebarTrigger />
-              <span className="truncate text-sm">{current?.label ?? "Access restricted"}</span>
+              <span className="truncate text-sm">{current?.label ?? "Accès restreint"}</span>
             </div>
             <span className="hidden text-xs text-muted-foreground sm:block">
-              Codetics · EV operations
+              Codetics · Supervision de recharge
             </span>
           </header>
           <main className="workspace-canvas flex min-w-0 flex-1 flex-col gap-6">
@@ -67,8 +67,10 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               children
             ) : (
               <Alert>
-                <AlertTitle>Access restricted</AlertTitle>
-                <AlertDescription>Your role does not have access to this page.</AlertDescription>
+                <AlertTitle>Accès restreint</AlertTitle>
+                <AlertDescription>
+                  Votre rôle ne permet pas d’accéder à cette page.
+                </AlertDescription>
               </Alert>
             )}
           </main>

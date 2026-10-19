@@ -55,6 +55,10 @@ springdoc:
 app:
   public-url: ${APP_PUBLIC_URL:http://localhost:3000}
   cookie-secure: ${COOKIE_SECURE:true}
+  workspace-signup-enabled: ${WORKSPACE_SIGNUP_ENABLED:false}
+  stripe:
+    api-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
   signup-enabled: ${SIGNUP_ENABLED:false}
   public-tenant: ${PUBLIC_TENANT:}
   token-hours: ${SESSION_HOURS:8}
@@ -64,8 +68,8 @@ app:
   ocpi:
     public-url: ${OCPI_PUBLIC_URL:http://localhost:8080}
     country-code: ${OCPI_COUNTRY_CODE:FR}
-    party-id: ${OCPI_PARTY_ID:CDT}
+    party-id: ${OCPI_PARTY_ID:COD}
   bootstrap:
     email: ${BOOTSTRAP_EMAIL:}
     password: ${BOOTSTRAP_PASSWORD:}
-    tenant: ${BOOTSTRAP_TENANT:codetics}
+    tenant: ${BOOTSTRAP_TENANT:codetics_ev_server}

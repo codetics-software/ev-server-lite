@@ -8,13 +8,10 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 
-class ProviderRegistry(
-    val registrations: List<ClientRegistration>
-) : ClientRegistrationRepository, Iterable<ClientRegistration> {
+class ProviderRegistry(val registrations: List<ClientRegistration>) :
+    ClientRegistrationRepository, Iterable<ClientRegistration> {
     override fun findByRegistrationId(registrationId: String): ClientRegistration? {
-        return registrations.find { registration ->
-            registration.registrationId == registrationId
-        }
+        return registrations.find { registration -> registration.registrationId == registrationId }
     }
 
     override fun iterator(): Iterator<ClientRegistration> {
@@ -26,7 +23,7 @@ private data class ProviderEndpoints(
     val issuer: String,
     val authorization: String,
     val token: String,
-    val keys: String
+    val keys: String,
 )
 
 @Configuration(proxyBeanMethods = false)
@@ -34,33 +31,34 @@ class OAuthProviders {
     @Bean
     fun providers(environment: Environment): ProviderRegistry {
         val publicUrl = requireNotNull(environment.getProperty("app.public-url")).trimEnd('/')
-        val registrations = listOfNotNull(
-            buildProvider(
-                environment,
-                "google",
-                publicUrl,
-                listOf("openid", "email", "profile"),
-                ProviderEndpoints(
-                    issuer = "https://accounts.google.com",
-                    authorization = "https://accounts.google.com/o/oauth2/v2/auth",
-                    token = "https://oauth2.googleapis.com/token",
-                    keys = "https://www.googleapis.com/oauth2/v3/certs"
-                )
-            ),
-            microsoft(environment, publicUrl),
-            buildProvider(
-                environment,
-                "apple",
-                publicUrl,
-                listOf("openid", "email", "name"),
-                ProviderEndpoints(
-                    issuer = "https://appleid.apple.com",
-                    authorization = "https://appleid.apple.com/auth/authorize",
-                    token = "https://appleid.apple.com/auth/token",
-                    keys = "https://appleid.apple.com/auth/keys"
-                )
+        val registrations =
+            listOfNotNull(
+                buildProvider(
+                    environment,
+                    "google",
+                    publicUrl,
+                    listOf("openid", "email", "profile"),
+                    ProviderEndpoints(
+                        issuer = "https://accounts.google.com",
+                        authorization = "https://accounts.google.com/o/oauth2/v2/auth",
+                        token = "https://oauth2.googleapis.com/token",
+                        keys = "https://www.googleapis.com/oauth2/v3/certs",
+                    ),
+                ),
+                microsoft(environment, publicUrl),
+                buildProvider(
+                    environment,
+                    "apple",
+                    publicUrl,
+                    listOf("openid", "email", "name"),
+                    ProviderEndpoints(
+                        issuer = "https://appleid.apple.com",
+                        authorization = "https://appleid.apple.com/auth/authorize",
+                        token = "https://appleid.apple.com/auth/token",
+                        keys = "https://appleid.apple.com/auth/keys",
+                    ),
+                ),
             )
-        )
 
         return ProviderRegistry(registrations)
     }
@@ -72,11 +70,12 @@ class OAuthProviders {
             return null
         }
 
-        val tenant = requireNotNull(environment.getProperty("MICROSOFT_TENANT_ID")) {
-            "Set MICROSOFT_TENANT_ID to your Entra directory UUID"
-        }
+        val tenant =
+            requireNotNull(environment.getProperty("MICROSOFT_TENANT_ID")) {
+                "Renseignez l’identifiant UUID de votre annuaire Entra dans MICROSOFT_TENANT_ID."
+            }
         require(tenant.matches(Regex("[0-9a-fA-F-]{36}"))) {
-            "A specific Microsoft tenant is required"
+            "Un annuaire Microsoft précis est requis."
         }
 
         return buildProvider(
@@ -88,8 +87,8 @@ class OAuthProviders {
                 issuer = "https://login.microsoftonline.com/$tenant/v2.0",
                 authorization = "https://login.microsoftonline.com/$tenant/oauth2/v2.0/authorize",
                 token = "https://login.microsoftonline.com/$tenant/oauth2/v2.0/token",
-                keys = "https://login.microsoftonline.com/$tenant/discovery/v2.0/keys"
-            )
+                keys = "https://login.microsoftonline.com/$tenant/discovery/v2.0/keys",
+            ),
         )
     }
 
@@ -98,7 +97,7 @@ class OAuthProviders {
         id: String,
         publicUrl: String,
         scopes: List<String>,
-        endpoints: ProviderEndpoints
+        endpoints: ProviderEndpoints,
     ): ClientRegistration? {
         val clientId = environment.getProperty("${id.uppercase()}_CLIENT_ID")
 
@@ -106,15 +105,17 @@ class OAuthProviders {
             return null
         }
 
-        val secret = requireNotNull(environment.getProperty("${id.uppercase()}_CLIENT_SECRET")) {
-            "Missing $id client secret"
-        }
+        val secret =
+            requireNotNull(environment.getProperty("${id.uppercase()}_CLIENT_SECRET")) {
+                "Le secret client du fournisseur $id est manquant."
+            }
         require(secret.isNotBlank())
-        val authentication = if (id == "apple") {
-            ClientAuthenticationMethod.CLIENT_SECRET_POST
-        } else {
-            ClientAuthenticationMethod.CLIENT_SECRET_BASIC
-        }
+        val authentication =
+            if (id == "apple") {
+                ClientAuthenticationMethod.CLIENT_SECRET_POST
+            } else {
+                ClientAuthenticationMethod.CLIENT_SECRET_BASIC
+            }
 
         return ClientRegistration.withRegistrationId(id)
             .clientId(clientId)

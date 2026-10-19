@@ -14,7 +14,7 @@ export function ResourcePagination({ offset, count, total, loading, paginated, o
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
       <span className="text-xs text-muted-foreground tabular-nums">
-        {Math.min(offset + 1, total)}–{Math.min(offset + count, total)} of {total}
+        {Math.min(offset + 1, total)}–{Math.min(offset + count, total)} sur {total}
       </span>
       {paginated && total > PAGE_SIZE && (
         <div className="flex gap-2">
@@ -24,7 +24,7 @@ export function ResourcePagination({ offset, count, total, loading, paginated, o
             disabled={offset === 0 || loading}
             onClick={() => onChange(Math.max(0, offset - PAGE_SIZE))}
           >
-            Previous
+            Précédent
           </Button>
           <Button
             variant="outline"
@@ -32,7 +32,7 @@ export function ResourcePagination({ offset, count, total, loading, paginated, o
             disabled={offset + PAGE_SIZE >= total || loading}
             onClick={() => onChange(offset + PAGE_SIZE)}
           >
-            Next
+            Suivant
           </Button>
         </div>
       )}

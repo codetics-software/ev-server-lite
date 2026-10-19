@@ -1,10 +1,10 @@
 package fr.codetics.ev_server.ocpp
 
 import fr.codetics.ev_server.core.Database
-import fr.codetics.ev_server.persistence.CommandEntity
-import fr.codetics.ev_server.persistence.CommandRepository
-import fr.codetics.ev_server.persistence.StationKey
-import fr.codetics.ev_server.persistence.StationRepository
+import fr.codetics.ev_server.models.entities.CommandEntity
+import fr.codetics.ev_server.models.entities.StationKey
+import fr.codetics.ev_server.repositories.CommandRepository
+import fr.codetics.ev_server.repositories.StationRepository
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.domain.PageRequest
@@ -18,25 +18,27 @@ import tools.jackson.databind.JsonNode
 class OcppCommandQueue(
     private val db: Database,
     private val stations: StationRepository,
-    private val commands: CommandRepository
+    private val commands: CommandRepository,
 ) {
     fun complete(station: StationIdentity, frame: JsonNode) {
         val success = frame[0].intValue() == 3
-        val valid = if (success) {
-            frame.size() == 3 && frame[2].isObject
-        } else {
-            frame.size() == 5 && frame[2].isString && frame[3].isString && frame[4].isObject
-        }
+        val valid =
+            if (success) {
+                frame.size() == 3 && frame[2].isObject
+            } else {
+                frame.size() == 5 && frame[2].isString && frame[3].isString && frame[4].isObject
+            }
 
         if (!valid) {
-            throw OcppFault("FormationViolation", "Invalid response")
+            throw OcppFault("FormationViolation", "Réponse invalide.")
         }
 
-        val id = try {
-            UUID.fromString(frame[1].asText())
-        } catch (_: IllegalArgumentException) {
-            return
-        }
+        val id =
+            try {
+                UUID.fromString(frame[1].asText())
+            } catch (_: IllegalArgumentException) {
+                return
+            }
 
         db.atomic {
             val command = commands.findForUpdate(id, station.tenant, station.station)
@@ -65,21 +67,23 @@ class OcppCommandQueue(
             throw ResponseStatusException(HttpStatus.NOT_FOUND)
         }
 
-        val command = commands.save(
-            CommandEntity(
-                tenantId = tenant,
-                stationId = station,
-                action = action,
-                request = db.encode(payload)
+        val command =
+            commands.save(
+                CommandEntity(
+                    tenantId = tenant,
+                    stationId = station,
+                    action = action,
+                    request = db.encode(payload),
+                )
             )
-        )
 
         return command.id
     }
 
     fun expire() {
         db.atomic {
-            val expired = commands.findAllByStateInAndDeadlineBefore(listOf("QUEUED", "SENT"), Instant.now())
+            val expired =
+                commands.findAllByStateInAndDeadlineBefore(listOf("QUEUED", "SENT"), Instant.now())
 
             expired.forEach { command ->
                 val locked = commands.findForUpdate(command.id, command.tenantId, command.stationId)
@@ -97,20 +101,19 @@ class OcppCommandQueue(
 
     fun claim(station: StationIdentity): List<CommandEntity> {
         return db.atomic {
-            val pending = commands.findPending(
-                station.tenant,
-                station.station,
-                Instant.now(),
-                PageRequest.of(0, 10)
-            )
+            val pending =
+                commands.findPending(
+                    station.tenant,
+                    station.station,
+                    Instant.now(),
+                    PageRequest.of(0, 10),
+                )
 
-            pending.forEach { command ->
-                command.state = "SENT"
-            }
+            pending.forEach { command -> command.state = "SENT" }
             commands.saveAll(pending)
 
-            // Commit before transmission. A transport failure must not replay a
-            // non-idempotent command that the station may already have executed.
+            // Valider avant l’envoi : une erreur de transport ne doit pas rejouer
+            // une commande que la borne a peut-être déjà exécutée.
             pending
         }
     }

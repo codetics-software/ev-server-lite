@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { date } from "@/lib/format";
+import { date, display } from "@/lib/format";
 import type { ChargingSession } from "./session-types";
 
 export function SessionsTable({ sessions }: { sessions: ChargingSession[] }) {
@@ -16,12 +16,12 @@ export function SessionsTable({ sessions }: { sessions: ChargingSession[] }) {
       <TableHeader>
         <TableRow>
           <TableHead>Session</TableHead>
-          <TableHead>Station</TableHead>
-          <TableHead>State</TableHead>
-          <TableHead>Started</TableHead>
-          <TableHead>Stopped</TableHead>
-          <TableHead className="text-right">Energy · kWh</TableHead>
-          <TableHead>Authorization</TableHead>
+          <TableHead>Borne</TableHead>
+          <TableHead>État</TableHead>
+          <TableHead>Début</TableHead>
+          <TableHead>Fin</TableHead>
+          <TableHead className="text-right">Énergie · kWh</TableHead>
+          <TableHead>Autorisation</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -31,12 +31,12 @@ export function SessionsTable({ sessions }: { sessions: ChargingSession[] }) {
             <TableCell>
               <span className="block font-medium">{session.station_id}</span>
               <span className="text-xs text-muted-foreground">
-                Connector {session.connector_id}
+                Connecteur {session.connector_id}
               </span>
             </TableCell>
             <TableCell>
               <Badge variant={session.stopped_at ? "outline" : "secondary"}>
-                {session.stopped_at ? "Completed" : "Active"}
+                {session.stopped_at ? "Terminée" : "En cours"}
               </Badge>
             </TableCell>
             <TableCell className="text-muted-foreground">{date(session.started_at)}</TableCell>
@@ -44,12 +44,14 @@ export function SessionsTable({ sessions }: { sessions: ChargingSession[] }) {
             <TableCell className="text-right tabular-nums">
               {session.energy_kwh === null
                 ? "—"
-                : Number(session.energy_kwh).toLocaleString("en-GB", {
+                : Number(session.energy_kwh).toLocaleString("fr-FR", {
                     minimumFractionDigits: 3,
                     maximumFractionDigits: 3,
                   })}
             </TableCell>
-            <TableCell className="text-muted-foreground">{session.authorization_status}</TableCell>
+            <TableCell className="text-muted-foreground">
+              {display(session.authorization_status)}
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>

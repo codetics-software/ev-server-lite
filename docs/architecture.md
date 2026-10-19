@@ -1,49 +1,37 @@
-# EV Supervision Lite architecture
+# Architecture
 
-Built by Kevin Vavelin, Codetics. Product home: https://codetics.fr.
+Le serveur Kotlin possède les données, les autorisations et les états de recharge. Le tableau de bord Next.js communique avec son API par un mandataire côté serveur. Les fonctionnalités du tableau de bord sont regroupées dans `features/`, sans logique métier dans les fichiers de route.
 
-The Kotlin Spring Boot server owns PostgreSQL persistence, authorization, charging
-state, station communication and roaming. The Next.js dashboard uses the same API
-through a server-side proxy; credentials remain in HttpOnly cookies.
+## Séparation des responsabilités
 
-## Ownership and identity
+Les **contrôleurs** traduisent les requêtes HTTP. Les **services** appliquent les règles métier et les limites des espaces clients. Les **dépôts** interrogent la base. Les **modèles** distinguent les entités persistées des objets exposés par l’API. L’adaptateur Stripe et les échanges OCPP possèdent leurs propres dossiers.
 
-Every operational object belongs to one tenant. Tenant identity comes from an
-authenticated principal, never an editable request field. A company contains
-sites; a site contains site areas and stations. Station connector numbers are
-scoped to a station. An OCPP connector is not automatically an OCPI EVSE: explicit
-location/EVSE/connector mappings are required before publication.
+Les services applicatifs déduisent l’espace depuis le compte authentifié. Ils recherchent les objets avec cet identifiant ; un identifiant d’objet appartenant à un autre espace ne donne aucun accès. Les requêtes des conducteurs sont aussi limitées à leurs propres sessions.
 
-Tokens belong to a tenant and optionally to a user. A charging transaction belongs
-to a station and connector, and may reference a user, token and vehicle. A vehicle
-is always optional. Meter readings retain their original timestamp, unit, context,
-phase and signed values. Energy and financial amounts use decimal arithmetic.
+La connexion utilise l’identifiant permanent de l’espace. La création d’un espace produit un administrateur à vérifier par courriel. Aucun routage par domaine n’est nécessaire.
 
-Station connectivity, connector availability, authorization and transaction state
-are independent facts. Outbound commands have a correlation ID, deadline and
-persisted outcome. An Accepted command response does not prove that charging began.
+## États des bornes
 
-OCPI objects are scoped by partner, role, module and object path. Received objects
-are partner-owned copies; local objects are separately managed. CDRs are immutable.
-Historical transactions and imported documents must not be deleted through the
-generic configuration API.
+La connexion WebSocket de la borne, l’état d’un connecteur, une autorisation et une transaction sont des faits distincts. Les commandes possèdent un identifiant de corrélation, une échéance et un résultat persisté. Une commande acceptée ne constitue pas une preuve de démarrage.
 
-## Data migration
+Les messages OCPP reçus sont dédupliqués par espace, borne et identifiant de message. La réutilisation d’un identifiant avec un contenu différent est refusée. Les mesures conservent leurs horodatages et leurs échantillons d’origine.
 
-Mongo Extended JSON documents are archived in PostgreSQL with a collection,
-source ID, raw UTF-8 document text and SHA-256 fingerprint. A JSONB copy supports
-querying while the raw text preserves key ordering and number formatting that
-JSONB can normalize. Import is atomic and idempotent.
-Archival preserves fields; it does not establish application parity or populate
-the operational relational tables automatically. A verified collection-specific
-mapping and reconciliation is required before a production cutover.
+## Paiement public
 
-## Acceptance
+Un point de charge publié relie explicitement un espace, une borne, un connecteur et un tarif. Le QR code contient l’adresse de son portail. Le prix et le compte Stripe sont choisis par le serveur, jamais par le navigateur.
 
-[parity-inventory.json](parity-inventory.json) is the source-derived checklist.
-The findings and review scope are in [migration-audit.md](migration-audit.md).
-Pending means unverified;
-no component is considered equivalent merely because a route or table exists.
-Protocol claims are limited to tested versions and implemented actions. The full
-rewrite is accepted only after workflow, authorization, protocol, financial,
-integration, data-reconciliation and browser evidence closes this checklist.
+Une demande de paiement contient un crédit et une clé de reprise. Le serveur conserve un instantané du tarif, une empreinte du secret de suivi et une copie chiffrée de ce secret pour reprendre la création du paiement après une interruption. L’accès public à la session exige ce secret dans un en-tête ; il n’accorde aucun accès au tableau de bord.
+
+La notification Stripe signée doit correspondre au compte connecté, à la session Checkout, à la devise et au montant attendus. Les notifications sont dédupliquées. Après paiement, un badge temporaire limité à cette borne et à ce connecteur sert à demander le démarrage. Le démarrage réel consomme cette autorisation.
+
+Le suivi de consommation et de durée demande l’arrêt à l’épuisement du crédit. Le relevé final déclenche le calcul et le remboursement du solde. Les opérations Stripe sont reprises avec des clés d’idempotence ; le suivi ne prétend jamais qu’une borne est arrêtée avant sa confirmation.
+
+## Persistance
+
+PostgreSQL est la base de production. Les migrations Flyway créent les tables et les contraintes ; Hibernate valide le schéma. Les montants et les mesures utilisent des nombres décimaux. Les clés d’espace restent présentes dans les relations métier.
+
+Les historiques de session et les documents importés sont conservés. L’import d’archives Mongo Extended JSON préserve le document UTF-8 d’origine et son empreinte SHA-256. Il ne transforme pas automatiquement une archive en données opérationnelles : cette reprise exige un mappage adapté aux collections d’origine.
+
+## Vérification
+
+Le profil H2 sert aux tests locaux des dépôts, des contrôleurs et des échanges de session. Le paiement y utilise un adaptateur de test. Les captures sont produites depuis l’application réelle avec ce serveur local de test. PostgreSQL, les paiements Stripe réels et les modèles de bornes déployés doivent également être essayés dans l’environnement cible.

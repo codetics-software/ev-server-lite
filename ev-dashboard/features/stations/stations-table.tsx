@@ -22,10 +22,10 @@ export function StationsTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Station</TableHead>
-          <TableHead>Connection</TableHead>
-          <TableHead>Manufacturer</TableHead>
-          <TableHead>Last contact</TableHead>
+          <TableHead>Borne</TableHead>
+          <TableHead>Connexion</TableHead>
+          <TableHead>Fabricant</TableHead>
+          <TableHead>Dernier contact</TableHead>
           <TableHead>
             <span className="sr-only">Actions</span>
           </TableHead>
@@ -40,7 +40,7 @@ export function StationsTable({
             </TableCell>
             <TableCell>
               <Badge variant={station.connected ? "secondary" : "outline"}>
-                {station.connected ? "Connected" : "Offline"}
+                {station.connected ? "Connectée" : "Hors ligne"}
               </Badge>
             </TableCell>
             <TableCell>
@@ -50,7 +50,7 @@ export function StationsTable({
             <TableCell className="text-muted-foreground">{date(station.last_seen)}</TableCell>
             <TableCell className="text-right">
               <Button variant="ghost" size="sm" onClick={() => onSelect(station)}>
-                View
+                Consulter
               </Button>
             </TableCell>
           </TableRow>

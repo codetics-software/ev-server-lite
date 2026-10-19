@@ -31,7 +31,7 @@ export function StationDetail({ station, user }: { station: string; user: User }
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="secondary">{data?.connected ? "Connected" : "Disconnected"}</Badge>
+        <Badge variant="secondary">{data?.connected ? "Connectée" : "Déconnectée"}</Badge>
         <span className="text-sm text-muted-foreground">
           {display(data?.vendor)} · {display(data?.model)}
         </span>

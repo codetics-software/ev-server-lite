@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { type Row } from "@/lib/api";
 
+import { valueLabel } from "@/lib/labels";
 import { inputValue } from "../resource-format";
 import type { FormField } from "../types";
 
@@ -47,8 +48,8 @@ export function ResourceField({
           <SelectContent>
             <SelectGroup>
               {field.options.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
+                <SelectItem key={valueLabel(option)} value={valueLabel(option)}>
+                  {valueLabel(option)}
                 </SelectItem>
               ))}
             </SelectGroup>

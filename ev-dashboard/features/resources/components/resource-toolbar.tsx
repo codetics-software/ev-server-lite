@@ -23,8 +23,8 @@ export function ResourceToolbar({
     <div className="flex flex-wrap items-center gap-2">
       <InputGroup className="w-full sm:w-64">
         <InputGroupInput
-          aria-label="Search this page"
-          placeholder="Search this page…"
+          aria-label="Rechercher dans cette page"
+          placeholder="Rechercher dans cette page…"
           value={search}
           onChange={(event) => onSearch(event.target.value)}
         />
@@ -35,7 +35,7 @@ export function ResourceToolbar({
       <Button
         variant="outline"
         size="icon"
-        aria-label="Refresh"
+        aria-label="Actualiser"
         onClick={onRefresh}
         disabled={loading}
       >
@@ -43,7 +43,7 @@ export function ResourceToolbar({
       </Button>
       <Button variant="outline" onClick={onExport} disabled={exportDisabled}>
         <IconDownload data-icon="inline-start" />
-        Export page
+        Exporter cette page
       </Button>
     </div>
   );

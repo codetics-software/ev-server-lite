@@ -8,8 +8,5 @@ import org.springframework.test.context.ActiveProfiles
 @ActiveProfiles("local")
 class EvServerApplicationTests {
 
-	@Test
-	fun contextLoads() {
-	}
-
+    @Test fun contextLoads() {}
 }

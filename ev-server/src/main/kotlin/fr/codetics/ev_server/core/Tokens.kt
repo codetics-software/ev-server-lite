@@ -6,9 +6,7 @@ import java.util.Base64
 
 fun sha256(value: String): String {
     val digest = MessageDigest.getInstance("SHA-256").digest(value.toByteArray())
-    return digest.joinToString("") { byte ->
-        "%02x".format(byte)
-    }
+    return digest.joinToString("") { byte -> "%02x".format(byte) }
 }
 
 fun randomToken(): String {

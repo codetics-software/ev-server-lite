@@ -21,15 +21,16 @@ import { useState, type FormEvent } from "react";
 import { AuthIntro } from "./auth-intro";
 
 const titles: Record<string, string> = {
-  login: "Sign in",
-  register: "Create your account.",
-  "forgot-password": "Reset your access.",
-  "reset-password": "Choose a new password.",
-  "verify-email": "Verify your email.",
+  login: "Se connecter",
+  register: "Créer votre compte",
+  "forgot-password": "Rétablir votre accès",
+  "reset-password": "Choisir un nouveau mot de passe",
+  "verify-email": "Vérifier votre adresse électronique",
 };
 
 export function AuthScreen({ action }: { action: string }) {
   const router = useRouter();
+  const { data: options } = useApi<{ registrationAvailable: boolean }>("public/workspaces/options");
   const { data: providers, loading: providersLoading } =
     useApi<{ id: string; name: string; url: string }[]>("auth/providers");
   const [error, setError] = useState("");
@@ -71,12 +72,12 @@ export function AuthScreen({ action }: { action: string }) {
       } else {
         setMessage(
           action === "register" || action === "forgot-password"
-            ? "If your account is eligible, an email with the next steps will arrive shortly."
-            : "Your account has been updated. You can now sign in.",
+            ? "Si votre compte est éligible, vous recevrez un courriel avec les prochaines étapes."
+            : "Votre compte a été mis à jour. Vous pouvez vous connecter.",
         );
       }
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Unable to complete this request");
+      setError(failure instanceof Error ? failure.message : "Impossible de traiter cette demande.");
     } finally {
       setPending(false);
     }
@@ -90,12 +91,12 @@ export function AuthScreen({ action }: { action: string }) {
           <CardHeader>
             <CardDescription>Codetics Supervision</CardDescription>
             <CardTitle className="text-2xl">{titles[action]}</CardTitle>
-            <CardDescription>Enter your workspace and account credentials.</CardDescription>
+            <CardDescription>Renseignez votre espace client et vos identifiants.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             {message ? (
               <Alert>
-                <AlertTitle>Request completed</AlertTitle>
+                <AlertTitle>Demande traitée</AlertTitle>
                 <AlertDescription>{message}</AlertDescription>
               </Alert>
             ) : (
@@ -103,31 +104,31 @@ export function AuthScreen({ action }: { action: string }) {
                 <FieldGroup>
                   {["login", "forgot-password"].includes(action) && (
                     <Field>
-                      <FieldLabel htmlFor="tenant">Workspace</FieldLabel>
+                      <FieldLabel htmlFor="tenant">Espace client</FieldLabel>
                       <Input
                         id="tenant"
                         name="tenant"
                         autoComplete="organization"
-                        placeholder="Your workspace identifier"
+                        placeholder="Identifiant de votre espace"
                         required
                       />
                     </Field>
                   )}
                   {action === "register" && (
                     <Field>
-                      <FieldLabel htmlFor="name">Full name</FieldLabel>
+                      <FieldLabel htmlFor="name">Nom complet</FieldLabel>
                       <Input id="name" name="name" autoComplete="name" required />
                     </Field>
                   )}
                   {hasEmail && (
                     <Field>
-                      <FieldLabel htmlFor="email">Email address</FieldLabel>
+                      <FieldLabel htmlFor="email">Adresse électronique</FieldLabel>
                       <Input
                         id="email"
                         name="email"
                         type="email"
                         autoComplete="username"
-                        placeholder="you@company.com"
+                        placeholder="vous@entreprise.fr"
                         required
                         maxLength={320}
                       />
@@ -135,7 +136,7 @@ export function AuthScreen({ action }: { action: string }) {
                   )}
                   {hasPassword && (
                     <Field>
-                      <FieldLabel htmlFor="password">Password</FieldLabel>
+                      <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
                       <Input
                         id="password"
                         name="password"
@@ -154,12 +155,12 @@ export function AuthScreen({ action }: { action: string }) {
                   )}
                   <Button type="submit" className="w-full" disabled={pending}>
                     {pending
-                      ? "Please wait…"
+                      ? "Veuillez patienter…"
                       : action === "login"
-                        ? "Sign in"
+                        ? "Se connecter"
                         : action === "verify-email"
-                          ? "Verify email"
-                          : "Continue"}
+                          ? "Vérifier l’adresse"
+                          : "Continuer"}
                   </Button>
                 </FieldGroup>
               </form>
@@ -169,7 +170,7 @@ export function AuthScreen({ action }: { action: string }) {
                 href="/auth/forgot-password"
                 className="text-center text-sm text-muted-foreground hover:text-foreground"
               >
-                Forgot your password?
+                Mot de passe oublié ?
               </Link>
             )}
             {action === "login" && Boolean(providers?.length) && (
@@ -183,7 +184,7 @@ export function AuthScreen({ action }: { action: string }) {
                       variant="outline"
                       render={<a href={provider.url} />}
                     >
-                      Continue with {provider.name}
+                      Continuer avec {provider.name}
                     </Button>
                   ))}
                 </div>
@@ -191,10 +192,13 @@ export function AuthScreen({ action }: { action: string }) {
             )}
           </CardContent>
           <CardFooter className="flex-col justify-center gap-3 text-xs text-muted-foreground">
+            {action === "login" && options?.registrationAvailable && (
+              <Link href="/auth/create-workspace">Créer un espace client</Link>
+            )}
             {action === "login" ? (
-              "Access is managed by your workspace administrator."
+              "Votre administrateur gère l’accès à cet espace."
             ) : (
-              <Link href="/auth/login">Return to sign in</Link>
+              <Link href="/auth/login">Retour à la connexion</Link>
             )}
             <span>
               Kevin Vavelin, <a href="https://codetics.fr">Codetics</a>

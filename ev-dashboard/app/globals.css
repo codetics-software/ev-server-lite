@@ -75,14 +75,14 @@
 }
 
 :root {
-  --background: oklch(0.977 0.003 255);
+  --background: #f6f8f7;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.488 0.243 264.376);
-  --primary-foreground: oklch(0.97 0.014 254.604);
+  --primary: #164737;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0 0);
@@ -99,13 +99,13 @@
   --chart-4: oklch(0.527 0.154 150.069);
   --chart-5: oklch(0.448 0.119 151.328);
   --radius: 0.625rem;
-  --sidebar: var(--background);
-  --sidebar-foreground: var(--foreground);
+  --sidebar: #121a17;
+  --sidebar-foreground: #dee7e2;
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.936 0.004 165);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: var(--border);
+  --sidebar-accent: #212f29;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2b3b33;
   --sidebar-ring: oklch(0.708 0 0);
 }
 
@@ -156,7 +156,7 @@
 }
 
 @layer components {
-  /* The shared frame stays in the layout; each feature owns only its content. */
+  /* Le cadre est partagé ; chaque fonctionnalité possède son contenu. */
   .workspace-canvas {
     margin: 0 8px 0 0;
     padding: 28px;
@@ -266,8 +266,9 @@
     justify-content: space-between;
     gap: 48px;
     padding: 48px;
-    background: var(--background);
-    border-right: 1px solid var(--border);
+    background: var(--sidebar);
+    color: var(--sidebar-foreground);
+    border-right: 1px solid var(--sidebar-border);
   }
   .auth-intro h1 {
     max-width: 340px;
@@ -276,9 +277,12 @@
     line-height: 1.15;
     letter-spacing: -0.025em;
   }
+  .auth-intro .text-muted-foreground {
+    color: #a1a9a5;
+  }
   .auth-intro p {
     margin-top: 16px;
-    color: var(--muted-foreground);
+    color: #a1a9a5;
     font-size: 16px;
     line-height: 1.5;
   }

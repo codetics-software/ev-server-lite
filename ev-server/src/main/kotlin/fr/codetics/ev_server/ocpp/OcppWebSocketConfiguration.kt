@@ -1,8 +1,8 @@
 package fr.codetics.ev_server.ocpp
 
-import fr.codetics.ev_server.persistence.StationKey
-import fr.codetics.ev_server.persistence.StationRepository
-import fr.codetics.ev_server.persistence.TenantRepository
+import fr.codetics.ev_server.models.entities.StationKey
+import fr.codetics.ev_server.repositories.StationRepository
+import fr.codetics.ev_server.repositories.TenantRepository
 import fr.codetics.ev_server.security.AccountService
 import java.util.Base64
 import org.springframework.context.annotation.Configuration
@@ -23,10 +23,11 @@ class OcppWebSocketConfiguration(
     private val stations: StationRepository,
     private val tenants: TenantRepository,
     private val passwords: PasswordEncoder,
-    private val accounts: AccountService
+    private val accounts: AccountService,
 ) : WebSocketConfigurer {
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        registry.addHandler(gateway, "/ocpp/{tenant}/{station}")
+        registry
+            .addHandler(gateway, "/ocpp/{tenant}/{station}")
             .addInterceptors(StationHandshake(stations, tenants, passwords, accounts))
     }
 }
@@ -35,19 +36,20 @@ private class StationHandshake(
     private val stations: StationRepository,
     private val tenants: TenantRepository,
     private val passwords: PasswordEncoder,
-    private val accounts: AccountService
+    private val accounts: AccountService,
 ) : HandshakeInterceptor {
     override fun beforeHandshake(
         request: ServerHttpRequest,
         response: ServerHttpResponse,
         handler: WebSocketHandler,
-        attributes: MutableMap<String, Any>
+        attributes: MutableMap<String, Any>,
     ): Boolean {
         try {
             val path = request.uri.path.split('/').filter(String::isNotBlank)
-            val protocols = request.headers["Sec-WebSocket-Protocol"].orEmpty().flatMap { header ->
-                header.split(',').map(String::trim)
-            }
+            val protocols =
+                request.headers["Sec-WebSocket-Protocol"].orEmpty().flatMap { header ->
+                    header.split(',').map(String::trim)
+                }
             require(path.size == 3 && "ocpp1.6" in protocols)
 
             val slug = path[1]
@@ -62,10 +64,15 @@ private class StationHandshake(
             val credentials = String(Base64.getDecoder().decode(encoded)).split(':', limit = 2)
             require(credentials.size == 2 && credentials[0] == station)
 
-            val tenant = tenants.findBySlugAndActiveTrue(slug)
-                ?: throw IllegalArgumentException("Unknown tenant")
+            val tenant =
+                tenants.findBySlugAndActiveTrue(slug)
+                    ?: throw IllegalArgumentException("Espace client inconnu.")
             val device = stations.findById(StationKey(tenant.id, station)).orElse(null)
-            require(device != null && device.enabled && passwords.matches(credentials[1], device.secretHash))
+            require(
+                device != null &&
+                    device.enabled &&
+                    passwords.matches(credentials[1], device.secretHash)
+            )
 
             attributes["station"] = StationIdentity(tenant.id, station)
             return true
@@ -79,8 +86,8 @@ private class StationHandshake(
         request: ServerHttpRequest,
         response: ServerHttpResponse,
         handler: WebSocketHandler,
-        exception: Exception?
+        exception: Exception?,
     ) {
-        // Authentication is completed before the WebSocket is accepted.
+        // L’authentification précède l’acceptation de la connexion WebSocket.
     }
 }

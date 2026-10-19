@@ -1,11 +1,11 @@
 package fr.codetics.ev_server.ocpi
 
 import fr.codetics.ev_server.core.Database
-import fr.codetics.ev_server.persistence.OcpiObjectEntity
-import fr.codetics.ev_server.persistence.OcpiObjectKey
-import fr.codetics.ev_server.persistence.OcpiObjectRepository
-import fr.codetics.ev_server.persistence.PartnerEntity
-import fr.codetics.ev_server.persistence.PartnerRepository
+import fr.codetics.ev_server.models.entities.OcpiObjectEntity
+import fr.codetics.ev_server.models.entities.OcpiObjectKey
+import fr.codetics.ev_server.models.entities.PartnerEntity
+import fr.codetics.ev_server.repositories.OcpiObjectRepository
+import fr.codetics.ev_server.repositories.PartnerRepository
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.time.Instant
@@ -23,7 +23,7 @@ class OcpiCatalog(
     private val db: Database,
     private val objects: OcpiObjectRepository,
     private val partners: PartnerRepository,
-    @param:Value("\${app.ocpi.public-url}") private val publicUrl: String
+    @param:Value("\${app.ocpi.public-url}") private val publicUrl: String,
 ) {
     val modules = setOf("locations", "sessions", "cdrs", "tariffs", "tokens")
 
@@ -33,23 +33,28 @@ class OcpiCatalog(
         objectPath: String,
         request: HttpServletRequest,
         response: HttpServletResponse,
-        body: JsonNode?
+        body: JsonNode?,
     ): Any {
         if (module !in modules) {
-            throw OcpiFault(2001, "Unsupported module", HttpStatus.NOT_FOUND)
+            throw OcpiFault(2001, "Module non pris en charge.", HttpStatus.NOT_FOUND)
         }
 
         val path = objectPath.trim('/')
         val parts = path.split('/').filter(String::isNotBlank)
         require(parts.all { part -> part.length <= 64 && part.matches(Regex("[A-Za-z0-9_.:*-]+")) })
-        val sender = (partner.localRole == "cpo" && module != "tokens") ||
-            (partner.localRole == "emsp" && module == "tokens")
+        val sender =
+            (partner.localRole == "cpo" && module != "tokens") ||
+                (partner.localRole == "emsp" && module == "tokens")
         val direction = if (sender) "SENDER" else "RECEIVER"
 
         if (request.method == "GET") {
             if (parts.isEmpty()) {
                 if (!sender) {
-                    throw OcpiFault(2001, "Object ID required", HttpStatus.METHOD_NOT_ALLOWED)
+                    throw OcpiFault(
+                        2001,
+                        "L’identifiant de l’objet est requis.",
+                        HttpStatus.METHOD_NOT_ALLOWED,
+                    )
                 }
                 return list(partner, module, direction, request, response)
             }
@@ -58,15 +63,22 @@ class OcpiCatalog(
                 verifyOwner(partner, parts)
             }
 
-            val rootPath = if (sender || module == "cdrs") parts.first() else parts.take(3).joinToString("/")
-            val root = get(partner, module, direction, rootPath)
-                ?: throw OcpiFault(2003, "Object not found", HttpStatus.NOT_FOUND)
-            val children = if (module == "locations") parts.drop(if (sender) 1 else 3) else emptyList()
+            val rootPath =
+                if (sender || module == "cdrs") parts.first() else parts.take(3).joinToString("/")
+            val root =
+                get(partner, module, direction, rootPath)
+                    ?: throw OcpiFault(2003, "Objet introuvable.", HttpStatus.NOT_FOUND)
+            val children =
+                if (module == "locations") parts.drop(if (sender) 1 else 3) else emptyList()
             return ocpi(nested(root, children))
         }
 
         if (sender) {
-            throw OcpiFault(2001, "Sender objects are read only on this interface", HttpStatus.METHOD_NOT_ALLOWED)
+            throw OcpiFault(
+                2001,
+                "Les objets reçus sont accessibles en lecture seule sur cette interface.",
+                HttpStatus.METHOD_NOT_ALLOWED,
+            )
         }
 
         if (module == "cdrs") {
@@ -77,14 +89,18 @@ class OcpiCatalog(
 
         if (request.method == "DELETE") {
             if (module != "tariffs") {
-                throw OcpiFault(2001, "Deletion is not supported by this module", HttpStatus.METHOD_NOT_ALLOWED)
+                throw OcpiFault(
+                    2001,
+                    "Ce module ne prend pas en charge la suppression.",
+                    HttpStatus.METHOD_NOT_ALLOWED,
+                )
             }
             objects.deleteById(key(partner, module, direction, path))
             return ocpi()
         }
 
         if (request.method !in setOf("PUT", "PATCH")) {
-            throw OcpiFault(2001, "Unsupported method", HttpStatus.METHOD_NOT_ALLOWED)
+            throw OcpiFault(2001, "Méthode non prise en charge.", HttpStatus.METHOD_NOT_ALLOWED)
         }
 
         val input = requireNotNull(body)
@@ -96,8 +112,15 @@ class OcpiCatalog(
             partners.findForUpdate(partner.id)
             val previous = get(partner, module, direction, rootPath)
 
-            if (previous != null && Instant.parse(previous.path("last_updated").asText()).isAfter(updatedAt)) {
-                throw OcpiFault(2001, "Update is older than stored object", HttpStatus.CONFLICT)
+            if (
+                previous != null &&
+                    Instant.parse(previous.path("last_updated").asText()).isAfter(updatedAt)
+            ) {
+                throw OcpiFault(
+                    2001,
+                    "La mise à jour est antérieure à l’objet enregistré.",
+                    HttpStatus.CONFLICT,
+                )
             }
 
             val updated = replaceOrPatch(module, parts, request.method, previous, input)
@@ -105,7 +128,7 @@ class OcpiCatalog(
                 OcpiObjectEntity(
                     key = key(partner, module, direction, rootPath),
                     data = db.encode(updated),
-                    lastUpdated = updatedAt
+                    lastUpdated = updatedAt,
                 )
             )
             ocpi()
@@ -117,35 +140,46 @@ class OcpiCatalog(
         module: String,
         direction: String,
         request: HttpServletRequest,
-        response: HttpServletResponse
+        response: HttpServletResponse,
     ): Any {
         val offset = request.getParameter("offset")?.toInt() ?: 0
         val limit = request.getParameter("limit")?.toInt() ?: 50
         require(offset >= 0 && limit in 1..500)
         val from = request.getParameter("date_from")?.let(Instant::parse) ?: Instant.EPOCH
-        val to = request.getParameter("date_to")?.let(Instant::parse) ?: Instant.parse("9999-01-01T00:00:00Z")
+        val to =
+            request.getParameter("date_to")?.let(Instant::parse)
+                ?: Instant.parse("9999-01-01T00:00:00Z")
         require(!from.isAfter(to))
 
-        val specification = Specification<OcpiObjectEntity> { root, _, criteria ->
-            val identity = root.get<OcpiObjectKey>("key")
-            criteria.and(
-                criteria.equal(identity.get<java.util.UUID>("tenantId"), partner.tenantId),
-                criteria.equal(identity.get<java.util.UUID>("partnerId"), partner.id),
-                criteria.equal(identity.get<String>("module"), module),
-                criteria.equal(identity.get<String>("direction"), direction),
-                criteria.greaterThanOrEqualTo(root.get("lastUpdated"), from),
-                criteria.lessThan(root.get("lastUpdated"), to)
-            )
-        }
-        // Fetch an extra partial page for arbitrary OCPI offsets; OCPI does not
-        // require its offset to be a multiple of the negotiated page size.
+        val specification =
+            Specification<OcpiObjectEntity> { root, _, criteria ->
+                val identity = root.get<OcpiObjectKey>("key")
+                criteria.and(
+                    criteria.equal(identity.get<java.util.UUID>("tenantId"), partner.tenantId),
+                    criteria.equal(identity.get<java.util.UUID>("partnerId"), partner.id),
+                    criteria.equal(identity.get<String>("module"), module),
+                    criteria.equal(identity.get<String>("direction"), direction),
+                    criteria.greaterThanOrEqualTo(root.get("lastUpdated"), from),
+                    criteria.lessThan(root.get("lastUpdated"), to),
+                )
+            }
+        // Les décalages OCPI ne sont pas nécessairement multiples de la taille
+        // de page : lire aussi la page partielle supplémentaire.
         val firstPage = offset / limit
         val skip = offset % limit
-        val first = objects.findAll(specification, PageRequest.of(firstPage, limit, Sort.by("key.objectPath")))
+        val first =
+            objects.findAll(
+                specification,
+                PageRequest.of(firstPage, limit, Sort.by("key.objectPath")),
+            )
         val rows = first.content.drop(skip).toMutableList()
 
         if (skip > 0 && first.hasNext()) {
-            val second = objects.findAll(specification, PageRequest.of(firstPage + 1, limit, Sort.by("key.objectPath")))
+            val second =
+                objects.findAll(
+                    specification,
+                    PageRequest.of(firstPage + 1, limit, Sort.by("key.objectPath")),
+                )
             rows.addAll(second.content.take(skip))
         }
 
@@ -153,17 +187,25 @@ class OcpiCatalog(
         response.setHeader("X-Limit", limit.toString())
 
         if (offset + rows.size < first.totalElements) {
-            val url = "${base(partner)}/$module/?offset=${offset + limit}&limit=$limit&date_from=$from&date_to=$to"
+            val url =
+                "${base(partner)}/$module/?offset=${offset + limit}&limit=$limit&date_from=$from&date_to=$to"
             response.setHeader("Link", "<$url>; rel=\"next\"")
         }
 
         return ocpi(rows.map { row -> db.decode(row.data) })
     }
 
-    private fun replaceOrPatch(module: String, parts: List<String>, method: String, previous: JsonNode?, input: JsonNode): JsonNode {
+    private fun replaceOrPatch(
+        module: String,
+        parts: List<String>,
+        method: String,
+        previous: JsonNode?,
+        input: JsonNode,
+    ): JsonNode {
         if (module == "locations" && parts.size > 3) {
-            val root = previous?.deepCopy() as? ObjectNode
-                ?: throw OcpiFault(2003, "Parent location is unknown", HttpStatus.NOT_FOUND)
+            val root =
+                previous?.deepCopy() as? ObjectNode
+                    ?: throw OcpiFault(2003, "Le site parent est inconnu.", HttpStatus.NOT_FOUND)
             val target = nested(root, parts.drop(3)) as ObjectNode
 
             if (method == "PUT") {
@@ -183,8 +225,9 @@ class OcpiCatalog(
         }
 
         if (method == "PATCH") {
-            val updated = previous?.deepCopy() as? ObjectNode
-                ?: throw OcpiFault(2003, "Object not found", HttpStatus.NOT_FOUND)
+            val updated =
+                previous?.deepCopy() as? ObjectNode
+                    ?: throw OcpiFault(2003, "Objet introuvable.", HttpStatus.NOT_FOUND)
             return updated.setAll(input as ObjectNode)
         }
 
@@ -192,15 +235,36 @@ class OcpiCatalog(
         return input
     }
 
-    private fun cdr(partner: PartnerEntity, path: String, method: String, data: JsonNode, response: HttpServletResponse): Any {
+    private fun cdr(
+        partner: PartnerEntity,
+        path: String,
+        method: String,
+        data: JsonNode,
+        response: HttpServletResponse,
+    ): Any {
         if (method != "POST" || path.isNotEmpty()) {
-            throw OcpiFault(2001, "CDRs are immutable", HttpStatus.METHOD_NOT_ALLOWED)
+            throw OcpiFault(
+                2001,
+                "Les relevés de recharge sont immuables.",
+                HttpStatus.METHOD_NOT_ALLOWED,
+            )
         }
 
-        val required = listOf(
-            "id", "start_date_time", "stop_date_time", "auth_id", "auth_method", "location",
-            "currency", "charging_periods", "total_cost", "total_energy", "total_time", "last_updated"
-        )
+        val required =
+            listOf(
+                "id",
+                "start_date_time",
+                "stop_date_time",
+                "auth_id",
+                "auth_method",
+                "location",
+                "currency",
+                "charging_periods",
+                "total_cost",
+                "total_energy",
+                "total_time",
+                "last_updated",
+            )
         require(required.all(data::hasNonNull))
         val id = data.path("id").asText()
         require(id.matches(Regex("[A-Za-z0-9_.:-]{1,36}")))
@@ -211,11 +275,21 @@ class OcpiCatalog(
             val previous = get(partner, "cdrs", "RECEIVER", id)
 
             if (previous != null && previous != data) {
-                throw OcpiFault(2004, "CDR cannot be overwritten", HttpStatus.CONFLICT)
+                throw OcpiFault(
+                    2004,
+                    "Un relevé de recharge ne peut pas être remplacé.",
+                    HttpStatus.CONFLICT,
+                )
             }
 
             if (previous == null) {
-                objects.save(OcpiObjectEntity(key(partner, "cdrs", "RECEIVER", id), db.encode(data), updatedAt))
+                objects.save(
+                    OcpiObjectEntity(
+                        key(partner, "cdrs", "RECEIVER", id),
+                        db.encode(data),
+                        updatedAt,
+                    )
+                )
             }
 
             true
@@ -227,16 +301,30 @@ class OcpiCatalog(
 
     private fun verifyOwner(partner: PartnerEntity, parts: List<String>) {
         if (parts.size < 3 || parts[0] != partner.countryCode || parts[1] != partner.partyId) {
-            throw OcpiFault(2001, "Object owner does not match authenticated party", HttpStatus.FORBIDDEN)
+            throw OcpiFault(
+                2001,
+                "Le propriétaire de l’objet ne correspond pas au partenaire authentifié.",
+                HttpStatus.FORBIDDEN,
+            )
         }
     }
 
-    private fun get(partner: PartnerEntity, module: String, direction: String, path: String): JsonNode? {
+    private fun get(
+        partner: PartnerEntity,
+        module: String,
+        direction: String,
+        path: String,
+    ): JsonNode? {
         val record = objects.findById(key(partner, module, direction, path)).orElse(null)
         return record?.data?.let(db::decode)
     }
 
-    private fun key(partner: PartnerEntity, module: String, direction: String, path: String): OcpiObjectKey {
+    private fun key(
+        partner: PartnerEntity,
+        module: String,
+        direction: String,
+        path: String,
+    ): OcpiObjectKey {
         return OcpiObjectKey(partner.tenantId, partner.id, module, direction, path)
     }
 
@@ -245,14 +333,15 @@ class OcpiCatalog(
             return root
         }
         require(parts.size <= 2)
-        var current = root.path("evses").firstOrNull { evse ->
-            evse.path("uid").asText() == parts[0]
-        } ?: throw OcpiFault(2003, "EVSE not found", HttpStatus.NOT_FOUND)
+        var current =
+            root.path("evses").firstOrNull { evse -> evse.path("uid").asText() == parts[0] }
+                ?: throw OcpiFault(2003, "Point de charge introuvable.", HttpStatus.NOT_FOUND)
 
         if (parts.size == 2) {
-            current = current.path("connectors").firstOrNull { connector ->
-                connector.path("id").asText() == parts[1]
-            } ?: throw OcpiFault(2003, "Connector not found", HttpStatus.NOT_FOUND)
+            current =
+                current.path("connectors").firstOrNull { connector ->
+                    connector.path("id").asText() == parts[1]
+                } ?: throw OcpiFault(2003, "Connecteur introuvable.", HttpStatus.NOT_FOUND)
         }
 
         return current

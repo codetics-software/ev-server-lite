@@ -33,7 +33,7 @@ class LocalTestBridge {
     const classpathFile = process.env.EV_LOCAL_TEST_CLASSPATH;
 
     if (!classpathFile || process.env.NODE_ENV === "production") {
-      throw new Error("The local test bridge is disabled");
+      throw new Error("Le transport local de test est désactivé.");
     }
 
     const classpath = (await readFile(classpathFile, "utf8")).trim();
@@ -59,12 +59,13 @@ class LocalTestBridge {
         }
       });
 
-      child.stderr.on("data", () => {
-        // Keep test transport output separate from browser response bodies.
+      child.stderr.on("data", (data: Buffer) => {
+        process.stderr.write(data);
+        // Les journaux de test ne sont pas renvoyés dans les réponses du navigateur.
       });
 
       child.on("exit", () => {
-        const error = new Error("The local Spring test harness stopped");
+        const error = new Error("Le serveur local de test s’est arrêté.");
         reject(error);
         this.pending.forEach((request) => request.reject(error));
         this.pending.clear();
@@ -83,7 +84,7 @@ class LocalTestBridge {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error("The local test request timed out"));
+        reject(new Error("La demande de test locale a dépassé son délai."));
       }, 20000);
 
       this.pending.set(id, {

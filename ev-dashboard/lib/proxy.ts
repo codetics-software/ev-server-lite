@@ -9,17 +9,24 @@ export async function proxy(request: NextRequest, path: string) {
   const target = new URL(`/${path}`, process.env.EV_SERVER_URL || "http://127.0.0.1:8080");
   target.search = request.nextUrl.search;
   const headers = new Headers();
-  for (const key of ["cookie", "content-type", "accept", "x-xsrf-token"]) {
+  for (const key of [
+    "cookie",
+    "content-type",
+    "accept",
+    "x-xsrf-token",
+    "x-charge-token",
+    "stripe-signature",
+  ]) {
     const value = request.headers.get(key);
     if (value) {
       headers.set(key, value);
     }
   }
   const isMutation = !["GET", "HEAD"].includes(request.method);
-  if (isMutation && path !== "login/oauth2/code/apple") {
+  if (isMutation && !["login/oauth2/code/apple", "api/v1/stripe/webhook"].includes(path)) {
     const allowed = new URL(process.env.APP_PUBLIC_URL || request.nextUrl.origin).origin;
     if (request.headers.get("origin") !== allowed) {
-      return NextResponse.json({ detail: "Invalid request origin" }, { status: 403 });
+      return NextResponse.json({ detail: "Origine de la demande non autorisée." }, { status: 403 });
     }
   }
   try {
@@ -38,7 +45,10 @@ export async function proxy(request: NextRequest, path: string) {
         headers: Object.fromEntries(headers.entries()),
         body: body ? Buffer.from(body).toString("utf8") : null,
       });
-      const response = new NextResponse(result.body, { status: result.status });
+      const response = new NextResponse(
+        [204, 205, 304].includes(result.status) ? null : result.body,
+        { status: result.status },
+      );
 
       for (const [key, values] of Object.entries(result.headers)) {
         if (["content-type", "set-cookie", "location"].includes(key.toLowerCase())) {
@@ -76,7 +86,7 @@ export async function proxy(request: NextRequest, path: string) {
   } catch {
     return NextResponse.json(
       {
-        detail: "The supervision server is unavailable. Check the connection and try again.",
+        detail: "Le serveur de supervision est indisponible. Vérifiez la connexion et réessayez.",
       },
       { status: 502 },
     );

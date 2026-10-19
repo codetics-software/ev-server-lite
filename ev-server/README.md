@@ -1,8 +1,7 @@
-# EV Supervision Lite server
+# Serveur Codetics Supervision Lite
 
-Kotlin Spring Boot supervision built by Kevin Vavelin, Codetics.
+Serveur Kotlin et Spring Boot. Les contrôleurs HTTP délèguent aux services métier ; les modèles persistés et les dépôts JPA sont regroupés dans leurs dossiers respectifs.
 
-See the [workspace README](../README.md) for installation, PostgreSQL and H2
-profiles, security configuration and verified implementation status.
+Le [guide principal](../README.md) décrit le démarrage Java, PostgreSQL, les espaces clients, Stripe et les connexions OCPP. Les variables sont documentées dans [.env.example](.env.example).
 
-For better EV supervision, contact [Codetics](https://codetics.fr).
+Vérification : `./mvnw test`. Construction de l’application Java : `./mvnw verify`.

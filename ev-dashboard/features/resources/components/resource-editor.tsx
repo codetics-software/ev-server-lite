@@ -45,7 +45,7 @@ export function ResourceEditor({
       <DialogContent className="max-h-[85svh] overflow-auto">
         <DialogHeader>
           <DialogTitle>
-            {receipt ? `${name} saved` : record ? `Edit ${name}` : `Add ${name}`}
+            {receipt ? "Enregistrement effectué" : record ? `Modifier ${name}` : `Ajouter ${name}`}
           </DialogTitle>
           <DialogDescription>
             {sections.find((item) => item.id === section)?.label}
@@ -54,17 +54,17 @@ export function ResourceEditor({
         {receipt ? (
           <div className="flex flex-col gap-4">
             <Alert>
-              <AlertTitle>Saved successfully</AlertTitle>
+              <AlertTitle>Enregistrement effectué</AlertTitle>
               <AlertDescription>{display(receipt.message)}</AlertDescription>
             </Alert>
             {Boolean(receipt.secret || receipt.token) && (
               <Input
-                aria-label="One-time credential"
+                aria-label="Identifiant affiché une seule fois"
                 value={String(receipt.secret || receipt.token)}
                 readOnly
               />
             )}
-            <Button onClick={close}>Done</Button>
+            <Button onClick={close}>Terminer</Button>
           </div>
         ) : (
           <form onSubmit={submit} key={String(existing.id || existing.uid || "new")}>
@@ -81,7 +81,8 @@ export function ResourceEditor({
               })}
               {section === "cars" && (
                 <FieldDescription>
-                  Vehicles are optional and never required for charging.
+                  Les véhicules sont facultatifs : leur enregistrement n’est pas nécessaire pour
+                  recharger.
                 </FieldDescription>
               )}
               {error && (
@@ -90,7 +91,7 @@ export function ResourceEditor({
                 </Alert>
               )}
               <Button type="submit" disabled={pending}>
-                {pending ? "Saving…" : `Save ${name}`}
+                {pending ? "Enregistrement…" : "Enregistrer"}
               </Button>
             </FieldGroup>
           </form>

@@ -4,8 +4,9 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.randomToken
 import fr.codetics.ev_server.core.sha256
-import fr.codetics.ev_server.persistence.PartnerEntity
-import fr.codetics.ev_server.persistence.PartnerRepository
+import fr.codetics.ev_server.models.entities.PartnerEntity
+import fr.codetics.ev_server.repositories.PartnerRepository
+import fr.codetics.ev_server.security.SecretVault
 import java.util.UUID
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -22,7 +23,7 @@ data class PartnerInput(
     val countryCode: String,
     val partyId: String,
     val localRole: String,
-    val remoteUrl: String
+    val remoteUrl: String,
 )
 
 @RestController
@@ -32,7 +33,7 @@ class OcpiAdminController(
     private val db: Database,
     private val vault: SecretVault,
     private val transport: OcpiTransport,
-    private val partners: PartnerRepository
+    private val partners: PartnerRepository,
 ) {
     @GetMapping
     fun list(@AuthenticationPrincipal user: AppPrincipal): List<Map<String, Any?>> {
@@ -45,7 +46,7 @@ class OcpiAdminController(
                 "local_role" to partner.localRole,
                 "remote_url" to partner.remoteUrl,
                 "registered" to partner.registered,
-                "enabled" to partner.enabled
+                "enabled" to partner.enabled,
             )
         }
     }
@@ -53,7 +54,7 @@ class OcpiAdminController(
     @PostMapping
     fun create(
         @RequestBody body: PartnerInput,
-        @AuthenticationPrincipal user: AppPrincipal
+        @AuthenticationPrincipal user: AppPrincipal,
     ): Map<String, Any> {
         require(body.name.isNotBlank() && body.name.length <= 200)
         require(body.countryCode.matches(Regex("[A-Z]{2}")))
@@ -63,24 +64,30 @@ class OcpiAdminController(
 
         return db.atomic {
             val token = randomToken()
-            val partner = partners.save(
-                PartnerEntity(
-                    tenantId = user.tenantId,
-                    name = body.name,
-                    countryCode = body.countryCode,
-                    partyId = body.partyId,
-                    localRole = body.localRole,
-                    tokenHash = sha256(token),
-                    localTokenEncrypted = vault.encrypt(token),
-                    remoteUrl = body.remoteUrl
+            val partner =
+                partners.save(
+                    PartnerEntity(
+                        tenantId = user.tenantId,
+                        name = body.name,
+                        countryCode = body.countryCode,
+                        partyId = body.partyId,
+                        localRole = body.localRole,
+                        tokenHash = sha256(token),
+                        localTokenEncrypted = vault.encrypt(token),
+                        remoteUrl = body.remoteUrl,
+                    )
                 )
+            db.audit(
+                user.tenantId,
+                user.id.toString(),
+                "OCPI_PARTNER_CREATE",
+                partner.id.toString(),
             )
-            db.audit(user.tenantId, user.id.toString(), "OCPI_PARTNER_CREATE", partner.id.toString())
 
             mapOf(
                 "id" to partner.id,
                 "token" to token,
-                "message" to "Share this bootstrap token with the partner over a secure channel"
+                "message" to "Transmettez ce jeton initial au partenaire par un canal sécurisé.",
             )
         }
     }
@@ -88,7 +95,7 @@ class OcpiAdminController(
     @DeleteMapping("/{id}")
     fun disable(
         @PathVariable id: UUID,
-        @AuthenticationPrincipal user: AppPrincipal
+        @AuthenticationPrincipal user: AppPrincipal,
     ): Map<String, Boolean> {
         return db.atomic {
             val partner = partners.findByTenantIdAndId(user.tenantId, id)

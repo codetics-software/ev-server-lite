@@ -1,10 +1,13 @@
-EV Supervision Lite
+Codetics Supervision Lite
 Copyright (c) 2026 Kevin Vavelin, Codetics.
 https://codetics.fr
 
-The Kotlin and Next.js implementation and modifications are by Codetics.
+L’implémentation Kotlin et Next.js et ses modifications sont réalisées par Codetics.
 
-shadcn/ui components and their underlying dependencies retain their respective
-MIT and other package licenses. See licenses/shadcn-MIT.txt and package metadata.
+Les composants shadcn/ui et leurs dépendances conservent leurs licences
+respectives. Consultez licenses/shadcn-MIT.txt et les métadonnées des dépendances.
+La police Source Sans 3 conserve sa licence dans licenses/SourceSans3-OFL.txt.
+Stripe Java et ZXing conservent leurs licences Apache 2.0.
 
-Third-party names in this notice identify attribution only, not endorsement.
+Les noms tiers cités identifient leurs auteurs ou leurs produits ; ils
+n’impliquent aucune approbation de cette application.

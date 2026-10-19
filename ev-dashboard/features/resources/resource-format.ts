@@ -16,7 +16,7 @@ export function formatCell(row: Row, key: string): string {
   }
 
   if (key === "energy_kwh" && value !== null) {
-    return Number(value).toLocaleString("en-GB", { maximumFractionDigits: 3 });
+    return Number(value).toLocaleString("fr-FR", { maximumFractionDigits: 3 });
   }
 
   return display(value);

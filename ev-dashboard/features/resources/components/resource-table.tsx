@@ -56,11 +56,11 @@ export function ResourceTable({ rows, columns, canEdit, onView, onEdit }: Props)
             ))}
             <TableCell className="text-right">
               <Button variant="ghost" size="sm" onClick={() => onView(row)}>
-                View
+                Consulter
               </Button>
               {canEdit && (
                 <Button variant="ghost" size="sm" onClick={() => onEdit(row)}>
-                  Edit
+                  Modifier
                 </Button>
               )}
             </TableCell>

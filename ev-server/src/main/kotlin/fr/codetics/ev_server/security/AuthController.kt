@@ -3,7 +3,7 @@ package fr.codetics.ev_server.security
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.sha256
-import fr.codetics.ev_server.persistence.UserRepository
+import fr.codetics.ev_server.repositories.UserRepository
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
@@ -16,27 +16,13 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-data class LoginRequest(
-    val tenant: String,
-    val email: String,
-    val password: String
-)
+data class LoginRequest(val tenant: String, val email: String, val password: String)
 
-data class SignupRequest(
-    val email: String,
-    val name: String,
-    val password: String
-)
+data class SignupRequest(val email: String, val name: String, val password: String)
 
-data class ChallengeRequest(
-    val tenant: String,
-    val email: String
-)
+data class ChallengeRequest(val tenant: String, val email: String)
 
-data class CompleteRequest(
-    val token: String,
-    val password: String? = null
-)
+data class CompleteRequest(val token: String, val password: String? = null)
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -45,14 +31,11 @@ class AuthController(
     private val providers: ProviderRegistry,
     private val db: Database,
     private val users: UserRepository,
-    @param:Value("\${app.cookie-secure}") private val secure: Boolean
+    @param:Value("\${app.cookie-secure}") private val secure: Boolean,
 ) {
     @GetMapping("/csrf")
     fun csrf(token: CsrfToken): Map<String, String> {
-        return mapOf(
-            "token" to token.token,
-            "headerName" to token.headerName
-        )
+        return mapOf("token" to token.token, "headerName" to token.headerName)
     }
 
     @GetMapping("/providers")
@@ -61,7 +44,7 @@ class AuthController(
             mapOf(
                 "id" to provider.registrationId,
                 "name" to provider.clientName,
-                "url" to "/oauth2/authorization/${provider.registrationId}"
+                "url" to "/oauth2/authorization/${provider.registrationId}",
             )
         }
     }
@@ -70,7 +53,7 @@ class AuthController(
     fun login(
         @RequestBody body: LoginRequest,
         request: HttpServletRequest,
-        response: HttpServletResponse
+        response: HttpServletResponse,
     ): AppPrincipal {
         val user = accounts.login(body.tenant, body.email, body.password, request.remoteAddr)
         requestToken(request)?.let(accounts::revoke)
@@ -84,7 +67,8 @@ class AuthController(
         accounts.limit("signup:${request.remoteAddr}", 5)
         accounts.register(body.email, body.name, body.password)
         return mapOf(
-            "message" to "If registration is available for this email, a verification link will be sent"
+            "message" to
+                "Si l’inscription est disponible pour cette adresse, un lien de vérification sera envoyé."
         )
     }
 
@@ -99,7 +83,7 @@ class AuthController(
     @PostMapping("/signout/all")
     fun logoutAll(
         @AuthenticationPrincipal user: AppPrincipal,
-        response: HttpServletResponse
+        response: HttpServletResponse,
     ): Map<String, Boolean> {
         accounts.revokeAll(user.id)
         response.addHeader("Set-Cookie", sessionCookie("", secure, true).toString())
@@ -112,7 +96,10 @@ class AuthController(
     }
 
     @PostMapping("/password/reset/request")
-    fun resetRequest(@RequestBody body: ChallengeRequest, request: HttpServletRequest): Map<String, Boolean> {
+    fun resetRequest(
+        @RequestBody body: ChallengeRequest,
+        request: HttpServletRequest,
+    ): Map<String, Boolean> {
         accounts.limit("reset:${request.remoteAddr}", 20)
         accounts.requestChallenge(body.tenant, body.email, "RESET")
         return mapOf("accepted" to true)
@@ -125,7 +112,10 @@ class AuthController(
     }
 
     @PostMapping("/mail/resend")
-    fun resend(@RequestBody body: ChallengeRequest, request: HttpServletRequest): Map<String, Boolean> {
+    fun resend(
+        @RequestBody body: ChallengeRequest,
+        request: HttpServletRequest,
+    ): Map<String, Boolean> {
         accounts.limit("verify:${request.remoteAddr}", 20)
         accounts.requestChallenge(body.tenant, body.email, "VERIFY")
         return mapOf("accepted" to true)
@@ -140,10 +130,10 @@ class AuthController(
     fun link(
         @PathVariable provider: String,
         @AuthenticationPrincipal user: AppPrincipal,
-        request: HttpServletRequest
+        request: HttpServletRequest,
     ): Map<String, String> {
         require(providers.findByRegistrationId(provider) != null) {
-            "Provider is not configured"
+            "Ce fournisseur n’est pas configuré."
         }
 
         if (request.getSession(false) != null) {
@@ -160,8 +150,8 @@ class AuthController(
     fun eula(): Map<String, String> {
         return mapOf(
             "version" to "1.0",
-            "attribution" to "EV Supervision Lite — Kevin Vavelin, Codetics",
-            "url" to "https://codetics.fr"
+            "attribution" to "Supervision de recharge Lite — Kevin Vavelin, Codetics",
+            "url" to "https://codetics.fr",
         )
     }
 

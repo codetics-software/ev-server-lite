@@ -7,5 +7,5 @@ data class AppPrincipal(
     val tenantId: UUID,
     val email: String,
     val name: String,
-    val role: String
+    val role: String,
 )

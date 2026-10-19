@@ -1,14 +1,16 @@
+import { valueLabel } from "./labels";
+
 export function display(value: unknown): string {
   if (value === null || value === undefined || value === "") {
     return "—";
   }
   if (typeof value === "boolean") {
-    return value ? "Yes" : "No";
+    return value ? "Oui" : "Non";
   }
   if (typeof value === "object") {
     return JSON.stringify(value);
   }
-  return String(value);
+  return valueLabel(String(value));
 }
 export function date(value: unknown): string {
   if (!value) {
@@ -17,7 +19,7 @@ export function date(value: unknown): string {
   const parsed = new Date(String(value));
   return Number.isNaN(parsed.valueOf())
     ? display(value)
-    : new Intl.DateTimeFormat("en-GB", {
+    : new Intl.DateTimeFormat("fr-FR", {
         dateStyle: "medium",
         timeStyle: "short",
       }).format(parsed);

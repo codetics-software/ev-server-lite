@@ -7,7 +7,7 @@ import { IconChevronRight, IconDots } from "@tabler/icons-react"
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav
-      aria-label="breadcrumb"
+      aria-label="Fil d’Ariane"
       data-slot="breadcrumb"
       className={cn(className)}
       {...props}
@@ -108,7 +108,7 @@ function BreadcrumbEllipsis({
     >
       <IconDots
       />
-      <span className="sr-only">More</span>
+      <span className="sr-only">Afficher plus</span>
     </span>
   )
 }

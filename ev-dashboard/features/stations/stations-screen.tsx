@@ -46,13 +46,13 @@ export function StationsScreen() {
     <>
       <div className="page-heading">
         <div>
-          <h1>Charging stations</h1>
-          <p>Station connections, connector states and remote operations.</p>
+          <h1>Bornes de recharge</h1>
+          <p>Connexion des bornes, état des connecteurs et commandes à distance.</p>
         </div>
         {user.role === "ADMIN" && (
           <Button onClick={() => setProvisioning(true)}>
             <IconPlus data-icon="inline-start" />
-            Add station
+            Ajouter une borne
           </Button>
         )}
       </div>
@@ -73,10 +73,10 @@ export function StationsScreen() {
             exportCsv(
               "stations",
               [
-                ["name", "Station"],
-                ["id", "Identity"],
-                ["connected", "Connected"],
-                ["last_seen", "Last contact"],
+                ["name", "Borne"],
+                ["id", "Identifiant"],
+                ["connected", "Connectée"],
+                ["last_seen", "Dernier contact"],
               ],
               stations,
             )
@@ -88,11 +88,13 @@ export function StationsScreen() {
       ) : !stations.length ? (
         <Empty className="min-h-48 border">
           <EmptyHeader>
-            <EmptyTitle>{search ? "No matching stations" : "No stations provisioned"}</EmptyTitle>
+            <EmptyTitle>
+              {search ? "Aucune borne correspondante" : "Aucune borne enregistrée"}
+            </EmptyTitle>
             <EmptyDescription>
               {search
-                ? "Try a station name or identity."
-                : "Add a station to generate its connection credentials."}
+                ? "Essayez le nom ou l’identifiant d’une borne."
+                : "Ajoutez une borne pour obtenir ses identifiants de connexion."}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -118,7 +120,7 @@ export function StationsScreen() {
         <DialogContent className="max-h-[85svh] overflow-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{selected?.name}</DialogTitle>
-            <DialogDescription>{selected?.id} · Station operations</DialogDescription>
+            <DialogDescription>{selected?.id} · Gestion de la borne</DialogDescription>
           </DialogHeader>
           {selected && <StationDetail station={selected.id} user={user} />}
         </DialogContent>

@@ -7,7 +7,10 @@ const resourceSections = sections.filter(
     section.id !== "overview" &&
     section.id !== "account" &&
     section.id !== "stations" &&
-    section.id !== "transactions",
+    section.id !== "transactions" &&
+    section.id !== "evses" &&
+    section.id !== "payments" &&
+    section.id !== "workspace",
 );
 
 export function generateStaticParams() {

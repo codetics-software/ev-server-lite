@@ -64,7 +64,7 @@ export function useResourceEditor(
         onClose();
       }
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Unable to save");
+      setError(failure instanceof Error ? failure.message : "Impossible d’enregistrer.");
     } finally {
       setPending(false);
     }

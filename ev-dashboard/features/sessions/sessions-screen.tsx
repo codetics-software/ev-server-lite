@@ -29,11 +29,11 @@ export function SessionsScreen() {
     <>
       <div className="page-heading">
         <div>
-          <h1>Charging sessions</h1>
+          <h1>Sessions de recharge</h1>
           <p>
             {user.role === "DRIVER"
-              ? "Your session history and measured energy."
-              : "Session history, authorization and measured energy across your network."}
+              ? "Votre historique de recharge et l’énergie mesurée."
+              : "Historique, autorisations et énergie mesurée sur votre réseau."}
           </p>
         </div>
       </div>
@@ -55,11 +55,11 @@ export function SessionsScreen() {
               "sessions",
               [
                 ["id", "Session"],
-                ["station_id", "Station"],
-                ["connector_id", "Connector"],
-                ["started_at", "Started"],
-                ["stopped_at", "Stopped"],
-                ["energy_kwh", "Energy · kWh"],
+                ["station_id", "Borne"],
+                ["connector_id", "Connecteur"],
+                ["started_at", "Début"],
+                ["stopped_at", "Fin"],
+                ["energy_kwh", "Énergie · kWh"],
               ],
               sessions,
             )
@@ -71,11 +71,13 @@ export function SessionsScreen() {
       ) : !sessions.length ? (
         <Empty className="min-h-48 border">
           <EmptyHeader>
-            <EmptyTitle>{search ? "No matching sessions" : "No charging sessions yet"}</EmptyTitle>
+            <EmptyTitle>
+              {search ? "Aucune session correspondante" : "Aucune session de recharge"}
+            </EmptyTitle>
             <EmptyDescription>
               {search
-                ? "Try a station identity or session number."
-                : "Sessions appear when a connected station reports a transaction."}
+                ? "Essayez un identifiant de borne ou un numéro de session."
+                : "Les sessions apparaissent lorsqu’une borne connectée annonce une recharge."}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

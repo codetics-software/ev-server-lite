@@ -9,6 +9,8 @@ import {
   type Locale,
 } from "react-day-picker"
 
+import { fr } from "react-day-picker/locale"
+
 import { Button, buttonVariants } from "@/components/ui/button"
 import { IconChevronLeft, IconChevronRight, IconChevronDown } from "@tabler/icons-react"
 
@@ -18,7 +20,7 @@ function Calendar({
   showOutsideDays = true,
   captionLayout = "label",
   buttonVariant = "ghost",
-  locale,
+  locale = fr,
   formatters,
   components,
   ...props
@@ -38,6 +40,13 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       locale={locale}
+      labels={{
+        labelNext: () => "Mois suivant",
+        labelPrevious: () => "Mois précédent",
+        labelMonthDropdown: () => "Choisir le mois",
+        labelYearDropdown: () => "Choisir l’année",
+        labelDayButton: (date, modifiers) => `${date.toLocaleDateString("fr-FR", { dateStyle: "full" })}${modifiers.selected ? ", sélectionné" : ""}${modifiers.today ? ", aujourd’hui" : ""}`,
+      }}
       formatters={{
         formatMonthDropdown: (date) =>
           date.toLocaleString(locale?.code, { month: "short" }),

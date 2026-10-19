@@ -1,25 +1,25 @@
 import type { NetworkOverview } from "./overview-types";
 
 export function OverviewMetrics({ data }: { data: NetworkOverview }) {
-  const energy = Number(data.transactions.energy_kwh).toLocaleString("en-GB", {
+  const energy = Number(data.transactions.energy_kwh).toLocaleString("fr-FR", {
     maximumFractionDigits: 1,
   });
   const metrics = [
     {
-      label: "Charging stations",
+      label: "Bornes de recharge",
       value: data.stations.total,
-      detail: `${data.stations.online} connected`,
+      detail: `${data.stations.online} connectées`,
     },
     {
-      label: "Active sessions",
+      label: "Sessions en cours",
       value: data.transactions.active,
-      detail: `${data.transactions.total} sessions recorded`,
+      detail: `${data.transactions.total} sessions enregistrées`,
     },
     {
-      label: "Energy delivered",
+      label: "Énergie délivrée",
       value: energy,
       unit: "kWh",
-      detail: "Completed sessions · all time",
+      detail: "Sessions terminées · depuis l’origine",
     },
   ];
 
