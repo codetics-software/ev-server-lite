@@ -3,19 +3,15 @@ package fr.codetics.ev_server.core
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
+import java.time.Clock
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.EnableScheduling
-import org.springframework.transaction.PlatformTransactionManager
-import org.springframework.transaction.support.TransactionTemplate
 
 @Configuration(proxyBeanMethods = false)
 @EnableScheduling
 class AppConfiguration {
-    @Bean
-    fun transactionTemplate(manager: PlatformTransactionManager): TransactionTemplate {
-        return TransactionTemplate(manager)
-    }
+    @Bean fun clock(): Clock = Clock.systemUTC()
 
     @Bean
     fun openApi(): OpenAPI {

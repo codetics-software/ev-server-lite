@@ -28,10 +28,16 @@ Le suivi de consommation et de durée demande l’arrêt à l’épuisement du c
 
 ## Persistance
 
-PostgreSQL est la base de production. Les migrations Flyway créent les tables et les contraintes ; Hibernate valide le schéma. Les montants et les mesures utilisent des nombres décimaux. Les clés d’espace restent présentes dans les relations métier.
+La base de production est PostgreSQL ou MongoDB, choisie au démarrage d’après le schéma de `DATABASE_URL`. Les deux partagent les mêmes entités, les mêmes dépôts Spring Data et la même API : seules la configuration et quelques opérations du paquet `persistence` diffèrent.
+
+Avec PostgreSQL, les migrations Flyway créent les tables et les contraintes ; Hibernate valide le schéma. Les verrous de ligne sérialisent les opérations concurrentes sur une borne, un paiement ou une commande.
+
+Avec MongoDB, chaque table devient une collection du même nom et les clés composées deviennent des `_id` structurés. Les contraintes d’unicité sont recréées par des index au démarrage. Les montants sont stockés en `Decimal128`, les identifiants numériques des sessions et des journaux par des compteurs. Un verrou est une écriture dans la transaction : une modification concurrente provoque un conflit, et l’opération est rejouée. Les dates sont conservées à la milliseconde.
+
+Les montants et les mesures utilisent des nombres décimaux. Les clés d’espace restent présentes dans les relations métier.
 
 Les historiques de session et les documents importés sont conservés. L’import d’archives Mongo Extended JSON préserve le document UTF-8 d’origine et son empreinte SHA-256. Il ne transforme pas automatiquement une archive en données opérationnelles : cette reprise exige un mappage adapté aux collections d’origine.
 
 ## Vérification
 
-Le profil H2 sert aux tests locaux des dépôts, des contrôleurs et des échanges de session. Le paiement y utilise un adaptateur de test. Les captures sont produites depuis l’application réelle avec ce serveur local de test. PostgreSQL, les paiements Stripe réels et les modèles de bornes déployés doivent également être essayés dans l’environnement cible.
+Le profil H2 sert aux tests locaux des dépôts, des contrôleurs et des échanges de session. Le paiement y utilise un adaptateur de test. Les captures sont produites depuis l’application réelle avec ce serveur local de test. La même suite s’exécute sur PostgreSQL ou MongoDB en définissant `DATABASE_URL`. Les paiements Stripe réels et les modèles de bornes déployés doivent également être essayés dans l’environnement cible.

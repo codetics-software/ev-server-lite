@@ -1,10 +1,14 @@
 package fr.codetics.ev_server.services.evses
 
 import fr.codetics.ev_server.core.AppPrincipal
+import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.models.billing.PaymentState
 import fr.codetics.ev_server.models.entities.ConnectorKey
 import fr.codetics.ev_server.models.entities.PublicEvseEntity
+import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.evses.EvseInput
 import fr.codetics.ev_server.models.evses.EvseResponse
@@ -21,7 +25,6 @@ import fr.codetics.ev_server.services.billing.TariffService
 import fr.codetics.ev_server.stripe.PaymentGateway
 import java.net.URI
 import java.util.UUID
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -39,7 +42,7 @@ class EvseService(
     private val db: Database,
     private val transactions: TransactionRepository,
     private val vault: SecretVault,
-    @Value("\${app.public-url}") private val publicUrl: String,
+    private val properties: AppProperties,
 ) {
     fun list(tenantId: UUID) = evses.findAllByTenantIdOrderByName(tenantId).map { response(it) }
 
@@ -49,18 +52,18 @@ class EvseService(
 
     fun save(user: AppPrincipal, input: EvseInput, id: UUID? = null): EvseResponse =
         db.atomic {
-            require(input.name.isNotBlank() && input.name.length <= 200) {
+            ensure(input.name.isNotBlank() && input.name.length <= 200) {
                 "Renseignez le nom du point de charge."
             }
-            require(input.connectorId > 0) { "Sélectionnez un connecteur physique." }
+            ensure(input.connectorId > 0) { "Sélectionnez un connecteur physique." }
             val station =
-                stations.findForUpdate(StationKey(user.tenantId, input.stationId))
+                db.lock<StationEntity>(StationKey(user.tenantId, input.stationId))
                     ?: throw ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Borne introuvable dans cet espace.",
                     )
-            require(station.enabled) { "La borne est désactivée." }
-            require(
+            ensure(station.enabled) { "La borne est désactivée." }
+            ensure(
                 connectors.existsById(
                     ConnectorKey(user.tenantId, input.stationId, input.connectorId)
                 )
@@ -77,11 +80,11 @@ class EvseService(
                     input.stationId,
                     input.connectorId,
                 )
-            require(duplicate == null || duplicate.id == evse.id) {
+            ensure(duplicate == null || duplicate.id == evse.id) {
                 "Ce connecteur possède déjà un point de charge public."
             }
             if (payments.existsByEvseIdAndStateIn(evse.id, PaymentState.WORKABLE)) {
-                require(
+                ensure(
                     evse.stationId == input.stationId && evse.connectorId == input.connectorId
                 ) {
                     "Un point de charge avec une session en cours ne peut pas changer de connecteur."
@@ -92,7 +95,7 @@ class EvseService(
             evse.connectorId = input.connectorId
             evse.pricingDefinitionId = input.pricingDefinitionId
             evse.published = input.published
-            evses.saveAndFlush(evse)
+            evses.save(evse).also { db.flush() }
             db.audit(user.tenantId, user.id.toString(), "EVSE_SAVE", evse.id.toString())
             response(evse)
         }
@@ -146,14 +149,14 @@ class EvseService(
 
     fun portalUrl(tenantId: UUID, id: UUID): String {
         val tenant = tenants.findById(tenantId).orElseThrow()
-        val base = URI(publicUrl)
-        require(
+        val base = URI(properties.publicUrl)
+        ensure(
             base.scheme == "https" ||
                 (base.scheme == "http" && base.host in setOf("localhost", "127.0.0.1"))
         ) {
             "L’URL publique doit utiliser HTTPS."
         }
-        return "${publicUrl.trimEnd('/')}/charge/${tenant.slug}/$id"
+        return "${properties.publicUrl.trimEnd('/')}/charge/${tenant.slug}/$id"
     }
 
     private fun response(evse: PublicEvseEntity) =

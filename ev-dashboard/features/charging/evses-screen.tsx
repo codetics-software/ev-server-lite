@@ -2,7 +2,7 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import {
   Table,
@@ -60,27 +60,23 @@ export function EvsesScreen() {
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      nativeButton={false}
-                      size="sm"
-                      variant="outline"
-                      render={<a href={evse.portalUrl} target="_blank" rel="noreferrer" />}
+                    <a
+                      href={evse.portalUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-slot="button"
+                      className={buttonVariants({ size: "sm", variant: "outline" })}
                     >
                       Ouvrir le portail
-                    </Button>
-                    <Button
-                      nativeButton={false}
-                      size="sm"
-                      variant="outline"
-                      render={
-                        <a
-                          href={`/api/backend/api/v1/evses/${evse.id}/qr`}
-                          download={`recharge-${evse.stationId}-${evse.connectorId}.svg`}
-                        />
-                      }
+                    </a>
+                    <a
+                      href={`/api/backend/api/v1/evses/${evse.id}/qr`}
+                      download={`recharge-${evse.stationId}-${evse.connectorId}.svg`}
+                      data-slot="button"
+                      className={buttonVariants({ size: "sm", variant: "outline" })}
                     >
                       Télécharger le QR code
-                    </Button>
+                    </a>
                     {user.role === "ADMIN" && (
                       <Button size="sm" variant="ghost" onClick={() => setEditing(evse)}>
                         Modifier

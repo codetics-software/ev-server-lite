@@ -1,6 +1,8 @@
 package fr.codetics.ev_server.services.billing
 
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.invalid
 import fr.codetics.ev_server.models.billing.ChargingTariff
 import fr.codetics.ev_server.models.entities.RecordKey
 import fr.codetics.ev_server.repositories.RecordRepository
@@ -22,11 +24,11 @@ class TariffService(private val records: RecordRepository, private val db: Datab
         val data = db.decode(record.data)
         fun amount(field: String): BigDecimal {
             val value = data.path(field).asText("0")
-            require(value.length <= 30) { "Le montant du tarif est invalide." }
+            ensure(value.length <= 30) { "Le montant du tarif est invalide." }
             val decimal =
                 value.toBigDecimalOrNull()
-                    ?: throw IllegalArgumentException("Le montant du tarif est invalide.")
-            require(decimal <= BigDecimal(10000)) { "Le montant du tarif est trop élevé." }
+                    ?: invalid("Le montant du tarif est invalide.")
+            ensure(decimal <= BigDecimal(10000)) { "Le montant du tarif est trop élevé." }
             return decimal
         }
         return ChargingTariff(

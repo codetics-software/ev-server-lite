@@ -1,6 +1,8 @@
 package fr.codetics.ev_server.ocpi
 
+import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.models.entities.OcpiObjectEntity
 import fr.codetics.ev_server.models.entities.OcpiObjectKey
 import fr.codetics.ev_server.models.entities.PartnerEntity
@@ -9,10 +11,8 @@ import fr.codetics.ev_server.repositories.PartnerRepository
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.time.Instant
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
-import org.springframework.data.jpa.domain.Specification
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import tools.jackson.databind.JsonNode
@@ -23,7 +23,7 @@ class OcpiCatalog(
     private val db: Database,
     private val objects: OcpiObjectRepository,
     private val partners: PartnerRepository,
-    @param:Value("\${app.ocpi.public-url}") private val publicUrl: String,
+    private val properties: AppProperties,
 ) {
     val modules = setOf("locations", "sessions", "cdrs", "tariffs", "tokens")
 
@@ -109,7 +109,7 @@ class OcpiCatalog(
         val rootPath = parts.take(3).joinToString("/")
 
         return db.atomic {
-            partners.findForUpdate(partner.id)
+            db.lock<PartnerEntity>(partner.id)
             val previous = get(partner, module, direction, rootPath)
 
             if (
@@ -151,35 +151,27 @@ class OcpiCatalog(
                 ?: Instant.parse("9999-01-01T00:00:00Z")
         require(!from.isAfter(to))
 
-        val specification =
-            Specification<OcpiObjectEntity> { root, _, criteria ->
-                val identity = root.get<OcpiObjectKey>("key")
-                criteria.and(
-                    criteria.equal(identity.get<java.util.UUID>("tenantId"), partner.tenantId),
-                    criteria.equal(identity.get<java.util.UUID>("partnerId"), partner.id),
-                    criteria.equal(identity.get<String>("module"), module),
-                    criteria.equal(identity.get<String>("direction"), direction),
-                    criteria.greaterThanOrEqualTo(root.get("lastUpdated"), from),
-                    criteria.lessThan(root.get("lastUpdated"), to),
+        fun page(number: Int) =
+            objects
+                .findAllByKeyTenantIdAndKeyPartnerIdAndKeyModuleAndKeyDirectionAndLastUpdatedGreaterThanEqualAndLastUpdatedLessThan(
+                    partner.tenantId,
+                    partner.id,
+                    module,
+                    direction,
+                    from,
+                    to,
+                    PageRequest.of(number, limit, Sort.by("key.objectPath")),
                 )
-            }
+
         // Les décalages OCPI ne sont pas nécessairement multiples de la taille
         // de page : lire aussi la page partielle supplémentaire.
         val firstPage = offset / limit
         val skip = offset % limit
-        val first =
-            objects.findAll(
-                specification,
-                PageRequest.of(firstPage, limit, Sort.by("key.objectPath")),
-            )
+        val first = page(firstPage)
         val rows = first.content.drop(skip).toMutableList()
 
         if (skip > 0 && first.hasNext()) {
-            val second =
-                objects.findAll(
-                    specification,
-                    PageRequest.of(firstPage + 1, limit, Sort.by("key.objectPath")),
-                )
+            val second = page(firstPage + 1)
             rows.addAll(second.content.take(skip))
         }
 
@@ -271,7 +263,7 @@ class OcpiCatalog(
         val updatedAt = Instant.parse(data.path("last_updated").asText())
 
         db.atomic {
-            partners.findForUpdate(partner.id)
+            db.lock<PartnerEntity>(partner.id)
             val previous = get(partner, "cdrs", "RECEIVER", id)
 
             if (previous != null && previous != data) {
@@ -291,8 +283,6 @@ class OcpiCatalog(
                     )
                 )
             }
-
-            true
         }
 
         response.setHeader("Location", "${base(partner)}/cdrs/$id")
@@ -348,6 +338,6 @@ class OcpiCatalog(
     }
 
     private fun base(partner: PartnerEntity): String {
-        return "${publicUrl.trimEnd('/')}/ocpi/${partner.localRole}/2.1.1"
+        return "${properties.ocpi.publicUrl.trimEnd('/')}/ocpi/${partner.localRole}/2.1.1"
     }
 }

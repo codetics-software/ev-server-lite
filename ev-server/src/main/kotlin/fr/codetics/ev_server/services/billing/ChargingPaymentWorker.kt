@@ -1,12 +1,16 @@
 package fr.codetics.ev_server.services.billing
 
 import fr.codetics.ev_server.core.Database
-import fr.codetics.ev_server.models.billing.ChargingTariff
+import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.models.billing.PaymentState
+import fr.codetics.ev_server.models.billing.tariff
+import fr.codetics.ev_server.models.commands.CommandState
+import fr.codetics.ev_server.models.entities.ChargingPaymentEntity
 import fr.codetics.ev_server.repositories.ChargingPaymentRepository
 import fr.codetics.ev_server.repositories.CommandRepository
 import fr.codetics.ev_server.repositories.TransactionRepository
 import fr.codetics.ev_server.stripe.PaymentGateway
+import java.time.Clock
 import java.time.Instant
 import java.util.UUID
 import org.slf4j.LoggerFactory
@@ -22,6 +26,7 @@ class ChargingPaymentWorker(
     private val checkout: ChargingCheckoutService,
     private val gateway: PaymentGateway,
     private val db: Database,
+    private val clock: Clock,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -47,6 +52,7 @@ class ChargingPaymentWorker(
                         order.id,
                         error.javaClass.simpleName,
                     )
+                    log.debug("Détail de l’échec du paiement {}", order.id, error)
                 }
             }
     }
@@ -56,13 +62,13 @@ class ChargingPaymentWorker(
         if (
             snapshot.state == PaymentState.PENDING_PAYMENT &&
                 snapshot.stripeCheckoutId == null &&
-                snapshot.expiresAt.isAfter(Instant.now())
+                snapshot.expiresAt.isAfter(Instant.now(clock))
         ) {
             checkout.initialize(id)
         }
         db.atomic {
-            val order = requireNotNull(payments.findForUpdate(id))
-            val now = Instant.now()
+            val order = requireNotNull(db.lock<ChargingPaymentEntity>(id))
+            val now = Instant.now(clock)
             when (order.state) {
                 PaymentState.PENDING_PAYMENT ->
                     if (order.expiresAt.isBefore(now)) {
@@ -72,16 +78,17 @@ class ChargingPaymentWorker(
                 PaymentState.START_REQUESTED -> {
                     val command = order.startCommandId?.let { commands.findById(it).orElse(null) }
                     val rejected =
-                        command?.state == "SUCCEEDED" &&
+                        command?.state == CommandState.SUCCEEDED &&
                             db.decode(command.result ?: "{}").path("status").asText() == "Rejected"
-                    if (rejected || order.updatedAt.plusSeconds(300).isBefore(now)) {
+                    val startDeadline = order.updatedAt.plus(ChargingTimeouts.START_WINDOW)
+                    if (rejected || startDeadline.isBefore(now)) {
                         lifecycle.settleWithoutCharging(
                             order,
                             "La borne n’a pas démarré la recharge. Le crédit est remboursé.",
                         )
                         // Une commande non transmise ne doit plus démarrer après le remboursement.
-                        if (command?.state == "QUEUED") {
-                            command.state = "CANCELLED"
+                        if (command?.state == CommandState.QUEUED) {
+                            command.state = CommandState.CANCELLED
                             commands.save(command)
                         }
                     }
@@ -91,16 +98,12 @@ class ChargingPaymentWorker(
                         order.transactionId?.let { transactions.findById(it).orElse(null) }
                     if (transaction != null) {
                         val estimate =
-                            ChargingTariff(
-                                    order.currency,
-                                    order.energyPrice,
-                                    order.timePrice,
-                                    order.flatPrice,
-                                )
+                            order
+                                .tariff()
                                 .amountMinor(order.observedEnergyWh, transaction.startedAt, now)
                         if (
                             estimate >= order.prepaidMinor ||
-                                order.createdAt.plusSeconds(86400).isBefore(now)
+                                order.createdAt.plus(ChargingTimeouts.MAX_SESSION).isBefore(now)
                         )
                             lifecycle.requestStop(order)
                     }
@@ -108,7 +111,6 @@ class ChargingPaymentWorker(
                 else -> Unit
             }
             payments.save(order)
-            true
         }
         settle(id)
     }
@@ -129,11 +131,11 @@ class ChargingPaymentWorker(
                     order.id,
                 )
         db.atomic {
-            val saved = requireNotNull(payments.findForUpdate(id))
+            val saved = requireNotNull(db.lock<ChargingPaymentEntity>(id))
             if (saved.state !in setOf(PaymentState.SETTLING, PaymentState.REFUND_PENDING))
-                return@atomic true
+                return@atomic
             saved.refundId = refund?.id
-            saved.updatedAt = Instant.now()
+            saved.updatedAt = Instant.now(clock)
             when (refund?.status) {
                 null,
                 "succeeded" -> {
@@ -148,7 +150,6 @@ class ChargingPaymentWorker(
                 else -> saved.state = PaymentState.REFUND_PENDING
             }
             payments.save(saved)
-            true
         }
     }
 }

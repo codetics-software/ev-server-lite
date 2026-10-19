@@ -11,9 +11,11 @@ import jakarta.persistence.Version
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Entity
 @Table(name = "charging_payments")
+@Document("charging_payments")
 class ChargingPaymentEntity(
     @Id var id: UUID = UUID.randomUUID(),
     var tenantId: UUID = UUID.randomUUID(),

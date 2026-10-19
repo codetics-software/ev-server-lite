@@ -1,9 +1,10 @@
 package fr.codetics.ev_server.security
 
+import fr.codetics.ev_server.core.AppProperties
+import fr.codetics.ev_server.core.ensure
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.util.UUID
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
@@ -13,8 +14,7 @@ import org.springframework.stereotype.Component
 @Component
 class OAuthSignInHandler(
     private val accounts: AccountService,
-    @param:Value("\${app.cookie-secure}") private val secure: Boolean,
-    @param:Value("\${app.public-url}") private val publicUrl: String,
+    private val properties: AppProperties,
 ) : AuthenticationSuccessHandler {
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
@@ -36,12 +36,13 @@ class OAuthSignInHandler(
 
             request.getSession(false)?.invalidate()
             SecurityContextHolder.clearContext()
-            response.addHeader("Set-Cookie", sessionCookie(accounts.issue(user), secure).toString())
-            response.sendRedirect("${publicUrl.trimEnd('/')}/")
+            val cookie = sessionCookie(accounts.issue(user), properties.cookieSecure)
+        response.addHeader("Set-Cookie", cookie.toString())
+            response.sendRedirect("${properties.publicUrl.trimEnd('/')}/")
         } catch (_: Exception) {
             request.getSession(false)?.invalidate()
             SecurityContextHolder.clearContext()
-            response.sendRedirect("${publicUrl.trimEnd('/')}/auth/login?error=provider")
+            response.sendRedirect("${properties.publicUrl.trimEnd('/')}/auth/login?error=provider")
         }
     }
 
@@ -50,7 +51,7 @@ class OAuthSignInHandler(
         val user = session.getAttribute("LINK_USER") as? UUID ?: return null
         val tokenHash = session.getAttribute("LINK_TOKEN") as? String
 
-        require(tokenHash != null && accounts.authenticateTokenHash(tokenHash)?.id == user) {
+        ensure(tokenHash != null && accounts.authenticateTokenHash(tokenHash)?.id == user) {
             "La session d’origine du compte n’est plus valide."
         }
 

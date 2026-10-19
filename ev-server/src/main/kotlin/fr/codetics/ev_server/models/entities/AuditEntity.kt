@@ -7,9 +7,11 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Entity
 @Table(name = "audit_events")
+@Document("audit_events")
 class AuditEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Long? = null,
     var tenantId: UUID = UUID.randomUUID(),

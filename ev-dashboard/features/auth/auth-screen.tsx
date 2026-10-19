@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,14 +10,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
+import { email, isInvalid, lengthBetween, maxLength, required, rules } from "@/lib/form";
+import { revalidateLogic, useForm, useStore } from "@tanstack/react-form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { AuthIntro } from "./auth-intro";
 
 const titles: Record<string, string> = {
@@ -35,53 +37,55 @@ export function AuthScreen({ action }: { action: string }) {
     useApi<{ id: string; name: string; url: string }[]>("auth/providers");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [pending, setPending] = useState(false);
+  const hasTenant = ["login", "forgot-password"].includes(action);
+  const hasName = action === "register";
   const hasEmail = ["login", "register", "forgot-password"].includes(action);
   const hasPassword = ["login", "register", "reset-password"].includes(action);
+  const form = useForm({
+    defaultValues: { tenant: "", name: "", email: "", password: "" },
+    validationLogic: revalidateLogic(),
+    onSubmit: async ({ value }) => {
+      setError("");
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setPending(true);
-    setError("");
+      const parameters = new URLSearchParams(window.location.search);
+      const payload = {
+        tenant: hasTenant ? value.tenant : null,
+        email: hasEmail ? value.email : null,
+        name: hasName ? value.name : null,
+        password: hasPassword ? value.password : null,
+        token: parameters.get("token"),
+      };
+      const paths: Record<string, string> = {
+        login: "auth/signin",
+        register: "auth/signon",
+        "forgot-password": "auth/password/reset/request",
+        "reset-password": "auth/password/reset",
+        "verify-email": "auth/mail/check",
+      };
 
-    const form = new FormData(event.currentTarget);
-    const parameters = new URLSearchParams(window.location.search);
-    const payload = {
-      tenant: form.get("tenant"),
-      email: form.get("email"),
-      name: form.get("name"),
-      password: form.get("password"),
-      token: parameters.get("token"),
-    };
-    const paths: Record<string, string> = {
-      login: "auth/signin",
-      register: "auth/signon",
-      "forgot-password": "auth/password/reset/request",
-      "reset-password": "auth/password/reset",
-      "verify-email": "auth/mail/check",
-    };
+      try {
+        await api(paths[action], {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
 
-    try {
-      await api(paths[action], {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-
-      if (action === "login") {
-        router.replace("/");
-      } else {
-        setMessage(
-          action === "register" || action === "forgot-password"
-            ? "Si votre compte est éligible, vous recevrez un courriel avec les prochaines étapes."
-            : "Votre compte a été mis à jour. Vous pouvez vous connecter.",
+        if (action === "login") {
+          router.replace("/");
+        } else {
+          setMessage(
+            action === "register" || action === "forgot-password"
+              ? "Si votre compte est éligible, vous recevrez un courriel avec les prochaines étapes."
+              : "Votre compte a été mis à jour. Vous pouvez vous connecter.",
+          );
+        }
+      } catch (failure) {
+        setError(
+          failure instanceof Error ? failure.message : "Impossible de traiter cette demande.",
         );
       }
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Impossible de traiter cette demande.");
-    } finally {
-      setPending(false);
-    }
-  }
+    },
+  });
+  const pending = useStore(form.store, (state) => state.isSubmitting);
 
   return (
     <main className="grid min-h-svh lg:grid-cols-2" aria-busy={providersLoading}>
@@ -100,53 +104,148 @@ export function AuthScreen({ action }: { action: string }) {
                 <AlertDescription>{message}</AlertDescription>
               </Alert>
             ) : (
-              <form onSubmit={submit}>
+              <form
+                noValidate
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void form.handleSubmit();
+                }}
+              >
                 <FieldGroup>
-                  {["login", "forgot-password"].includes(action) && (
-                    <Field>
-                      <FieldLabel htmlFor="tenant">Espace client</FieldLabel>
-                      <Input
-                        id="tenant"
-                        name="tenant"
-                        autoComplete="organization"
-                        placeholder="Identifiant de votre espace"
-                        required
-                      />
-                    </Field>
+                  {hasTenant && (
+                    <form.Field
+                      name="tenant"
+                      validators={{
+                        onDynamic: rules(required("Renseignez l’identifiant de votre espace.")),
+                      }}
+                    >
+                      {(field) => {
+                        const invalid = isInvalid(field);
+                        return (
+                          <Field data-invalid={invalid}>
+                            <FieldLabel htmlFor="tenant">Espace client</FieldLabel>
+                            <Input
+                              id="tenant"
+                              name={field.name}
+                              value={field.state.value}
+                              onBlur={field.handleBlur}
+                              onChange={(event) => field.handleChange(event.target.value)}
+                              aria-invalid={invalid}
+                              autoComplete="organization"
+                              placeholder="Identifiant de votre espace"
+                              required
+                            />
+                            {invalid && <FieldError errors={field.state.meta.errors} />}
+                          </Field>
+                        );
+                      }}
+                    </form.Field>
                   )}
-                  {action === "register" && (
-                    <Field>
-                      <FieldLabel htmlFor="name">Nom complet</FieldLabel>
-                      <Input id="name" name="name" autoComplete="name" required />
-                    </Field>
+                  {hasName && (
+                    <form.Field
+                      name="name"
+                      validators={{
+                        onDynamic: rules(
+                          required("Renseignez votre nom."),
+                          maxLength(200, "Le nom contient au plus 200 caractères."),
+                        ),
+                      }}
+                    >
+                      {(field) => {
+                        const invalid = isInvalid(field);
+                        return (
+                          <Field data-invalid={invalid}>
+                            <FieldLabel htmlFor="name">Nom complet</FieldLabel>
+                            <Input
+                              id="name"
+                              name={field.name}
+                              value={field.state.value}
+                              onBlur={field.handleBlur}
+                              onChange={(event) => field.handleChange(event.target.value)}
+                              aria-invalid={invalid}
+                              autoComplete="name"
+                              required
+                            />
+                            {invalid && <FieldError errors={field.state.meta.errors} />}
+                          </Field>
+                        );
+                      }}
+                    </form.Field>
                   )}
                   {hasEmail && (
-                    <Field>
-                      <FieldLabel htmlFor="email">Adresse électronique</FieldLabel>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        autoComplete="username"
-                        placeholder="vous@entreprise.fr"
-                        required
-                        maxLength={320}
-                      />
-                    </Field>
+                    <form.Field
+                      name="email"
+                      validators={{
+                        onDynamic: rules(
+                          required("Renseignez votre adresse électronique."),
+                          email(),
+                        ),
+                      }}
+                    >
+                      {(field) => {
+                        const invalid = isInvalid(field);
+                        return (
+                          <Field data-invalid={invalid}>
+                            <FieldLabel htmlFor="email">Adresse électronique</FieldLabel>
+                            <Input
+                              id="email"
+                              name={field.name}
+                              type="email"
+                              value={field.state.value}
+                              onBlur={field.handleBlur}
+                              onChange={(event) => field.handleChange(event.target.value)}
+                              aria-invalid={invalid}
+                              autoComplete="username"
+                              placeholder="vous@entreprise.fr"
+                              required
+                              maxLength={320}
+                            />
+                            {invalid && <FieldError errors={field.state.meta.errors} />}
+                          </Field>
+                        );
+                      }}
+                    </form.Field>
                   )}
                   {hasPassword && (
-                    <Field>
-                      <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
-                      <Input
-                        id="password"
-                        name="password"
-                        type="password"
-                        autoComplete={action === "login" ? "current-password" : "new-password"}
-                        minLength={action === "login" ? undefined : 16}
-                        maxLength={128}
-                        required
-                      />
-                    </Field>
+                    <form.Field
+                      name="password"
+                      validators={{
+                        onDynamic: rules(
+                          action === "login"
+                            ? required("Renseignez votre mot de passe.")
+                            : lengthBetween(
+                                16,
+                                128,
+                                "Le mot de passe doit contenir entre 16 et 128 caractères.",
+                              ),
+                        ),
+                      }}
+                    >
+                      {(field) => {
+                        const invalid = isInvalid(field);
+                        return (
+                          <Field data-invalid={invalid}>
+                            <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+                            <Input
+                              id="password"
+                              name={field.name}
+                              type="password"
+                              value={field.state.value}
+                              onBlur={field.handleBlur}
+                              onChange={(event) => field.handleChange(event.target.value)}
+                              aria-invalid={invalid}
+                              autoComplete={
+                                action === "login" ? "current-password" : "new-password"
+                              }
+                              minLength={action === "login" ? undefined : 16}
+                              maxLength={128}
+                              required
+                            />
+                            {invalid && <FieldError errors={field.state.meta.errors} />}
+                          </Field>
+                        );
+                      }}
+                    </form.Field>
                   )}
                   {error && (
                     <Alert variant="destructive">
@@ -178,14 +277,14 @@ export function AuthScreen({ action }: { action: string }) {
                 <Separator />
                 <div className="flex flex-col gap-2">
                   {providers?.map((provider) => (
-                    <Button
+                    <a
                       key={provider.id}
-                      nativeButton={false}
-                      variant="outline"
-                      render={<a href={provider.url} />}
+                      href={provider.url}
+                      data-slot="button"
+                      className={buttonVariants({ variant: "outline" })}
                     >
                       Continuer avec {provider.name}
-                    </Button>
+                    </a>
                   ))}
                 </div>
               </>

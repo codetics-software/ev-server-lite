@@ -5,9 +5,11 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Entity
 @Table(name = "mail_outbox")
+@Document("mail_outbox")
 class MailEntity(
     @Id var id: UUID = UUID.randomUUID(),
     var recipient: String = "",

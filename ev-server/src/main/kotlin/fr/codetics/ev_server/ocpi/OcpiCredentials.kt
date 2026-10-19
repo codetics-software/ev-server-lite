@@ -1,12 +1,13 @@
 package fr.codetics.ev_server.ocpi
 
+import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.core.randomToken
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.PartnerEntity
 import fr.codetics.ev_server.repositories.PartnerRepository
 import fr.codetics.ev_server.security.SecretVault
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import tools.jackson.databind.JsonNode
@@ -17,9 +18,7 @@ class OcpiCredentials(
     private val partners: PartnerRepository,
     private val transport: OcpiTransport,
     private val vault: SecretVault,
-    @param:Value("\${app.ocpi.public-url}") private val publicUrl: String,
-    @param:Value("\${app.ocpi.country-code}") private val country: String,
-    @param:Value("\${app.ocpi.party-id}") private val party: String,
+    private val properties: AppProperties,
 ) {
     fun exchange(partner: PartnerEntity, method: String, body: JsonNode?): Any {
         when (method) {
@@ -31,7 +30,7 @@ class OcpiCredentials(
             "DELETE" -> {
                 return db.atomic {
                     val locked =
-                        partners.findForUpdate(partner.id)
+                        db.lock<PartnerEntity>(partner.id)
                             ?: throw OcpiFault(
                                 2001,
                                 "Partenaire indisponible.",
@@ -77,7 +76,7 @@ class OcpiCredentials(
 
         return db.atomic {
             val locked =
-                partners.findForUpdate(partner.id)
+                db.lock<PartnerEntity>(partner.id)
                     ?: throw OcpiFault(2001, "Partenaire indisponible.", HttpStatus.FORBIDDEN)
 
             if (
@@ -114,9 +113,9 @@ class OcpiCredentials(
     private fun ourCredentials(role: String, token: String): Map<String, Any> {
         return mapOf(
             "token" to token,
-            "url" to "${publicUrl.trimEnd('/')}/ocpi/$role/versions",
-            "country_code" to country,
-            "party_id" to party,
+            "url" to "${properties.ocpi.publicUrl.trimEnd('/')}/ocpi/$role/versions",
+            "country_code" to properties.ocpi.countryCode,
+            "party_id" to properties.ocpi.partyId,
             "business_details" to mapOf("name" to "Codetics", "website" to "https://codetics.fr"),
         )
     }

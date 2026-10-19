@@ -28,7 +28,7 @@ internal class AccountAuthenticationFilter(private val accounts: AccountService)
         val user = requestToken(request)?.let(accounts::authenticateToken)
 
         if (user != null) {
-            val authorities = listOf(SimpleGrantedAuthority("ROLE_${user.role}"))
+            val authorities = listOf(SimpleGrantedAuthority("ROLE_${user.role.name}"))
             SecurityContextHolder.getContext().authentication =
                 UsernamePasswordAuthenticationToken(user, null, authorities)
         }

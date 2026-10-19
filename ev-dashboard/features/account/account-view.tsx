@@ -31,8 +31,14 @@ export function AccountView({ user }: { user: User }) {
   }
 
   async function revoke() {
-    await api("auth/signout/all", { method: "POST" });
-    router.replace("/auth/login");
+    setError("");
+
+    try {
+      await api("auth/signout/all", { method: "POST" });
+      router.replace("/auth/login");
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "La déconnexion a échoué. Réessayez.");
+    }
   }
 
   return (

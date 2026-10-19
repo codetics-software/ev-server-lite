@@ -1,16 +1,26 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { money, paymentLabels, type Payment } from "@/features/payments/payment-types";
+import {
+  money,
+  paymentLabels,
+  type Payment,
+  type PaymentState,
+} from "@/features/payments/payment-types";
 import { api } from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePortalAccess } from "./portal-access";
 import { PortalLayout } from "./portal-layout";
 
-const finished = new Set(["COMPLETED", "CANCELLED", "FAILED", "DISPUTED"]);
+const finished: ReadonlySet<PaymentState> = new Set([
+  "COMPLETED",
+  "CANCELLED",
+  "FAILED",
+  "DISPUTED",
+]);
 
 export function SessionScreen({ id, portalPath }: { id: string; portalPath: string }) {
   const { token, ready } = usePortalAccess(id);
@@ -22,13 +32,14 @@ export function SessionScreen({ id, portalPath }: { id: string; portalPath: stri
     if (!token) {
       return;
     }
+    const accessToken = token;
     let active = true;
     let timer: ReturnType<typeof setTimeout>;
     const controller = new AbortController();
     async function refresh() {
       try {
         const result = await api<Payment>(`public/sessions/${id}`, {
-          headers: { "X-Charge-Token": token! },
+          headers: { "X-Charge-Token": accessToken },
           signal: controller.signal,
         });
         if (active) {
@@ -62,7 +73,7 @@ export function SessionScreen({ id, portalPath }: { id: string; portalPath: stri
       setPayment(
         await api<Payment>(`public/sessions/${id}/stop`, {
           method: "POST",
-          headers: { "X-Charge-Token": sessionStorage.getItem(`recharge:${id}`) ?? "" },
+          headers: { "X-Charge-Token": token ?? "" },
         }),
       );
     } catch (failure) {
@@ -113,14 +124,16 @@ export function SessionScreen({ id, portalPath }: { id: string; portalPath: stri
             </p>
           )}
           <dl className="divide-y text-sm">
-            {[
-              ["Crédit payé", payment.prepaidMinor],
-              ["Montant de la recharge", payment.billedMinor],
-              ["Montant remboursé", payment.refundedMinor],
-            ].map(([label, value]) => (
+            {(
+              [
+                ["Crédit payé", payment.prepaidMinor],
+                ["Montant de la recharge", payment.billedMinor],
+                ["Montant remboursé", payment.refundedMinor],
+              ] as const
+            ).map(([label, value]) => (
               <div key={label} className="flex justify-between gap-4 py-3">
                 <dt>{label}</dt>
-                <dd className="tabular-nums">{money(value as number | null, payment.currency)}</dd>
+                <dd className="tabular-nums">{money(value, payment.currency)}</dd>
               </div>
             ))}
           </dl>
@@ -144,9 +157,9 @@ export function SessionScreen({ id, portalPath }: { id: string; portalPath: stri
           <p className="break-all text-xs text-muted-foreground">Référence : {payment.id}</p>
         </section>
       )}
-      <Button nativeButton={false} variant="outline" render={<Link href={portalPath} />}>
+      <Link href={portalPath} data-slot="button" className={buttonVariants({ variant: "outline" })}>
         Retour au point de charge
-      </Button>
+      </Link>
     </PortalLayout>
   );
 }

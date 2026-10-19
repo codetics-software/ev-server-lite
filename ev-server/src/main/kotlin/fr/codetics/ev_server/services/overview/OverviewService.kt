@@ -5,6 +5,7 @@ import fr.codetics.ev_server.models.overview.ConnectorTotal
 import fr.codetics.ev_server.models.overview.OverviewResponse
 import fr.codetics.ev_server.models.overview.SessionTotals
 import fr.codetics.ev_server.models.overview.StationTotals
+import fr.codetics.ev_server.persistence.SessionStatistics
 import fr.codetics.ev_server.repositories.ConnectorRepository
 import fr.codetics.ev_server.repositories.StationRepository
 import fr.codetics.ev_server.repositories.TransactionRepository
@@ -17,6 +18,7 @@ class OverviewService(
     private val stations: StationRepository,
     private val connectors: ConnectorRepository,
     private val sessions: TransactionRepository,
+    private val statistics: SessionStatistics,
 ) {
     fun summarize(tenantId: UUID): OverviewResponse {
         val physicalConnectors =
@@ -36,7 +38,7 @@ class OverviewService(
                 SessionTotals(
                     sessions.countByTenantId(tenantId),
                     sessions.countByTenantIdAndStoppedAtIsNull(tenantId),
-                    sessions.deliveredEnergyWh(tenantId).divide(BigDecimal(1000)),
+                    statistics.deliveredEnergyWh(tenantId).divide(BigDecimal(1000)),
                 ),
             connectors = physicalConnectors.map { (status, count) -> ConnectorTotal(status, count) },
         )

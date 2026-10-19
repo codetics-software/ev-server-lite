@@ -5,9 +5,8 @@ import fr.codetics.ev_server.models.entities.RecordKey
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.data.jpa.repository.JpaRepository
 
-interface RecordRepository : JpaRepository<RecordEntity, RecordKey> {
+interface RecordRepository : StoreRepository<RecordEntity, RecordKey> {
     fun findAllByKeyTenantIdAndKeyKindAndNameContainingIgnoreCase(
         tenant: UUID,
         kind: String,

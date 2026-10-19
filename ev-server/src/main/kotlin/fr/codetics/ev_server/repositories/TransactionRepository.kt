@@ -2,26 +2,21 @@ package fr.codetics.ev_server.repositories
 
 import fr.codetics.ev_server.models.entities.TransactionEntity
 import java.util.UUID
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 
-interface TransactionRepository :
-    JpaRepository<TransactionEntity, Int>, JpaSpecificationExecutor<TransactionEntity> {
+interface TransactionRepository : StoreRepository<TransactionEntity, Int> {
     fun countByTenantId(tenant: UUID): Long
 
     fun countByTenantIdAndStoppedAtIsNull(tenant: UUID): Long
 
-    @Query(
-        """
-        select coalesce(sum(t.meterStopWh - t.meterStartWh), 0)
-        from TransactionEntity t
-        where t.tenantId = :tenant
-          and t.meterStopWh >= t.meterStartWh
-        """
-    )
-    fun deliveredEnergyWh(@Param("tenant") tenant: UUID): java.math.BigDecimal
+    fun findAllByTenantId(tenant: UUID, pageable: Pageable): Page<TransactionEntity>
+
+    fun findAllByTenantIdAndUserId(
+        tenant: UUID,
+        user: UUID,
+        pageable: Pageable,
+    ): Page<TransactionEntity>
 
     fun findByTenantIdAndStationIdAndId(tenant: UUID, station: String, id: Int): TransactionEntity?
 

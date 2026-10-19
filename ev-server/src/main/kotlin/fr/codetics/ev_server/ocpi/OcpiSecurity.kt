@@ -1,6 +1,7 @@
 package fr.codetics.ev_server.ocpi
 
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.PartnerEntity
 import fr.codetics.ev_server.repositories.PartnerRepository
@@ -60,13 +61,13 @@ class OcpiTransport(
     fun validateRemote(url: String, pinned: String): URI {
         val uri = URI(url)
         val expected = URI(pinned)
-        require(uri.scheme == "https" && uri.host != null) {
+        ensure(uri.scheme == "https" && uri.host != null) {
             "L’adresse OCPI distante doit utiliser HTTPS."
         }
-        require(uri.userInfo == null && uri.fragment == null && uri.port in setOf(-1, 443)) {
+        ensure(uri.userInfo == null && uri.fragment == null && uri.port in setOf(-1, 443)) {
             "L’adresse OCPI distante doit utiliser le port 443, sans identifiants ni fragment."
         }
-        require(
+        ensure(
             uri.host.equals(expected.host, true) &&
                 uri.scheme == expected.scheme &&
                 uri.port == expected.port

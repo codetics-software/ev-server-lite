@@ -10,6 +10,7 @@ import java.time.Instant
 import java.util.UUID
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Embeddable
 data class StationKey(
@@ -19,6 +20,7 @@ data class StationKey(
 
 @Entity
 @Table(name = "stations")
+@Document("stations")
 class StationEntity(
     @EmbeddedId var key: StationKey = StationKey(),
     var name: String = "",

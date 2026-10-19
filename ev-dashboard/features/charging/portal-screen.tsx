@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApi } from "@/hooks/use-api";
 import Link from "next/link";
@@ -64,13 +64,13 @@ export function PortalScreen({ workspace, evseId }: { workspace: string; evseId:
             )}
           </section>
           {previous && (
-            <Button
-              nativeButton={false}
-              variant="outline"
-              render={<Link href={`/charge/${workspace}/${evseId}/sessions/${previous}`} />}
+            <Link
+              href={`/charge/${workspace}/${evseId}/sessions/${previous}`}
+              data-slot="button"
+              className={buttonVariants({ variant: "outline" })}
             >
               Retrouver ma session
-            </Button>
+            </Link>
           )}
         </>
       )}

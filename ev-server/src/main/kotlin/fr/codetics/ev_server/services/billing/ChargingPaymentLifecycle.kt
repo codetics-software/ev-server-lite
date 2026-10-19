@@ -1,15 +1,19 @@
 package fr.codetics.ev_server.services.billing
 
 import fr.codetics.ev_server.core.Database
-import fr.codetics.ev_server.models.billing.ChargingTariff
+import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.models.billing.PaymentState
+import fr.codetics.ev_server.models.billing.tariff
 import fr.codetics.ev_server.models.entities.ChargingPaymentEntity
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
 import fr.codetics.ev_server.models.entities.TransactionEntity
+import fr.codetics.ev_server.ocpp.AuthorizationStatus
 import fr.codetics.ev_server.ocpp.OcppCommandQueue
 import fr.codetics.ev_server.repositories.ChargingPaymentRepository
 import fr.codetics.ev_server.repositories.ChargingTokenRepository
+import fr.codetics.ev_server.repositories.TransactionRepository
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.Instant
 import java.util.UUID
 import org.springframework.stereotype.Service
@@ -19,27 +23,34 @@ import org.springframework.stereotype.Service
 class ChargingPaymentLifecycle(
     private val payments: ChargingPaymentRepository,
     private val tokens: ChargingTokenRepository,
+    private val transactions: TransactionRepository,
     private val queue: OcppCommandQueue,
     private val db: Database,
+    private val clock: Clock,
 ) {
-    fun authorization(tenant: UUID, station: String, connector: Int?, uid: String): String? {
+    fun authorization(
+        tenant: UUID,
+        station: String,
+        connector: Int?,
+        uid: String,
+    ): AuthorizationStatus? {
         val order = payments.findByTenantIdAndTokenUid(tenant, uid) ?: return null
         return if (
             order.stationId == station &&
                 (connector == null || order.connectorId == connector) &&
                 order.state == PaymentState.START_REQUESTED &&
-                order.updatedAt.plusSeconds(300).isAfter(Instant.now())
+                order.updatedAt.plus(ChargingTimeouts.START_WINDOW).isAfter(Instant.now(clock))
         )
-            "Accepted"
-        else "Blocked"
+            AuthorizationStatus.Accepted
+        else AuthorizationStatus.Blocked
     }
 
     fun started(transaction: TransactionEntity) {
         val candidate =
             payments.findByTenantIdAndTokenUid(transaction.tenantId, transaction.tokenUid) ?: return
-        val order = requireNotNull(payments.findForUpdate(candidate.id))
+        val order = requireNotNull(db.lock<ChargingPaymentEntity>(candidate.id))
         if (
-            transaction.authorizationStatus != "Accepted" ||
+            transaction.authorizationStatus != AuthorizationStatus.Accepted ||
                 order.state != PaymentState.START_REQUESTED ||
                 order.stationId != transaction.stationId ||
                 order.connectorId != transaction.connectorId
@@ -55,8 +66,9 @@ class ChargingPaymentLifecycle(
         }
         order.transactionId = transaction.id
         order.state = PaymentState.CHARGING
-        order.updatedAt = Instant.now()
-        transaction.tariffSnapshot = db.encode(tariff(order))
+        order.updatedAt = Instant.now(clock)
+        transaction.tariffSnapshot = db.encode(order.tariff())
+        transactions.save(transaction)
         disableToken(order)
         payments.save(order)
     }
@@ -67,17 +79,17 @@ class ChargingPaymentLifecycle(
                 transaction.tenantId,
                 requireNotNull(transaction.id),
             ) ?: return
-        val order = requireNotNull(payments.findForUpdate(candidate.id))
+        val order = requireNotNull(db.lock<ChargingPaymentEntity>(candidate.id))
         if (
             order.state !in setOf(PaymentState.CHARGING, PaymentState.STOP_REQUESTED) ||
                 sampledAt.isBefore(transaction.startedAt) ||
-                sampledAt.isAfter(Instant.now().plusSeconds(300))
+                sampledAt.isAfter(Instant.now(clock).plus(ChargingTimeouts.METER_CLOCK_SKEW))
         )
             return
         order.observedEnergyWh =
             order.observedEnergyWh.max((registerWh - transaction.meterStartWh).max(BigDecimal.ZERO))
         if (
-            tariff(order).amountMinor(order.observedEnergyWh, transaction.startedAt, sampledAt) >=
+            order.tariff().amountMinor(order.observedEnergyWh, transaction.startedAt, sampledAt) >=
                 order.prepaidMinor
         ) {
             requestStop(order)
@@ -91,18 +103,18 @@ class ChargingPaymentLifecycle(
                 transaction.tenantId,
                 requireNotNull(transaction.id),
             ) ?: return
-        val order = requireNotNull(payments.findForUpdate(candidate.id))
+        val order = requireNotNull(db.lock<ChargingPaymentEntity>(candidate.id))
         if (order.state !in setOf(PaymentState.CHARGING, PaymentState.STOP_REQUESTED)) return
         val energy =
             (requireNotNull(transaction.meterStopWh) - transaction.meterStartWh).max(
                 BigDecimal.ZERO
             )
         order.billedMinor =
-            tariff(order)
+            order.tariff()
                 .amountMinor(energy, transaction.startedAt, requireNotNull(transaction.stoppedAt))
                 .coerceAtMost(order.prepaidMinor)
         order.state = PaymentState.SETTLING
-        order.updatedAt = Instant.now()
+        order.updatedAt = Instant.now(clock)
         disableToken(order)
         payments.save(order)
     }
@@ -117,7 +129,7 @@ class ChargingPaymentLifecycle(
                 db.json.valueToTree(mapOf("transactionId" to requireNotNull(order.transactionId))),
             )
         order.state = PaymentState.STOP_REQUESTED
-        order.updatedAt = Instant.now()
+        order.updatedAt = Instant.now(clock)
     }
 
     fun settleWithoutCharging(order: ChargingPaymentEntity, message: String) {
@@ -125,7 +137,7 @@ class ChargingPaymentLifecycle(
         order.billedMinor = 0
         order.state = PaymentState.SETTLING
         order.lastError = message
-        order.updatedAt = Instant.now()
+        order.updatedAt = Instant.now(clock)
         disableToken(order)
     }
 
@@ -135,7 +147,4 @@ class ChargingPaymentLifecycle(
             tokens.save(it)
         }
     }
-
-    private fun tariff(order: ChargingPaymentEntity) =
-        ChargingTariff(order.currency, order.energyPrice, order.timePrice, order.flatPrice)
 }

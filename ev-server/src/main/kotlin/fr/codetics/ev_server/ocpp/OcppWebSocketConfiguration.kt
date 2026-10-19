@@ -32,6 +32,9 @@ class OcppWebSocketConfiguration(
     }
 }
 
+val STATION_ID = Regex("[A-Za-z0-9_-]{1,100}")
+private val TENANT_SLUG = Regex("[a-z0-9-]{1,63}")
+
 private class StationHandshake(
     private val stations: StationRepository,
     private val tenants: TenantRepository,
@@ -54,8 +57,8 @@ private class StationHandshake(
 
             val slug = path[1]
             val station = path[2]
-            require(slug.matches(Regex("[a-z0-9-]{1,63}")))
-            require(station.matches(Regex("[A-Za-z0-9_-]{1,100}")))
+            require(slug.matches(TENANT_SLUG))
+            require(station.matches(STATION_ID))
             accounts.limit("ocpp:${request.remoteAddress?.address?.hostAddress}", 100)
 
             val authorization = requireNotNull(request.headers.getFirst("Authorization"))

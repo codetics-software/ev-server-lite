@@ -1,7 +1,10 @@
 package fr.codetics.ev_server.services.billing
 
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.models.billing.PaymentState
+import fr.codetics.ev_server.models.entities.ChargingPaymentEntity
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.entities.StripeEventEntity
@@ -11,6 +14,7 @@ import fr.codetics.ev_server.repositories.ChargingTokenRepository
 import fr.codetics.ev_server.repositories.StationRepository
 import fr.codetics.ev_server.repositories.StripeEventRepository
 import fr.codetics.ev_server.stripe.PaymentGateway
+import java.time.Clock
 import java.time.Instant
 import java.util.UUID
 import org.springframework.http.HttpStatus
@@ -27,6 +31,7 @@ class StripeWebhookService(
     private val lifecycle: ChargingPaymentLifecycle,
     private val queue: OcppCommandQueue,
     private val db: Database,
+    private val clock: Clock,
 ) {
     fun receive(payload: String, signature: String) {
         val event = gateway.verifyEvent(payload, signature)
@@ -46,7 +51,7 @@ class StripeWebhookService(
                 }
                 .getOrNull() ?: return
         db.atomic {
-            val order = payments.findForUpdate(id) ?: return@atomic true
+            val order = db.lock<ChargingPaymentEntity>(id) ?: return@atomic
             if (order.stripeAccountId != event.accountId)
                 throw ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -57,35 +62,35 @@ class StripeWebhookService(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "Le paiement est en cours d’enregistrement. Réessayez.",
                 )
-            require(order.stripeCheckoutId == event.data.path("id").asText()) {
+            ensure(order.stripeCheckoutId == event.data.path("id").asText()) {
                 "La session Stripe ne correspond pas au paiement."
             }
-            if (events.existsById(event.id)) return@atomic true
+            if (events.existsById(event.id)) return@atomic
             if (
                 event.type in
                     setOf("checkout.session.expired", "checkout.session.async_payment_failed")
             ) {
                 if (order.state == PaymentState.PENDING_PAYMENT) {
                     order.state = PaymentState.CANCELLED
-                    order.updatedAt = Instant.now()
+                    order.updatedAt = Instant.now(clock)
                     lifecycle.disableToken(order)
                 }
             } else if (event.data.path("payment_status").asText() == "paid") {
-                require(
+                ensure(
                     event.data.path("amount_total").longValue() == order.prepaidMinor &&
                         event.data.path("currency").asText().equals(order.currency, true)
                 ) {
                     "Le montant Stripe ne correspond pas au crédit demandé."
                 }
                 val intent = event.data.path("payment_intent").asText()
-                require(intent.startsWith("pi_")) { "Le paiement Stripe est incomplet." }
+                ensure(intent.startsWith("pi_")) { "Le paiement Stripe est incomplet." }
                 if (order.stripePaymentIntentId == null) {
                     order.stripePaymentIntentId = intent
                     val station =
                         stations.findById(StationKey(order.tenantId, order.stationId)).orElse(null)
                     if (
                         order.state != PaymentState.PENDING_PAYMENT ||
-                            order.expiresAt.isBefore(Instant.now()) ||
+                            order.expiresAt.isBefore(Instant.now(clock)) ||
                             station?.enabled != true ||
                             !station.connected
                     ) {
@@ -99,7 +104,7 @@ class StripeWebhookService(
                                 .findById(ChargingTokenKey(order.tenantId, order.tokenUid))
                                 .orElseThrow()
                         token.enabled = true
-                        token.expiresAt = Instant.now().plusSeconds(300)
+                        token.expiresAt = Instant.now(clock).plus(ChargingTimeouts.START_WINDOW)
                         tokens.save(token)
                         order.startCommandId =
                             queue.command(
@@ -114,16 +119,15 @@ class StripeWebhookService(
                                 ),
                             )
                         order.state = PaymentState.START_REQUESTED
-                        order.updatedAt = Instant.now()
+                        order.updatedAt = Instant.now(clock)
                     }
                 } else
-                    require(order.stripePaymentIntentId == intent) {
+                    ensure(order.stripePaymentIntentId == intent) {
                         "Le paiement Stripe a changé."
                     }
             }
             payments.save(order)
             events.save(StripeEventEntity(event.id, event.accountId, event.type))
-            true
         }
     }
 }

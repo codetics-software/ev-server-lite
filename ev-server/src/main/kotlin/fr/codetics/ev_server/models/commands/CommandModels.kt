@@ -8,14 +8,14 @@ import tools.jackson.databind.annotation.JsonNaming
 
 data class CommandInput(val action: String, val payload: Map<String, Any?> = emptyMap())
 
-data class CommandReceipt(val id: UUID, val state: String = "QUEUED")
+data class CommandReceipt(val id: UUID, val state: CommandState = CommandState.QUEUED)
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class CommandResponse(
     val id: UUID,
     val stationId: String,
     val action: String,
-    val state: String,
+    val state: CommandState,
     val result: JsonNode?,
     val createdAt: Instant,
     val completedAt: Instant?,

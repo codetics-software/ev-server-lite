@@ -1,10 +1,13 @@
 package fr.codetics.ev_server.ocpp
 
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.repositories.StationRepository
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.*
@@ -18,6 +21,7 @@ class OcppGateway(
     private val stations: StationRepository,
     private val queue: OcppCommandQueue,
 ) : TextWebSocketHandler(), SubProtocolCapable {
+    private val log = LoggerFactory.getLogger(javaClass)
     private val sessions = ConcurrentHashMap<StationIdentity, WebSocketSession>()
 
     override fun getSubProtocols(): List<String> {
@@ -46,15 +50,13 @@ class OcppGateway(
 
     private fun updateConnectivity(identity: StationIdentity, connected: Boolean) {
         db.atomic {
-            val station = stations.findForUpdate(StationKey(identity.tenant, identity.station))
+            val station = db.lock<StationEntity>(StationKey(identity.tenant, identity.station))
 
             if (station != null) {
                 station.connected = connected
                 station.lastSeen = Instant.now()
                 stations.save(station)
             }
-
-            true
         }
     }
 
@@ -92,7 +94,14 @@ class OcppGateway(
             }
         } catch (fault: OcppFault) {
             sendError(session, id, fault.code, fault.message)
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            log.warn(
+                "Message OCPP non traité (borne {}/{}, message '{}')",
+                station.tenant,
+                station.station,
+                id,
+                error,
+            )
             if (id.isNotBlank()) {
                 sendError(session, id, "InternalError", "Le message n’a pas pu être traité.")
             } else {
@@ -147,7 +156,13 @@ class OcppGateway(
                             )
                         ),
                     )
-                } catch (_: Exception) {
+                } catch (error: Exception) {
+                    log.warn(
+                        "Envoi de la commande {} à la borne {} impossible",
+                        command.id,
+                        station.station,
+                        error,
+                    )
                     queue.fail(command)
                 }
             }

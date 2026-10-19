@@ -1,5 +1,6 @@
 package fr.codetics.ev_server.core
 
+import fr.codetics.ev_server.models.people.UserRole
 import java.util.UUID
 
 data class AppPrincipal(
@@ -7,5 +8,5 @@ data class AppPrincipal(
     val tenantId: UUID,
     val email: String,
     val name: String,
-    val role: String,
+    val role: UserRole,
 )

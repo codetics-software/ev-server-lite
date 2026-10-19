@@ -1,6 +1,5 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:ev_supervision;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
     username: sa
     password: ""
   flyway:
@@ -9,6 +8,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
 app:
+  database-url: ${DATABASE_URL:jdbc:h2:mem:ev_supervision;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
   cookie-secure: false
 server:
   servlet:

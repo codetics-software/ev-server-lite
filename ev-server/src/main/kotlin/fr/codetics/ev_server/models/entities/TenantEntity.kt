@@ -5,9 +5,11 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Entity
 @Table(name = "tenants")
+@Document("tenants")
 class TenantEntity(
     @Id var id: UUID = UUID.randomUUID(),
     var slug: String = "",

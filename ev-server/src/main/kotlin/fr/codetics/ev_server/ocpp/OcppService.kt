@@ -1,6 +1,7 @@
 package fr.codetics.ev_server.ocpp
 
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
 import fr.codetics.ev_server.models.entities.ConnectorEntity
@@ -19,6 +20,7 @@ import fr.codetics.ev_server.repositories.StationRepository
 import fr.codetics.ev_server.repositories.TransactionRepository
 import fr.codetics.ev_server.repositories.UserRepository
 import fr.codetics.ev_server.services.billing.ChargingPaymentLifecycle
+import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 import org.springframework.stereotype.Service
@@ -41,7 +43,7 @@ class OcppService(
 
         return db.atomic {
             val device =
-                stations.findForUpdate(StationKey(tenant, station))
+                db.lock<StationEntity>(StationKey(tenant, station))
                     ?: throw OcppFault("SecurityError", "Borne inconnue.")
 
             if (!device.enabled) {
@@ -59,7 +61,7 @@ class OcppService(
                         "Cet identifiant de message a déjà été utilisé pour une autre demande.",
                     )
                 }
-                return@atomic previous.response
+                return@atomic db.encode(db.decode(previous.response))
             }
 
             device.lastSeen = Instant.now()
@@ -140,30 +142,32 @@ class OcppService(
         station: String,
         uid: String,
         connector: Int? = null,
-    ): String {
+    ): AuthorizationStatus {
         payments.authorization(tenant, station, connector, uid)?.let {
             return it
         }
-        val token = tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null) ?: return "Invalid"
+        val token =
+            tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null)
+                ?: return AuthorizationStatus.Invalid
         val userDisabled =
             token.userId?.let { id -> users.findByTenantIdAndId(tenant, id)?.enabled != true }
                 ?: false
 
         if (!token.enabled || userDisabled) {
-            return "Blocked"
+            return AuthorizationStatus.Blocked
         }
         if (token.expiresAt?.isBefore(Instant.now()) == true) {
-            return "Expired"
+            return AuthorizationStatus.Expired
         }
 
-        return "Accepted"
+        return AuthorizationStatus.Accepted
     }
 
     private fun connector(station: StationEntity, number: Int): ConnectorEntity {
         val key = ConnectorKey(station.key.tenantId, station.key.stationId, number)
 
         return connectors.findById(key).orElse(null)
-            ?: connectors.saveAndFlush(ConnectorEntity(key = key))
+            ?: connectors.save(ConnectorEntity(key = key)).also { db.flush() }
     }
 
     private fun updateStatus(station: StationEntity, payload: JsonNode) {
@@ -200,7 +204,7 @@ class OcppService(
         val status = authorize(tenant, identity, uid, number)
         val token = tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null)
         val transaction =
-            transactions.saveAndFlush(
+            transactions.save(
                 TransactionEntity(
                     tenantId = tenant,
                     stationId = identity,
@@ -211,7 +215,7 @@ class OcppService(
                     meterStartWh = payload.path("meterStart").decimalValue(),
                     authorizationStatus = status,
                 )
-            )
+            ).also { db.flush() }
 
         payments.started(transaction)
         return mapOf("transactionId" to transaction.id, "idTagInfo" to mapOf("status" to status))
@@ -297,31 +301,37 @@ class OcppService(
         if (transaction != null) {
             val active = verifyTransaction(station, transaction, connector)
             values.forEach { reading ->
+                val sampledAt = Instant.parse(reading.path("timestamp").asText())
                 reading.path("sampledValue").forEach { sample ->
-                    if (
-                        sample.path("measurand").asText("Energy.Active.Import.Register") ==
-                            "Energy.Active.Import.Register" &&
-                            sample.path("format").asText("Raw") == "Raw" &&
-                            !sample.has("phase") &&
-                            sample.path("location").asText("Outlet") == "Outlet"
-                    ) {
-                        val value =
-                            sample
-                                .path("value")
-                                .asText()
-                                .takeIf { it.length <= 30 }
-                                ?.toBigDecimalOrNull()
-                        val unit = sample.path("unit").asText("Wh")
-                        if (value != null && value.signum() >= 0 && unit in setOf("Wh", "kWh")) {
-                            payments.observed(
-                                active,
-                                if (unit == "kWh") value * java.math.BigDecimal(1000) else value,
-                                Instant.parse(reading.path("timestamp").asText()),
-                            )
-                        }
-                    }
+                    energyRegisterWh(sample)?.let { payments.observed(active, it, sampledAt) }
                 }
             }
         }
+    }
+
+    private fun energyRegisterWh(sample: JsonNode): BigDecimal? {
+        val register =
+            sample.path("measurand").asText(ENERGY_REGISTER) == ENERGY_REGISTER &&
+                sample.path("format").asText("Raw") == "Raw" &&
+                !sample.has("phase") &&
+                sample.path("location").asText("Outlet") == "Outlet"
+        if (!register) {
+            return null
+        }
+        val value =
+            sample.path("value").asText().takeIf { it.length <= 30 }?.toBigDecimalOrNull()
+                ?: return null
+        if (value.signum() < 0) {
+            return null
+        }
+        return when (sample.path("unit").asText("Wh")) {
+            "Wh" -> value
+            "kWh" -> value * BigDecimal(1000)
+            else -> null
+        }
+    }
+
+    private companion object {
+        const val ENERGY_REGISTER = "Energy.Active.Import.Register"
     }
 }

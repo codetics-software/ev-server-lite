@@ -1,8 +1,32 @@
-const values: Record<string, string> = {
+import type { AuthorizationStatus, CommandState, UserRole } from "./api-types";
+
+export const roleLabels: Record<UserRole, string> = {
   ADMIN: "Administrateur",
   OPERATOR: "Exploitant",
   VIEWER: "Lecteur",
   DRIVER: "Conducteur",
+};
+
+export const authorizationLabels: Record<AuthorizationStatus, string> = {
+  Accepted: "Acceptée",
+  Blocked: "Bloquée",
+  Expired: "Expirée",
+  Invalid: "Invalide",
+};
+
+export const commandStateLabels: Record<CommandState, string> = {
+  QUEUED: "En attente",
+  SENT: "Envoyée",
+  SUCCEEDED: "Réponse reçue",
+  FAILED: "Échec",
+  TIMED_OUT: "Délai dépassé",
+  CANCELLED: "Annulée",
+};
+
+const values: Record<string, string> = {
+  ...roleLabels,
+  ...authorizationLabels,
+  ...commandStateLabels,
   METER: "Compteur",
   SOLAR: "Production solaire",
   BATTERY: "Batterie",
@@ -18,17 +42,7 @@ const values: Record<string, string> = {
   Reserved: "Réservé",
   Unavailable: "Indisponible",
   Faulted: "En défaut",
-  Accepted: "Acceptée",
-  Blocked: "Bloquée",
-  Expired: "Expirée",
-  Invalid: "Invalide",
   ConcurrentTx: "Session déjà en cours",
-  QUEUED: "En attente",
-  SENT: "Envoyée",
-  SUCCEEDED: "Réponse reçue",
-  FAILED: "Échec",
-  TIMED_OUT: "Délai dépassé",
-  CANCELLED: "Annulée",
   NoError: "Aucune",
   ConnectorLockFailure: "Verrouillage impossible",
   EVCommunicationError: "Communication avec le véhicule",

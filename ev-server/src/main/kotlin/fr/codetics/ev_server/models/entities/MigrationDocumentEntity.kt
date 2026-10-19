@@ -10,6 +10,7 @@ import java.time.Instant
 import java.util.UUID
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Embeddable
 data class MigrationDocumentKey(
@@ -20,9 +21,10 @@ data class MigrationDocumentKey(
 
 @Entity
 @Table(name = "migration_documents")
+@Document("migration_documents")
 class MigrationDocumentEntity(
     @EmbeddedId var key: MigrationDocumentKey = MigrationDocumentKey(),
-    var sourceSha256: String = "",
+    @JdbcTypeCode(SqlTypes.CHAR) @Column(length = 64) var sourceSha256: String = "",
     @JdbcTypeCode(SqlTypes.JSON) var document: String = "{}",
     @Column(columnDefinition = "text") var rawDocument: String = "",
     var importedAt: Instant = Instant.now(),

@@ -6,9 +6,11 @@ import jakarta.persistence.Table
 import jakarta.persistence.Version
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Entity
 @Table(name = "public_evses")
+@Document("public_evses")
 class PublicEvseEntity(
     @Id var id: UUID = UUID.randomUUID(),
     var tenantId: UUID = UUID.randomUUID(),

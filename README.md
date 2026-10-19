@@ -1,6 +1,6 @@
 # Codetics Supervision Lite
 
-Une supervision de recharge volontairement légère : un serveur **Kotlin / Spring Boot**, un tableau de bord **Next.js**, une base **PostgreSQL**. Développée par Kevin Vavelin, [Codetics](https://codetics.fr).
+Une supervision de recharge volontairement légère : un serveur **Kotlin / Spring Boot**, un tableau de bord **Next.js**, une base **PostgreSQL** ou **MongoDB**. Développée par Kevin Vavelin, [Codetics](https://codetics.fr).
 
 Le produit couvre les bornes et connecteurs, les commandes OCPP 1.6, les sessions, les utilisateurs et badges RFID, les sites, les tarifs et le paiement public par QR code. L’enregistrement d’un véhicule reste facultatif. Pour des besoins de supervision plus avancés, contactez Codetics.
 
@@ -68,7 +68,12 @@ npm run start
 
 Copiez les exemples [du serveur](ev-server/.env.example) et [du tableau de bord](ev-dashboard/.env.example) dans la configuration de votre hébergeur. Spring Boot ne charge pas automatiquement un fichier `.env` : transmettez ces valeurs comme variables d’environnement.
 
-En production, utilisez PostgreSQL et HTTPS. Flyway applique les migrations ; Hibernate vérifie le schéma sans modifier les tables. Le mandataire inverse doit transmettre les connexions WebSocket OCPP au serveur Java. `EV_SERVER_URL` reste une variable privée du tableau de bord.
+En production, utilisez HTTPS et PostgreSQL ou MongoDB. Le serveur choisit sa base d’après `DATABASE_URL` :
+
+- `jdbc:postgresql://hôte:5432/base` : PostgreSQL, avec `DATABASE_USER` et `DATABASE_PASSWORD`. Flyway applique les migrations ; Hibernate vérifie le schéma sans modifier les tables.
+- `mongodb://utilisateur:secret@hôte:27017/base?replicaSet=rs0` ou `mongodb+srv://…` : MongoDB 8, en replica set ou derrière `mongos`, car les opérations de paiement et OCPP reposent sur des transactions. Les index sont créés au démarrage.
+
+Toute autre adresse arrête le démarrage. Le mandataire inverse doit transmettre les connexions WebSocket OCPP au serveur Java. `EV_SERVER_URL` reste une variable privée du tableau de bord.
 
 ## Espaces clients
 

@@ -4,6 +4,7 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.models.billing.CheckoutRequest
 import fr.codetics.ev_server.models.billing.PaymentState
+import fr.codetics.ev_server.models.commands.CommandState
 import fr.codetics.ev_server.models.entities.*
 import fr.codetics.ev_server.models.entities.ConnectorEntity
 import fr.codetics.ev_server.models.entities.ConnectorKey
@@ -14,6 +15,7 @@ import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.entities.TenantEntity
 import fr.codetics.ev_server.models.entities.WorkspacePaymentSettings
 import fr.codetics.ev_server.models.evses.EvseInput
+import fr.codetics.ev_server.models.people.UserRole
 import fr.codetics.ev_server.ocpp.OcppService
 import fr.codetics.ev_server.repositories.*
 import fr.codetics.ev_server.repositories.ChargingPaymentRepository
@@ -136,7 +138,7 @@ constructor(
                 tenant.id,
                 "admin@example.test",
                 "Administrateur",
-                "ADMIN",
+                UserRole.ADMIN,
             )
         evse =
             evses.save(admin, EvseInput("Parking visiteurs", "BORNE-01", 1, tariff.key.id, true)).id
@@ -351,7 +353,7 @@ constructor(
         pay(id)
         val order = payments.findById(id).orElseThrow()
         val command = commands.findById(requireNotNull(order.startCommandId)).orElseThrow()
-        command.state = "SUCCEEDED"
+        command.state = CommandState.SUCCEEDED
         command.result = "{\"status\":\"Rejected\"}"
         commands.save(command)
         worker.advance(id)

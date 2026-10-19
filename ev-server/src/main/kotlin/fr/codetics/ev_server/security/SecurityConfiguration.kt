@@ -1,7 +1,7 @@
 package fr.codetics.ev_server.security
 
+import fr.codetics.ev_server.core.AppProperties
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
@@ -43,12 +43,11 @@ class SecurityConfiguration {
         accounts: AccountService,
         providers: ProviderRegistry,
         successHandler: OAuthSignInHandler,
-        @Value("\${app.cookie-secure}") secure: Boolean,
-        @Value("\${app.public-url}") publicUrl: String,
+        properties: AppProperties,
     ): SecurityFilterChain {
         val csrfRepository = CookieCsrfTokenRepository.withHttpOnlyFalse()
         csrfRepository.setCookieCustomizer { cookie ->
-            cookie.secure(secure).sameSite("Lax").path("/")
+            cookie.secure(properties.cookieSecure).sameSite("Lax").path("/")
         }
 
         http.csrf { csrf ->
@@ -112,7 +111,7 @@ class SecurityConfiguration {
         }
 
         if (providers.registrations.isNotEmpty()) {
-            configureOAuth(http, providers, successHandler, publicUrl)
+            configureOAuth(http, providers, successHandler, properties.publicUrl)
         }
 
         return http.build()

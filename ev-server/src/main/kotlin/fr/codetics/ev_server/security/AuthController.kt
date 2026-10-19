@@ -1,12 +1,14 @@
 package fr.codetics.ev_server.security
 
 import fr.codetics.ev_server.core.AppPrincipal
+import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.sha256
+import fr.codetics.ev_server.models.people.ChallengeKind
 import fr.codetics.ev_server.repositories.UserRepository
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.web.csrf.CsrfToken
 import org.springframework.web.bind.annotation.GetMapping
@@ -31,7 +33,7 @@ class AuthController(
     private val providers: ProviderRegistry,
     private val db: Database,
     private val users: UserRepository,
-    @param:Value("\${app.cookie-secure}") private val secure: Boolean,
+    private val properties: AppProperties,
 ) {
     @GetMapping("/csrf")
     fun csrf(token: CsrfToken): Map<String, String> {
@@ -58,7 +60,8 @@ class AuthController(
         val user = accounts.login(body.tenant, body.email, body.password, request.remoteAddr)
         requestToken(request)?.let(accounts::revoke)
         request.getSession(false)?.invalidate()
-        response.addHeader("Set-Cookie", sessionCookie(accounts.issue(user), secure).toString())
+        val cookie = sessionCookie(accounts.issue(user), properties.cookieSecure)
+        response.addHeader("Set-Cookie", cookie.toString())
         return user
     }
 
@@ -76,7 +79,10 @@ class AuthController(
     fun logout(request: HttpServletRequest, response: HttpServletResponse): Map<String, Boolean> {
         requestToken(request)?.let(accounts::revoke)
         request.getSession(false)?.invalidate()
-        response.addHeader("Set-Cookie", sessionCookie("", secure, true).toString())
+        response.addHeader(
+            "Set-Cookie",
+            sessionCookie("", properties.cookieSecure, true).toString(),
+        )
         return mapOf("success" to true)
     }
 
@@ -86,7 +92,10 @@ class AuthController(
         response: HttpServletResponse,
     ): Map<String, Boolean> {
         accounts.revokeAll(user.id)
-        response.addHeader("Set-Cookie", sessionCookie("", secure, true).toString())
+        response.addHeader(
+            "Set-Cookie",
+            sessionCookie("", properties.cookieSecure, true).toString(),
+        )
         return mapOf("success" to true)
     }
 
@@ -101,13 +110,13 @@ class AuthController(
         request: HttpServletRequest,
     ): Map<String, Boolean> {
         accounts.limit("reset:${request.remoteAddr}", 20)
-        accounts.requestChallenge(body.tenant, body.email, "RESET")
+        accounts.requestChallenge(body.tenant, body.email, ChallengeKind.RESET)
         return mapOf("accepted" to true)
     }
 
     @PostMapping("/password/reset")
     fun reset(@RequestBody body: CompleteRequest): Map<String, Boolean> {
-        val success = accounts.completeChallenge(body.token, "RESET", body.password)
+        val success = accounts.completeChallenge(body.token, ChallengeKind.RESET, body.password)
         return mapOf("success" to success)
     }
 
@@ -117,13 +126,13 @@ class AuthController(
         request: HttpServletRequest,
     ): Map<String, Boolean> {
         accounts.limit("verify:${request.remoteAddr}", 20)
-        accounts.requestChallenge(body.tenant, body.email, "VERIFY")
+        accounts.requestChallenge(body.tenant, body.email, ChallengeKind.VERIFY)
         return mapOf("accepted" to true)
     }
 
     @PostMapping("/mail/check")
     fun verify(@RequestBody body: CompleteRequest): Map<String, Boolean> {
-        return mapOf("success" to accounts.completeChallenge(body.token, "VERIFY"))
+        return mapOf("success" to accounts.completeChallenge(body.token, ChallengeKind.VERIFY))
     }
 
     @PostMapping("/link/{provider}")
@@ -132,7 +141,7 @@ class AuthController(
         @AuthenticationPrincipal user: AppPrincipal,
         request: HttpServletRequest,
     ): Map<String, String> {
-        require(providers.findByRegistrationId(provider) != null) {
+        ensure(providers.findByRegistrationId(provider) != null) {
             "Ce fournisseur n’est pas configuré."
         }
 

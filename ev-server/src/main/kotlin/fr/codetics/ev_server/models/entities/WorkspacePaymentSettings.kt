@@ -6,9 +6,11 @@ import jakarta.persistence.Table
 import jakarta.persistence.Version
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Entity
 @Table(name = "workspace_payment_settings")
+@Document("workspace_payment_settings")
 class WorkspacePaymentSettings(
     @Id var tenantId: UUID = UUID.randomUUID(),
     var stripeAccountId: String? = null,

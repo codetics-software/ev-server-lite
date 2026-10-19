@@ -9,7 +9,7 @@ data class UserResponse(
     val id: UUID,
     val email: String,
     val displayName: String,
-    val role: String,
+    val role: UserRole,
     val enabled: Boolean,
     val emailVerified: Boolean,
 )

@@ -1,6 +1,7 @@
 package fr.codetics.ev_server.core
 
 import com.stripe.exception.StripeException
+import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -12,6 +13,8 @@ import org.springframework.web.server.ResponseStatusException
 
 @RestControllerAdvice
 class ApiErrors {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     @ExceptionHandler(
         org.springframework.http.converter.HttpMessageNotReadableException::class,
         org.springframework.web.method.annotation.MethodArgumentTypeMismatchException::class,
@@ -31,14 +34,20 @@ class ApiErrors {
         )
     }
 
+    @ExceptionHandler(NotFound::class)
+    fun notFound(error: NotFound): ProblemDetail {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, error.message)
+    }
+
+    @ExceptionHandler(InvalidRequest::class)
+    fun invalid(error: InvalidRequest): ProblemDetail {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, error.message)
+    }
+
     @ExceptionHandler(IllegalArgumentException::class)
-    fun invalid(error: IllegalArgumentException): ProblemDetail {
-        return ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
-            error.message?.takeUnless {
-                it == "Failed requirement." || it.startsWith("For input string")
-            } ?: "Demande invalide.",
-        )
+    fun malformedArgument(error: IllegalArgumentException): ProblemDetail {
+        log.debug("Demande refusée", error)
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Demande invalide.")
     }
 
     @ExceptionHandler(

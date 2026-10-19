@@ -1,6 +1,8 @@
 package fr.codetics.ev_server.services.billing
 
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.billing.CheckoutDetails
 import fr.codetics.ev_server.models.billing.CheckoutRequest
@@ -9,6 +11,7 @@ import fr.codetics.ev_server.models.billing.PaymentState
 import fr.codetics.ev_server.models.entities.ChargingPaymentEntity
 import fr.codetics.ev_server.models.entities.ChargingTokenEntity
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
+import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.repositories.ChargingPaymentRepository
 import fr.codetics.ev_server.repositories.ChargingTokenRepository
@@ -39,7 +42,7 @@ class ChargingCheckoutService(
 ) {
     fun create(workspace: String, evseId: UUID, request: CheckoutRequest): CheckoutResponse {
         PortalAccessToken.validateFormat(request.accessToken)
-        require(request.creditMinor in 500..10000) {
+        ensure(request.creditMinor in 500..10000) {
             "Le crédit doit être compris entre 5 € et 100 €."
         }
         if (!gateway.configured || !vault.configured)
@@ -56,7 +59,7 @@ class ChargingCheckoutService(
         val existing = payments.findByTenantIdAndRequestId(tenant.id, request.requestId)
         if (existing != null) {
             PortalAccessToken.verify(existing.accessTokenHash, request.accessToken)
-            require(existing.evseId == evseId && existing.prepaidMinor == request.creditMinor) {
+            ensure(existing.evseId == evseId && existing.prepaidMinor == request.creditMinor) {
                 "Cette demande de paiement a déjà été utilisée."
             }
             return initialize(existing.id)
@@ -77,12 +80,12 @@ class ChargingCheckoutService(
         val orderId =
             db.atomic {
                 val evse = evses.find(tenant.id, evseId)
-                stations.findForUpdate(StationKey(tenant.id, evse.stationId))
+                db.lock<StationEntity>(StationKey(tenant.id, evse.stationId))
                     ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Borne introuvable.")
                 val raced = payments.findByTenantIdAndRequestId(tenant.id, request.requestId)
                 if (raced != null) {
                     PortalAccessToken.verify(raced.accessTokenHash, request.accessToken)
-                    require(raced.evseId == evseId && raced.prepaidMinor == request.creditMinor) {
+                    ensure(raced.evseId == evseId && raced.prepaidMinor == request.creditMinor) {
                         "Cette demande de paiement a déjà été utilisée."
                     }
                     return@atomic raced.id
@@ -112,7 +115,7 @@ class ChargingCheckoutService(
                         flatPrice = portal.tariff.flatPrice,
                         tokenUid = "Q" + UUID.randomUUID().toString().replace("-", "").take(19),
                     )
-                payments.saveAndFlush(order)
+                payments.save(order).also { db.flush() }
                 tokens.save(
                     ChargingTokenEntity(
                         ChargingTokenKey(tenant.id, order.tokenUid),
@@ -152,7 +155,7 @@ class ChargingCheckoutService(
             )
         val checkout = gateway.createCheckout(details)
         return db.atomic {
-            val saved = requireNotNull(payments.findForUpdate(orderId))
+            val saved = requireNotNull(db.lock<ChargingPaymentEntity>(orderId))
             saved.stripeCheckoutId = checkout.id
             saved.checkoutUrl = checkout.url
             saved.updatedAt = Instant.now()

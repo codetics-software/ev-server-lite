@@ -5,8 +5,7 @@ import fr.codetics.ev_server.models.entities.ChargingTokenKey
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.data.jpa.repository.JpaRepository
 
-interface ChargingTokenRepository : JpaRepository<ChargingTokenEntity, ChargingTokenKey> {
+interface ChargingTokenRepository : StoreRepository<ChargingTokenEntity, ChargingTokenKey> {
     fun findAllByKeyTenantId(tenant: UUID, pageable: Pageable): Page<ChargingTokenEntity>
 }

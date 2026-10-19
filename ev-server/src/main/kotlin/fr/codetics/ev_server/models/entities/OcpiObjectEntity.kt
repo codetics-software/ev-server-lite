@@ -9,6 +9,7 @@ import java.time.Instant
 import java.util.UUID
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Embeddable
 data class OcpiObjectKey(
@@ -21,6 +22,7 @@ data class OcpiObjectKey(
 
 @Entity
 @Table(name = "ocpi_objects")
+@Document("ocpi_objects")
 class OcpiObjectEntity(
     @EmbeddedId var key: OcpiObjectKey = OcpiObjectKey(),
     @JdbcTypeCode(SqlTypes.JSON) var data: String = "{}",

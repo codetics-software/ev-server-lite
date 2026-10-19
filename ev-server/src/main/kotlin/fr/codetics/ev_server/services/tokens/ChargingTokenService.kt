@@ -2,6 +2,7 @@ package fr.codetics.ev_server.services.tokens
 
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.entities.ChargingTokenEntity
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
@@ -32,7 +33,7 @@ class ChargingTokenService(
         }
 
     fun save(body: TokenInput, user: AppPrincipal): MutationResponse {
-        require(body.uid.matches(Regex("[A-Za-z0-9_-]{1,20}"))) {
+        ensure(body.uid.matches(Regex("[A-Za-z0-9_-]{1,20}"))) {
             "L’identifiant du badge OCPP 1.6 doit contenir au plus 20 caractères."
         }
         if (body.userId != null && users.findByTenantIdAndId(user.tenantId, body.userId) == null) {

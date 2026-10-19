@@ -11,6 +11,7 @@ import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.entities.TenantEntity
 import fr.codetics.ev_server.models.entities.UserEntity
+import fr.codetics.ev_server.models.people.UserRole
 import fr.codetics.ev_server.ocpp.OcppService
 import fr.codetics.ev_server.repositories.*
 import fr.codetics.ev_server.repositories.ChargingTokenRepository
@@ -157,7 +158,7 @@ private fun createBrowserFixtures(
                             else -> "Thomas Bernard"
                         },
                     passwordHash = passwords.encode(password),
-                    role = role,
+                    role = UserRole.valueOf(role),
                     emailVerified = true,
                 )
             )

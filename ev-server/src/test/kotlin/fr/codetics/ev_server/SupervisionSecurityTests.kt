@@ -14,6 +14,8 @@ import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.entities.TenantEntity
 import fr.codetics.ev_server.models.entities.UserEntity
+import fr.codetics.ev_server.models.people.ChallengeKind
+import fr.codetics.ev_server.models.people.UserRole
 import fr.codetics.ev_server.ocpp.OcppFault
 import fr.codetics.ev_server.ocpp.OcppService
 import fr.codetics.ev_server.repositories.*
@@ -110,7 +112,7 @@ constructor(
                 email = "${role.lowercase()}@example.test",
                 displayName = "$role test account",
                 passwordHash = passwords.encode("a-long-password-for-testing"),
-                role = role,
+                role = UserRole.valueOf(role),
                 emailVerified = true,
             )
         )
@@ -240,6 +242,15 @@ constructor(
             )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.total").value(0))
+        listOf("(.*[", ".*", "Private meter").forEach { search ->
+            mvc.perform(
+                    get("/api/v1/records/assets")
+                        .param("search", search)
+                        .header(HttpHeaders.AUTHORIZATION, authorization(admin))
+                )
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.total").value(0))
+        }
     }
 
     @Test
@@ -253,7 +264,7 @@ constructor(
 
         val first = ocpp.call(tenant.id, "TEST-01", message, "StartTransaction", payload)
         val replay = ocpp.call(tenant.id, "TEST-01", message, "StartTransaction", payload)
-        assertEquals(first, replay)
+        assertEquals(db.decode(first), db.decode(replay))
         assertEquals(1, transactions.countByTenantId(tenant.id))
 
         val changed =
@@ -298,17 +309,19 @@ constructor(
     @Test
     fun `password reset is single use and revokes existing sessions`() {
         val session = accounts.issue(requireNotNull(accounts.findUser(admin.id)))
-        accounts.requestChallenge(tenant.slug, admin.email, "RESET")
+        accounts.requestChallenge(tenant.slug, admin.email, ChallengeKind.RESET)
         val delivery =
             mail.findAll().last { entry ->
                 entry.recipient == admin.email && entry.body.contains("reset-password")
             }
         val raw = delivery.body.substringAfter("token=").substringBefore('\n')
 
-        assertTrue(accounts.completeChallenge(raw, "RESET", "a-different-long-password"))
+        assertTrue(
+            accounts.completeChallenge(raw, ChallengeKind.RESET, "a-different-long-password")
+        )
         assertNull(accounts.authenticateToken(session))
         assertThrows(ResponseStatusException::class.java) {
-            accounts.completeChallenge(raw, "RESET", "a-different-long-password")
+            accounts.completeChallenge(raw, ChallengeKind.RESET, "a-different-long-password")
         }
     }
 
@@ -509,7 +522,7 @@ constructor(
             tenants.save(TenantEntity(slug = "archive-${UUID.randomUUID()}", name = "Other tenant"))
         val otherAdmin =
             users.save(
-                UserEntity(tenantId = other.id, email = "other@example.test", role = "ADMIN")
+                UserEntity(tenantId = other.id, email = "other@example.test", role = UserRole.ADMIN)
             )
         listOf(admin, otherAdmin).forEach { user ->
             mvc.perform(

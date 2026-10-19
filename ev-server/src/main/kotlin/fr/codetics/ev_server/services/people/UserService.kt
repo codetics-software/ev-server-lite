@@ -2,11 +2,13 @@ package fr.codetics.ev_server.services.people
 
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.entities.UserEntity
 import fr.codetics.ev_server.models.people.CreatedUser
 import fr.codetics.ev_server.models.people.UserInput
 import fr.codetics.ev_server.models.people.UserResponse
+import fr.codetics.ev_server.models.people.UserRole
 import fr.codetics.ev_server.repositories.AccessTokenRepository
 import fr.codetics.ev_server.repositories.UserRepository
 import fr.codetics.ev_server.security.validateEmail
@@ -65,7 +67,7 @@ class UserService(
 
     fun update(id: UUID, body: UserInput, user: AppPrincipal): MutationResponse {
         validateUser(body)
-        require(id != user.id || (body.enabled && body.role == "ADMIN")) {
+        ensure(id != user.id || (body.enabled && body.role == UserRole.ADMIN)) {
             "Vous ne pouvez pas désactiver votre propre compte administrateur ni réduire ses droits."
         }
 
@@ -87,6 +89,5 @@ class UserService(
     private fun validateUser(body: UserInput) {
         validateEmail(body.email)
         require(body.name.isNotBlank() && body.name.length <= 200)
-        require(body.role in setOf("ADMIN", "OPERATOR", "VIEWER", "DRIVER"))
     }
 }

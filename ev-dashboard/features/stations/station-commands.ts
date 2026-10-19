@@ -1,4 +1,4 @@
-export const commands: Record<string, object> = {
+export const commands = {
   GetConfiguration: {},
   RemoteStartTransaction: { idTag: "", connectorId: 1 },
   RemoteStopTransaction: { transactionId: 1 },
@@ -30,4 +30,10 @@ export const commands: Record<string, object> = {
   },
   TriggerMessage: { requestedMessage: "StatusNotification" },
   DataTransfer: { vendorId: "" },
-};
+} satisfies Record<string, object>;
+
+export type CommandAction = keyof typeof commands;
+
+export function isCommandAction(value: string): value is CommandAction {
+  return Object.hasOwn(commands, value);
+}

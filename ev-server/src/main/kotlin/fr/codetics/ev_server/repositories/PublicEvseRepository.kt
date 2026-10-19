@@ -2,9 +2,8 @@ package fr.codetics.ev_server.repositories
 
 import fr.codetics.ev_server.models.entities.PublicEvseEntity
 import java.util.UUID
-import org.springframework.data.jpa.repository.JpaRepository
 
-interface PublicEvseRepository : JpaRepository<PublicEvseEntity, UUID> {
+interface PublicEvseRepository : StoreRepository<PublicEvseEntity, UUID> {
     fun findByTenantIdAndId(tenantId: UUID, id: UUID): PublicEvseEntity?
 
     fun findAllByTenantIdOrderByName(tenantId: UUID): List<PublicEvseEntity>

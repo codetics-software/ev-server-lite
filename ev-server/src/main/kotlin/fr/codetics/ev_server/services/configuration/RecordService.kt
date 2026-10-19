@@ -3,6 +3,7 @@ package fr.codetics.ev_server.services.configuration
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.bounds
+import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.api.PageResponse
 import fr.codetics.ev_server.models.api.RecordInput
@@ -10,6 +11,7 @@ import fr.codetics.ev_server.models.api.RecordResponse
 import fr.codetics.ev_server.models.api.SavedRecord
 import fr.codetics.ev_server.models.entities.RecordEntity
 import fr.codetics.ev_server.models.entities.RecordKey
+import fr.codetics.ev_server.models.people.UserRole
 import fr.codetics.ev_server.repositories.RecordRepository
 import java.time.Instant
 import java.util.UUID
@@ -39,7 +41,7 @@ class RecordService(private val db: Database, private val records: RecordReposit
             throw ResponseStatusException(HttpStatus.NOT_FOUND)
         }
 
-        if ((kind == "settings" || write) && user.role != "ADMIN") {
+        if ((kind == "settings" || write) && user.role != UserRole.ADMIN) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN)
         }
     }
@@ -83,13 +85,13 @@ class RecordService(private val db: Database, private val records: RecordReposit
 
         return db.atomic {
             val record =
-                records.saveAndFlush(
+                records.save(
                     RecordEntity(
                         key = RecordKey(user.tenantId, kind),
                         name = body.name,
                         data = db.encode(body.data),
                     )
-                )
+                ).also { db.flush() }
             db.audit(user.tenantId, user.id.toString(), "RECORD_CREATE", "$kind/${record.key.id}")
 
             SavedRecord(record.key.id, record.revision)
@@ -99,7 +101,7 @@ class RecordService(private val db: Database, private val records: RecordReposit
     fun update(kind: String, id: UUID, body: RecordInput, user: AppPrincipal): SavedRecord {
         authorize(kind, user, true)
         validate(body)
-        require(body.revision != null) {
+        ensure(body.revision != null) {
             "Renseignez la version actuelle pour éviter de remplacer une modification concurrente."
         }
 
@@ -118,7 +120,7 @@ class RecordService(private val db: Database, private val records: RecordReposit
             record.name = body.name
             record.data = db.encode(body.data)
             record.updatedAt = Instant.now()
-            records.saveAndFlush(record)
+            records.save(record).also { db.flush() }
             db.audit(user.tenantId, user.id.toString(), "RECORD_UPDATE", "$kind/$id")
 
             SavedRecord(id, record.revision)
@@ -137,6 +139,6 @@ class RecordService(private val db: Database, private val records: RecordReposit
 
     private fun validate(body: RecordInput) {
         require(body.name.isNotBlank() && body.name.length <= 200)
-        require(db.encode(body.data).length <= 65536) { "Cet élément est trop volumineux." }
+        ensure(db.encode(body.data).length <= 65536) { "Cet élément est trop volumineux." }
     }
 }

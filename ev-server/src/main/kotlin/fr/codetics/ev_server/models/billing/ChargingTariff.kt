@@ -1,5 +1,7 @@
 package fr.codetics.ev_server.models.billing
 
+import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.models.entities.ChargingPaymentEntity
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
@@ -12,13 +14,13 @@ data class ChargingTariff(
     val flatPrice: BigDecimal,
 ) {
     init {
-        require(currency == "EUR") { "Le paiement public est disponible en euros." }
-        require(
+        ensure(currency == "EUR") { "Le paiement public est disponible en euros." }
+        ensure(
             listOf(energyPrice, timePrice, flatPrice).all { it.signum() >= 0 && it.scale() <= 6 }
         ) {
             "Les tarifs doivent être positifs ou nuls, avec au plus six décimales."
         }
-        require(energyPrice.signum() > 0 || timePrice.signum() > 0 || flatPrice.signum() > 0) {
+        ensure(energyPrice.signum() > 0 || timePrice.signum() > 0 || flatPrice.signum() > 0) {
             "Renseignez au moins un tarif supérieur à zéro."
         }
     }
@@ -34,3 +36,5 @@ data class ChargingTariff(
             .longValueExact()
     }
 }
+
+fun ChargingPaymentEntity.tariff() = ChargingTariff(currency, energyPrice, timePrice, flatPrice)

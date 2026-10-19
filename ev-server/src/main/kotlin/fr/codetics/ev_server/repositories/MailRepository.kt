@@ -1,14 +1,10 @@
 package fr.codetics.ev_server.repositories
 
 import fr.codetics.ev_server.models.entities.MailEntity
-import jakarta.persistence.LockModeType
 import java.util.UUID
 import org.springframework.data.domain.Pageable
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Lock
 
-interface MailRepository : JpaRepository<MailEntity, UUID> {
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+interface MailRepository : StoreRepository<MailEntity, UUID> {
     fun findAllBySentAtIsNullAndAttemptsLessThanOrderByCreatedAt(
         attempts: Int,
         pageable: Pageable,

@@ -12,10 +12,3 @@ export function navigationFor(user: User) {
     return !("admin" in section && section.admin && user.role !== "ADMIN");
   });
 }
-
-export const roleLabels: Record<User["role"], string> = {
-  ADMIN: "Administrateur",
-  OPERATOR: "Exploitant",
-  VIEWER: "Lecteur",
-  DRIVER: "Conducteur",
-};

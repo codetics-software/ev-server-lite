@@ -7,6 +7,7 @@ import jakarta.persistence.Table
 import java.io.Serializable
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Embeddable
 data class ConnectorKey(
@@ -17,6 +18,7 @@ data class ConnectorKey(
 
 @Entity
 @Table(name = "connectors")
+@Document("connectors")
 class ConnectorEntity(
     @EmbeddedId var key: ConnectorKey = ConnectorKey(),
     var status: String = "Unavailable",

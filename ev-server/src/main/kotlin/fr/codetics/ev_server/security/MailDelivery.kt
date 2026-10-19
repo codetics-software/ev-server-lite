@@ -1,12 +1,15 @@
 package fr.codetics.ev_server.security
 
+import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.models.entities.MailEntity
 import fr.codetics.ev_server.repositories.AccessTokenRepository
 import fr.codetics.ev_server.repositories.AuthAttemptRepository
 import fr.codetics.ev_server.repositories.AuthChallengeRepository
 import fr.codetics.ev_server.repositories.MailRepository
+import java.time.Duration
 import java.time.Instant
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.PageRequest
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
@@ -21,22 +24,23 @@ class MailDelivery(
     private val challenges: AuthChallengeRepository,
     private val tokens: AccessTokenRepository,
     private val attempts: AuthAttemptRepository,
-    @param:Value("\${app.mail-enabled}") private val enabled: Boolean,
-    @param:Value("\${app.mail-from}") private val from: String,
+    private val properties: AppProperties,
 ) {
     @Scheduled(fixedDelay = 30000)
     fun deliver() {
         db.atomic {
-            if (enabled) {
+            if (properties.mailEnabled) {
                 outbox
                     .findAllBySentAtIsNullAndAttemptsLessThanOrderByCreatedAt(
                         5,
                         PageRequest.of(0, 10),
                     )
+                    .mapNotNull { db.lock<MailEntity>(it.id) }
+                    .filter { it.sentAt == null }
                     .forEach { message ->
                         try {
                             val email = SimpleMailMessage()
-                            email.setFrom(from)
+                            email.setFrom(properties.mailFrom)
                             email.setTo(message.recipient)
                             email.subject = message.subject
                             email.text = message.body
@@ -53,8 +57,7 @@ class MailDelivery(
 
             challenges.deleteAllByExpiresAtBefore(Instant.now())
             tokens.deleteAllByExpiresAtBefore(Instant.now())
-            attempts.deleteAllByWindowStartBefore(Instant.now().minusSeconds(86400))
-            true
+            attempts.deleteAllByWindowStartBefore(Instant.now().minus(Duration.ofDays(1)))
         }
     }
 }

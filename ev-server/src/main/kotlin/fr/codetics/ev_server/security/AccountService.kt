@@ -1,7 +1,10 @@
 package fr.codetics.ev_server.security
 
 import fr.codetics.ev_server.core.AppPrincipal
+import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.core.randomToken
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.AccessTokenEntity
@@ -11,15 +14,18 @@ import fr.codetics.ev_server.models.entities.OAuthIdentityEntity
 import fr.codetics.ev_server.models.entities.OAuthIdentityKey
 import fr.codetics.ev_server.models.entities.TenantEntity
 import fr.codetics.ev_server.models.entities.UserEntity
+import fr.codetics.ev_server.models.people.ChallengeKind
+import fr.codetics.ev_server.models.people.UserRole
 import fr.codetics.ev_server.repositories.AccessTokenRepository
 import fr.codetics.ev_server.repositories.AuthChallengeRepository
 import fr.codetics.ev_server.repositories.MailRepository
 import fr.codetics.ev_server.repositories.OAuthIdentityRepository
 import fr.codetics.ev_server.repositories.TenantRepository
 import fr.codetics.ev_server.repositories.UserRepository
+import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.http.HttpStatus
@@ -38,10 +44,8 @@ class AccountService(
     private val identities: OAuthIdentityRepository,
     private val mail: MailRepository,
     private val rateLimiter: RateLimiter,
-    @param:Value("\${app.token-hours}") private val tokenHours: Long,
-    @param:Value("\${app.signup-enabled}") private val signupEnabled: Boolean,
-    @param:Value("\${app.public-tenant}") private val publicTenant: String,
-    @param:Value("\${app.public-url}") private val publicUrl: String,
+    private val properties: AppProperties,
+    private val clock: Clock,
 ) {
     private val dummyPassword = passwords.encode(randomToken())
 
@@ -77,7 +81,7 @@ class AccountService(
     fun authenticateTokenHash(hash: String): AppPrincipal? {
         val token = tokens.findById(hash).orElse(null) ?: return null
 
-        if (!token.expiresAt.isAfter(Instant.now())) {
+        if (!token.expiresAt.isAfter(Instant.now(clock))) {
             return null
         }
 
@@ -114,7 +118,8 @@ class AccountService(
 
     fun issue(user: AppPrincipal): String {
         val raw = randomToken()
-        val expiresAt = Instant.now().plusSeconds(tokenHours.coerceIn(1, 24) * 3600)
+        val lifetime = Duration.ofHours(properties.tokenHours.coerceIn(1, 24))
+        val expiresAt = Instant.now(clock).plus(lifetime)
 
         tokens.save(
             AccessTokenEntity(tokenHash = sha256(raw), userId = user.id, expiresAt = expiresAt)
@@ -131,18 +136,17 @@ class AccountService(
     fun revokeAll(user: UUID) {
         db.atomic {
             tokens.deleteAllByUserId(user)
-            true
         }
     }
 
     fun validatePassword(password: String) {
-        require(password.length in 16..128) {
+        ensure(password.length in 16..128) {
             "Le mot de passe doit contenir entre 16 et 128 caractères."
         }
     }
 
     fun register(email: String, name: String, password: String) {
-        if (!signupEnabled || publicTenant.isBlank()) {
+        if (!properties.signupEnabled || properties.publicTenant.isBlank()) {
             throw ResponseStatusException(
                 HttpStatus.FORBIDDEN,
                 "L’inscription libre est désactivée.",
@@ -154,7 +158,7 @@ class AccountService(
         require(name.isNotBlank() && name.length <= 200)
 
         db.atomic {
-            val tenant = tenantBySlug(publicTenant)
+            val tenant = tenantBySlug(properties.publicTenant)
             val existing = users.findByTenantIdAndEmail(tenant, email.lowercase())
 
             if (existing == null) {
@@ -167,34 +171,32 @@ class AccountService(
                             passwordHash = passwords.encode(password),
                         )
                     )
-                challenge(user, "VERIFY")
+                challenge(user, ChallengeKind.VERIFY)
             }
-
-            true
         }
     }
 
-    fun requestChallenge(tenant: String, email: String, kind: String) {
+    fun requestChallenge(tenant: String, email: String, kind: ChallengeKind) {
         limit("challenge:$tenant:${email.lowercase()}", 5)
         val organization = tenants.findBySlugAndActiveTrue(tenant) ?: return
         val user = users.findByTenantIdAndEmail(organization.id, email.lowercase()) ?: return
 
-        if (!user.enabled || (kind == "VERIFY" && user.emailVerified)) {
+        if (!user.enabled || (kind == ChallengeKind.VERIFY && user.emailVerified)) {
             return
         }
 
         db.atomic {
             challenge(user, kind)
-            true
         }
     }
 
-    private fun challenge(user: UserEntity, kind: String) {
+    private fun challenge(user: UserEntity, kind: ChallengeKind) {
         val raw = randomToken()
-        val path = if (kind == "RESET") "reset-password" else "verify-email"
-        val action =
-            if (kind == "RESET") "Réinitialiser le mot de passe"
-            else "Vérifier l’adresse électronique"
+        val (path, action) =
+            when (kind) {
+                ChallengeKind.RESET -> "reset-password" to "Réinitialiser le mot de passe"
+                ChallengeKind.VERIFY -> "verify-email" to "Vérifier l’adresse électronique"
+            }
 
         challenges.deleteAllByUserIdAndKind(user.id, kind)
         challenges.save(
@@ -202,32 +204,33 @@ class AccountService(
                 tokenHash = sha256(raw),
                 userId = user.id,
                 kind = kind,
-                expiresAt = Instant.now().plusSeconds(1800),
+                expiresAt = Instant.now(clock).plus(CHALLENGE_TTL),
             )
         )
         mail.save(
             MailEntity(
                 recipient = user.email,
                 subject = "Codetics Supervision — $action",
-                body = "$publicUrl/auth/$path?token=$raw\n\nCe lien expire dans 30 minutes.",
+                body =
+                    "${properties.publicUrl}/auth/$path?token=$raw\n\nCe lien expire dans 30 minutes.",
             )
         )
     }
 
-    fun completeChallenge(raw: String, kind: String, password: String? = null): Boolean {
+    fun completeChallenge(raw: String, kind: ChallengeKind, password: String? = null): Boolean {
         require(raw.length in 40..100)
 
-        if (kind == "RESET") {
+        if (kind == ChallengeKind.RESET) {
             validatePassword(requireNotNull(password))
         }
 
         return db.atomic {
-            val challenge = challenges.findForConsumption(sha256(raw))
+            val challenge = db.lock<AuthChallengeEntity>(sha256(raw))
 
             if (
                 challenge == null ||
                     challenge.kind != kind ||
-                    !challenge.expiresAt.isAfter(Instant.now())
+                    !challenge.expiresAt.isAfter(Instant.now(clock))
             ) {
                 throw ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -237,7 +240,7 @@ class AccountService(
 
             val user = users.findById(challenge.userId).orElseThrow()
 
-            if (kind == "RESET") {
+            if (kind == ChallengeKind.RESET) {
                 user.passwordHash = passwords.encode(password)
                 tokens.deleteAllByUserId(user.id)
             } else {
@@ -299,7 +302,12 @@ class AccountService(
     }
 
     private fun provisionOAuthUser(email: String?, name: String?, verified: Boolean): AppPrincipal {
-        if (!signupEnabled || publicTenant.isBlank() || email.isNullOrBlank() || !verified) {
+        if (
+            !properties.signupEnabled ||
+                properties.publicTenant.isBlank() ||
+                email.isNullOrBlank() ||
+                !verified
+        ) {
             throw ResponseStatusException(
                 HttpStatus.FORBIDDEN,
                 "Associez ce fournisseur depuis un compte existant ou activez l’inscription avec vérification.",
@@ -307,7 +315,7 @@ class AccountService(
         }
 
         validateEmail(email)
-        val tenant = tenantBySlug(publicTenant)
+        val tenant = tenantBySlug(properties.publicTenant)
 
         if (users.findByTenantIdAndEmail(tenant, email.lowercase()) != null) {
             throw ResponseStatusException(
@@ -330,8 +338,12 @@ class AccountService(
     }
 }
 
+private val CHALLENGE_TTL: Duration = Duration.ofMinutes(30)
+private val EMAIL = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
+private val TENANT_SLUG = Regex("[a-z0-9][a-z0-9-]{0,62}")
+
 fun validateEmail(email: String) {
-    require(email.length <= 320 && email.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))) {
+    ensure(email.length <= 320 && email.matches(EMAIL)) {
         "Renseignez une adresse électronique valide."
     }
 }
@@ -343,18 +355,17 @@ class Bootstrap(
     private val accounts: AccountService,
     private val tenants: TenantRepository,
     private val users: UserRepository,
-    @param:Value("\${app.bootstrap.email}") private val email: String,
-    @param:Value("\${app.bootstrap.password}") private val password: String,
-    @param:Value("\${app.bootstrap.tenant}") private val slug: String,
+    private val properties: AppProperties,
 ) : ApplicationRunner {
     override fun run(args: ApplicationArguments) {
+        val (email, password, slug) = properties.bootstrap
         if (email.isBlank()) {
             return
         }
 
         accounts.validatePassword(password)
         validateEmail(email)
-        require(slug.matches(Regex("[a-z0-9][a-z0-9-]{0,62}")))
+        require(slug.matches(TENANT_SLUG))
 
         db.atomic {
             if (users.count() == 0L) {
@@ -368,13 +379,11 @@ class Bootstrap(
                         email = email.trim().lowercase(),
                         displayName = "Administrateur",
                         passwordHash = passwords.encode(password),
-                        role = "ADMIN",
+                        role = UserRole.ADMIN,
                         emailVerified = true,
                     )
                 )
             }
-
-            true
         }
     }
 }

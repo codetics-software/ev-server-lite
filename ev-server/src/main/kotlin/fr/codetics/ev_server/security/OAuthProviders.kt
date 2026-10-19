@@ -1,5 +1,6 @@
 package fr.codetics.ev_server.security
 
+import fr.codetics.ev_server.core.ensure
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.env.Environment
@@ -74,7 +75,7 @@ class OAuthProviders {
             requireNotNull(environment.getProperty("MICROSOFT_TENANT_ID")) {
                 "Renseignez l’identifiant UUID de votre annuaire Entra dans MICROSOFT_TENANT_ID."
             }
-        require(tenant.matches(Regex("[0-9a-fA-F-]{36}"))) {
+        ensure(tenant.matches(Regex("[0-9a-fA-F-]{36}"))) {
             "Un annuaire Microsoft précis est requis."
         }
 

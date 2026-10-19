@@ -13,10 +13,14 @@ import { FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { sections } from "@/features/workspace/navigation";
 import { display, type Row } from "@/lib/api";
-import { fields } from "../config/form-fields";
+import { isInvalid } from "@/lib/form";
 
 import { resourceName } from "../config/resource-names";
-import { useResourceEditor } from "../hooks/use-resource-editor";
+import {
+  useResourceEditor,
+  useResourceForm,
+  validateResourceField,
+} from "../hooks/use-resource-editor";
 import { ResourceField } from "./resource-field";
 
 export function ResourceEditor({
@@ -33,12 +37,7 @@ export function ResourceEditor({
   onSaved: () => void;
 }) {
   const name = resourceName(section);
-  const { pending, error, receipt, existing, isRecord, submit, close } = useResourceEditor(
-    section,
-    record,
-    onClose,
-    onSaved,
-  );
+  const { receipt, setReceipt, close } = useResourceEditor(onClose);
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && close()}>
@@ -67,36 +66,83 @@ export function ResourceEditor({
             <Button onClick={close}>Terminer</Button>
           </div>
         ) : (
-          <form onSubmit={submit} key={String(existing.id || existing.uid || "new")}>
-            <FieldGroup>
-              {(fields[section] || []).map((field) => {
-                return (
-                  <ResourceField
-                    key={field.key}
-                    field={field}
-                    existing={existing}
-                    isRecord={isRecord}
-                  />
-                );
-              })}
-              {section === "cars" && (
-                <FieldDescription>
-                  Les véhicules sont facultatifs : leur enregistrement n’est pas nécessaire pour
-                  recharger.
-                </FieldDescription>
-              )}
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              <Button type="submit" disabled={pending}>
-                {pending ? "Enregistrement…" : "Enregistrer"}
-              </Button>
-            </FieldGroup>
-          </form>
+          <ResourceForm
+            key={`${section}:${String(record?.id ?? record?.uid ?? "new")}`}
+            section={section}
+            record={record}
+            onSaved={onSaved}
+            onReceipt={setReceipt}
+            onClose={close}
+          />
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ResourceForm({
+  section,
+  record,
+  onSaved,
+  onReceipt,
+  onClose,
+}: {
+  section: string;
+  record: Row | null;
+  onSaved: () => void;
+  onReceipt: (receipt: Row) => void;
+  onClose: () => void;
+}) {
+  const { form, fields, pending, error } = useResourceForm({
+    section,
+    record,
+    onSaved,
+    onReceipt,
+    onClose,
+  });
+
+  return (
+    <form
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        void form.handleSubmit();
+      }}
+    >
+      <FieldGroup>
+        {fields.map((config) => (
+          <form.Field
+            key={config.key}
+            name={config.key}
+            validators={{ onDynamic: validateResourceField(config) }}
+          >
+            {(field) => (
+              <ResourceField
+                field={config}
+                value={field.state.value}
+                invalid={isInvalid(field)}
+                errors={field.state.meta.errors}
+                onBlur={field.handleBlur}
+                onChange={field.handleChange}
+              />
+            )}
+          </form.Field>
+        ))}
+        {section === "cars" && (
+          <FieldDescription>
+            Les véhicules sont facultatifs : leur enregistrement n’est pas nécessaire pour
+            recharger.
+          </FieldDescription>
+        )}
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <Button type="submit" disabled={pending}>
+          {pending ? "Enregistrement…" : "Enregistrer"}
+        </Button>
+      </FieldGroup>
+    </form>
   );
 }

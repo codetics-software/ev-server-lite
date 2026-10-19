@@ -1,6 +1,7 @@
 package fr.codetics.ev_server.billing
 
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.persistence.Store
 import fr.codetics.ev_server.repositories.AuditRepository
 import fr.codetics.ev_server.stripe.StripeChargingCheckout
 import fr.codetics.ev_server.stripe.StripeClientProvider
@@ -12,7 +13,7 @@ import javax.crypto.spec.SecretKeySpec
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
-import org.springframework.transaction.support.TransactionTemplate
+import org.springframework.transaction.PlatformTransactionManager
 import tools.jackson.databind.json.JsonMapper
 
 class StripeSignatureTests {
@@ -21,7 +22,8 @@ class StripeSignatureTests {
     private val db =
         Database(
             JsonMapper.builder().build(),
-            mock(TransactionTemplate::class.java),
+            mock(PlatformTransactionManager::class.java),
+            mock(Store::class.java),
             mock(AuditRepository::class.java),
         )
     private val gateway =

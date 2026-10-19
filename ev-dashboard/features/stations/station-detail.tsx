@@ -37,7 +37,9 @@ export function StationDetail({ station, user }: { station: string; user: User }
         </span>
       </div>
       <StationConnectors connectors={data?.connectors ?? []} />
-      {["ADMIN", "OPERATOR"].includes(user.role) && <StationCommandForm station={station} />}
+      {(user.role === "ADMIN" || user.role === "OPERATOR") && (
+        <StationCommandForm station={station} />
+      )}
     </div>
   );
 }

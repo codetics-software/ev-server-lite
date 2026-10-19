@@ -2,7 +2,7 @@ spring:
   application:
     name: ev-supervision-lite
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ev_supervision}
+    url: ${app.database-url}
     username: ${DATABASE_USER:ev_supervision}
     password: ${DATABASE_PASSWORD}
     hikari:
@@ -53,6 +53,7 @@ springdoc:
   swagger-ui:
     path: /api/v1/docs
 app:
+  database-url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ev_supervision}
   public-url: ${APP_PUBLIC_URL:http://localhost:3000}
   cookie-secure: ${COOKIE_SECURE:true}
   workspace-signup-enabled: ${WORKSPACE_SIGNUP_ENABLED:false}

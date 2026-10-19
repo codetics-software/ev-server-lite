@@ -7,6 +7,7 @@ import jakarta.persistence.Table
 import java.io.Serializable
 import java.time.Instant
 import java.util.UUID
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Embeddable
 data class ChargingTokenKey(var tenantId: UUID = UUID.randomUUID(), var uid: String = "") :
@@ -14,6 +15,7 @@ data class ChargingTokenKey(var tenantId: UUID = UUID.randomUUID(), var uid: Str
 
 @Entity
 @Table(name = "charging_tokens")
+@Document("charging_tokens")
 class ChargingTokenEntity(
     @EmbeddedId var key: ChargingTokenKey = ChargingTokenKey(),
     var userId: UUID? = null,

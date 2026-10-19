@@ -2,6 +2,7 @@ package fr.codetics.ev_server.services.stations
 
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.core.randomToken
 import fr.codetics.ev_server.models.api.PageResponse
@@ -10,6 +11,7 @@ import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.stations.ProvisionedStation
 import fr.codetics.ev_server.models.stations.StationInput
 import fr.codetics.ev_server.models.stations.StationResponse
+import fr.codetics.ev_server.ocpp.STATION_ID
 import fr.codetics.ev_server.repositories.ConnectorRepository
 import fr.codetics.ev_server.repositories.StationRepository
 import java.util.UUID
@@ -45,10 +47,10 @@ class StationService(
     }
 
     fun provision(user: AppPrincipal, input: StationInput): ProvisionedStation {
-        require(input.id.matches(Regex("[A-Za-z0-9_-]{1,100}"))) {
+        ensure(input.id.matches(STATION_ID)) {
             "Identifiant de borne invalide."
         }
-        require(input.name.isNotBlank() && input.name.length <= 200) {
+        ensure(input.name.isNotBlank() && input.name.length <= 200) {
             "Le nom de la borne doit contenir entre 1 et 200 caractères."
         }
 
@@ -61,9 +63,9 @@ class StationService(
                 )
             }
             val secret = randomToken()
-            stations.saveAndFlush(
+            stations.save(
                 StationEntity(key, input.name, requireNotNull(passwords.encode(secret)))
-            )
+            ).also { db.flush() }
             db.audit(user.tenantId, user.id.toString(), "STATION_CREATE", input.id)
             ProvisionedStation(input.id, secret)
         }

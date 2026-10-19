@@ -1,4 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+
+const titles: Record<number, string> = {
+  403: "Forbidden",
+  413: "Payload Too Large",
+  502: "Bad Gateway",
+};
+
+function problem(status: number, detail: string) {
+  return NextResponse.json(
+    { status, title: titles[status], detail },
+    {
+      status,
+      headers: { "Content-Type": "application/problem+json", "Cache-Control": "no-store" },
+    },
+  );
+}
+
 export async function proxy(request: NextRequest, path: string) {
   if (
     !/^(api\/v1\/|oauth2\/authorization\/|login\/oauth2\/code\/)/.test(path) ||
@@ -26,16 +43,16 @@ export async function proxy(request: NextRequest, path: string) {
   if (isMutation && !["login/oauth2/code/apple", "api/v1/stripe/webhook"].includes(path)) {
     const allowed = new URL(process.env.APP_PUBLIC_URL || request.nextUrl.origin).origin;
     if (request.headers.get("origin") !== allowed) {
-      return NextResponse.json({ detail: "Origine de la demande non autorisée." }, { status: 403 });
+      return problem(403, "Origine de la demande non autorisée.");
     }
   }
   try {
     if (Number(request.headers.get("content-length") || 0) > 1_048_576) {
-      return new NextResponse(null, { status: 413 });
+      return problem(413, "La demande est trop volumineuse.");
     }
     const body = isMutation ? await request.arrayBuffer() : undefined;
     if (body && body.byteLength > 1_048_576) {
-      return new NextResponse(null, { status: 413 });
+      return problem(413, "La demande est trop volumineuse.");
     }
     if (process.env.EV_LOCAL_TEST_CLASSPATH && process.env.NODE_ENV !== "production") {
       const { localTestRequest } = await import("@/lib/local-test-bridge");
@@ -51,10 +68,13 @@ export async function proxy(request: NextRequest, path: string) {
       );
 
       for (const [key, values] of Object.entries(result.headers)) {
-        if (["content-type", "set-cookie", "location"].includes(key.toLowerCase())) {
+        const name = key.toLowerCase();
+        if (name === "set-cookie") {
           for (const value of values) {
-            response.headers.append(key, value);
+            response.headers.append(name, value);
           }
+        } else if (["content-type", "location", "retry-after"].includes(name) && values.length) {
+          response.headers.set(name, values[values.length - 1]);
         }
       }
 
@@ -84,11 +104,9 @@ export async function proxy(request: NextRequest, path: string) {
     response.headers.set("Cache-Control", "no-store");
     return response;
   } catch {
-    return NextResponse.json(
-      {
-        detail: "Le serveur de supervision est indisponible. Vérifiez la connexion et réessayez.",
-      },
-      { status: 502 },
+    return problem(
+      502,
+      "Le serveur de supervision est indisponible. Vérifiez la connexion et réessayez.",
     );
   }
 }

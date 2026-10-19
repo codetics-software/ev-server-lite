@@ -10,6 +10,7 @@ import java.time.Instant
 import java.util.UUID
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
+import org.springframework.data.mongodb.core.mapping.Document
 
 @Embeddable
 data class RecordKey(
@@ -20,6 +21,7 @@ data class RecordKey(
 
 @Entity
 @Table(name = "records")
+@Document("records")
 class RecordEntity(
     @EmbeddedId var key: RecordKey = RecordKey(),
     var name: String = "",

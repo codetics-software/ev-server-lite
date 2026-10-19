@@ -3,31 +3,79 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { email, isInvalid, lengthBetween, matches, maxLength, required, rules } from "@/lib/form";
+import { revalidateLogic, useForm, useStore } from "@tanstack/react-form";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { AuthIntro } from "./auth-intro";
 
+const inputs = [
+  {
+    name: "name",
+    label: "Nom de l’espace",
+    type: "text",
+    validate: rules(
+      required("Le nom de l’espace est requis."),
+      maxLength(200, "Le nom de l’espace contient au plus 200 caractères."),
+    ),
+  },
+  {
+    name: "slug",
+    label: "Identifiant de l’espace",
+    type: "text",
+    validate: rules(
+      required("L’identifiant de l’espace est requis."),
+      matches(
+        /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/,
+        "L’identifiant doit contenir de 3 à 63 lettres minuscules, chiffres ou tirets.",
+      ),
+    ),
+  },
+  {
+    name: "administratorName",
+    label: "Votre nom",
+    type: "text",
+    validate: rules(
+      required("Le nom de l’administrateur est requis."),
+      maxLength(200, "Le nom contient au plus 200 caractères."),
+    ),
+  },
+  {
+    name: "email",
+    label: "Adresse électronique",
+    type: "email",
+    validate: rules(required("Renseignez votre adresse électronique."), email()),
+  },
+  {
+    name: "password",
+    label: "Mot de passe",
+    type: "password",
+    validate: rules(
+      lengthBetween(16, 128, "Le mot de passe doit contenir entre 16 et 128 caractères."),
+    ),
+  },
+] as const;
+
 export function CreateWorkspace() {
-  const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState(false);
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setPending(true);
-    setError("");
-    const form = new FormData(event.currentTarget);
-    try {
-      await api("workspaces", { method: "POST", body: JSON.stringify(Object.fromEntries(form)) });
-      setCreated(true);
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Impossible de créer l’espace.");
-    } finally {
-      setPending(false);
-    }
-  }
+  const form = useForm({
+    defaultValues: { name: "", slug: "", administratorName: "", email: "", password: "" },
+    validationLogic: revalidateLogic(),
+    onSubmit: async ({ value }) => {
+      setError("");
+      try {
+        await api("workspaces", { method: "POST", body: JSON.stringify(value) });
+        setCreated(true);
+      } catch (failure) {
+        setError(failure instanceof Error ? failure.message : "Impossible de créer l’espace.");
+      }
+    },
+  });
+  const pending = useStore(form.store, (state) => state.isSubmitting);
   return (
     <main className="grid min-h-svh lg:grid-cols-2">
       <AuthIntro />
@@ -45,34 +93,48 @@ export function CreateWorkspace() {
                 de vous connecter.
               </p>
             ) : (
-              <form onSubmit={submit}>
+              <form
+                noValidate
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void form.handleSubmit();
+                }}
+              >
                 <FieldGroup>
-                  {[
-                    ["name", "Nom de l’espace", "text"],
-                    ["slug", "Identifiant de l’espace", "text"],
-                    ["administratorName", "Votre nom", "text"],
-                    ["email", "Adresse électronique", "email"],
-                    ["password", "Mot de passe", "password"],
-                  ].map(([name, label, type]) => (
-                    <Field key={name}>
-                      <FieldLabel htmlFor={name}>{label}</FieldLabel>
-                      <Input
-                        id={name}
-                        name={name}
-                        type={type}
-                        required
-                        maxLength={name === "password" ? 128 : name === "slug" ? 63 : 200}
-                        minLength={name === "password" ? 16 : name === "slug" ? 3 : 1}
-                        pattern={name === "slug" ? "[a-z0-9][a-z0-9-]{1,61}[a-z0-9]" : undefined}
-                        autoComplete={
-                          name === "password"
-                            ? "new-password"
-                            : name === "email"
-                              ? "email"
-                              : undefined
-                        }
-                      />
-                    </Field>
+                  {inputs.map(({ name, label, type, validate }) => (
+                    <form.Field key={name} name={name} validators={{ onDynamic: validate }}>
+                      {(field) => {
+                        const invalid = isInvalid(field);
+                        return (
+                          <Field data-invalid={invalid}>
+                            <FieldLabel htmlFor={name}>{label}</FieldLabel>
+                            <Input
+                              id={name}
+                              name={field.name}
+                              type={type}
+                              value={field.state.value}
+                              onBlur={field.handleBlur}
+                              onChange={(event) => field.handleChange(event.target.value)}
+                              aria-invalid={invalid}
+                              required
+                              maxLength={name === "password" ? 128 : name === "slug" ? 63 : 200}
+                              minLength={name === "password" ? 16 : name === "slug" ? 3 : 1}
+                              pattern={
+                                name === "slug" ? "[a-z0-9][a-z0-9-]{1,61}[a-z0-9]" : undefined
+                              }
+                              autoComplete={
+                                name === "password"
+                                  ? "new-password"
+                                  : name === "email"
+                                    ? "email"
+                                    : undefined
+                              }
+                            />
+                            {invalid && <FieldError errors={field.state.meta.errors} />}
+                          </Field>
+                        );
+                      }}
+                    </form.Field>
                   ))}
                   <p className="text-xs text-muted-foreground">
                     L’identifiant permanent contient 3 à 63 lettres minuscules, chiffres ou tirets.

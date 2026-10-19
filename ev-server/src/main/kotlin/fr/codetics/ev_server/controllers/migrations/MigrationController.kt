@@ -2,6 +2,7 @@ package fr.codetics.ev_server.controllers.migrations
 
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.MigrationDocumentEntity
 import fr.codetics.ev_server.models.entities.MigrationDocumentKey
@@ -32,7 +33,7 @@ class MigrationController(
         @AuthenticationPrincipal user: AppPrincipal,
     ): Map<String, Int> {
         require(collection.matches(Regex("[A-Za-z][A-Za-z0-9_-]{0,79}")))
-        require(exportBytes.size <= 1_048_576) { "Découpez l’export en lots de 1 Mio au maximum." }
+        ensure(exportBytes.size <= 1_048_576) { "Découpez l’export en lots de 1 Mio au maximum." }
         val export =
             try {
                 Charsets.UTF_8.newDecoder()
@@ -62,7 +63,7 @@ class MigrationController(
                             "L’export contient un document JSON invalide.",
                         )
                     }
-                require(document.isObject && document.hasNonNull("_id")) {
+                ensure(document.isObject && document.hasNonNull("_id")) {
                     "Chaque document exporté doit conserver son identifiant _id d’origine."
                 }
 

@@ -1,10 +1,10 @@
 package fr.codetics.ev_server.ocpi
 
+import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.models.entities.PartnerEntity
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.time.Instant
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
@@ -50,7 +50,7 @@ class OcpiController(
     private val transport: OcpiTransport,
     private val credentials: OcpiCredentials,
     private val catalog: OcpiCatalog,
-    @param:Value("\${app.ocpi.public-url}") private val publicUrl: String,
+    private val properties: AppProperties,
 ) {
     private fun partner(
         role: String,
@@ -70,7 +70,7 @@ class OcpiController(
     }
 
     private fun base(role: String): String {
-        return "${publicUrl.trimEnd('/')}/ocpi/$role"
+        return "${properties.ocpi.publicUrl.trimEnd('/')}/ocpi/$role"
     }
 
     @GetMapping("", "/", "/versions", "/versions/")

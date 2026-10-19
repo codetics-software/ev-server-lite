@@ -17,11 +17,12 @@ import {
 } from "@/components/ui/sidebar";
 import { api } from "@/lib/api";
 import type { User } from "@/lib/api-types";
+import { roleLabels } from "@/lib/labels";
 import { IconLogout } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { navigationFor, roleLabels } from "./navigation-access";
+import { navigationFor } from "./navigation-access";
 
 export function WorkspaceSidebar({ user, section }: { user: User; section: string }) {
   const router = useRouter();

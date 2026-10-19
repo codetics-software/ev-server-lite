@@ -1,7 +1,7 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -11,44 +11,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type Row } from "@/lib/api";
+import type { FieldIssue } from "@/lib/form";
 
 import { valueLabel } from "@/lib/labels";
-import { inputValue } from "../resource-format";
+import type { ResourceValue } from "../hooks/use-resource-editor";
 import type { FormField } from "../types";
 
 export function ResourceField({
   field,
-  existing,
-  isRecord,
+  value,
+  invalid,
+  errors,
+  onBlur,
+  onChange,
 }: {
   field: FormField;
-  existing: Row;
-  isRecord: boolean;
+  value: ResourceValue;
+  invalid: boolean;
+  errors: Array<FieldIssue | undefined>;
+  onBlur: () => void;
+  onChange: (value: ResourceValue) => void;
 }) {
-  const aliases: Record<string, string> = {
-    userId: "user_id",
-    expiresAt: "expires_at",
-  };
-  const alias = aliases[field.key];
-  const fallback =
-    field.key === "name"
-      ? existing.name || existing.display_name
-      : (existing[field.key] ?? (alias ? existing[alias] : undefined));
-  const value = (isRecord ? (existing.data as Row)?.[field.key] : undefined) ?? fallback;
-
   return (
-    <Field key={field.key} orientation={field.type === "checkbox" ? "horizontal" : "vertical"}>
+    <Field
+      orientation={field.type === "checkbox" ? "horizontal" : "vertical"}
+      data-invalid={invalid}
+    >
       <FieldLabel htmlFor={`edit-${field.key}`}>{field.label}</FieldLabel>
       {field.options ? (
-        <Select name={field.key} defaultValue={String(value || field.options[0])}>
-          <SelectTrigger id={`edit-${field.key}`} className="w-full">
-            <SelectValue />
+        <Select
+          name={field.key}
+          value={String(value)}
+          onValueChange={(selected) => {
+            if (selected) {
+              onChange(selected);
+            }
+          }}
+        >
+          <SelectTrigger id={`edit-${field.key}`} className="w-full" aria-invalid={invalid}>
+            <SelectValue>
+              {(selected: string | null) => (selected ? valueLabel(selected) : null)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
               {field.options.map((option) => (
-                <SelectItem key={valueLabel(option)} value={valueLabel(option)}>
+                <SelectItem key={option} value={option}>
                   {valueLabel(option)}
                 </SelectItem>
               ))}
@@ -56,7 +64,12 @@ export function ResourceField({
           </SelectContent>
         </Select>
       ) : field.type === "checkbox" ? (
-        <Checkbox id={`edit-${field.key}`} name={field.key} defaultChecked={value !== false} />
+        <Checkbox
+          id={`edit-${field.key}`}
+          name={field.key}
+          checked={value === true}
+          onCheckedChange={(checked) => onChange(checked === true)}
+        />
       ) : (
         <Input
           id={`edit-${field.key}`}
@@ -66,10 +79,14 @@ export function ResourceField({
             field.type === "number" ? "any" : field.type === "datetime-local" ? "0.001" : undefined
           }
           required={field.required}
-          defaultValue={inputValue(value, field.type)}
-          maxLength={field.key === "uid" ? 20 : 320}
+          value={String(value)}
+          onBlur={onBlur}
+          onChange={(event) => onChange(event.target.value)}
+          aria-invalid={invalid}
+          maxLength={field.maxLength ?? 320}
         />
       )}
+      {invalid && <FieldError errors={errors} />}
     </Field>
   );
 }
