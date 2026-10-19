@@ -1,0 +1,17 @@
+export const descriptions: Record<string, string> = {
+  stations: "Connectivity, connector status and remote station controls.",
+  transactions: "Charging activity across your network, with energy measured in kWh.",
+  commands: "Follow queued commands through to the station’s response.",
+  sites: "The places where your charging network operates.",
+  "site-areas": "Group stations by the space and electrical capacity they share.",
+  companies: "Organizations within your workspace.",
+  assets: "Your electrical and energy infrastructure, in one place.",
+  tokens: "Charging credentials and the people who use them.",
+  users: "Control who can access your supervision workspace.",
+  "pricing-definitions": "Maintain pricing definitions for your charging services.",
+  roaming: "Trusted CPO and eMSP connections over OCPI.",
+  cars: "Optional vehicle records. A vehicle is never required to charge.",
+  "charging-station-templates": "Manufacturer and model configuration references.",
+  settings: "Workspace configuration, managed by administrators.",
+  audit: "Access and changes made within your workspace.",
+};

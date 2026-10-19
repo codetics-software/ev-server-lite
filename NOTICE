@@ -1,0 +1,10 @@
+EV Supervision Lite
+Copyright (c) 2026 Kevin Vavelin, Codetics.
+https://codetics.fr
+
+The Kotlin and Next.js implementation and modifications are by Codetics.
+
+shadcn/ui components and their underlying dependencies retain their respective
+MIT and other package licenses. See licenses/shadcn-MIT.txt and package metadata.
+
+Third-party names in this notice identify attribution only, not endorsement.

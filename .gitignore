@@ -1,0 +1,14 @@
+.DS_Store
+.env
+**/.env*
+!**/.env.example
+**/target/
+**/node_modules/
+**/.next/
+**/tsconfig.tsbuildinfo
+.local/
+*.log
+
+.taste-skill/
+.local/
+.claude/

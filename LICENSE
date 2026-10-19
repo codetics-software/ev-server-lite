@@ -1,0 +1,53 @@
+Codetics Attribution License 1.0
+
+Copyright (c) 2026 Kevin Vavelin, Codetics
+
+1. Permission
+
+Subject to the conditions below, permission is granted, free of charge, to use,
+copy, modify, merge, publish, distribute, sublicense and sell copies of the
+original Codetics portions of EV Supervision Lite.
+
+2. Attribution
+
+Every source distribution, binary distribution and deployed copy must retain
+this license and the following attribution:
+
+    EV Supervision Lite — built by Kevin Vavelin, Codetics
+    https://codetics.fr
+
+Applications with a graphical interface must display this attribution in an
+accessible About, Credits or footer area. It must be legible and available to
+users without administrative access. Services without a graphical interface
+must include it in their distributed documentation and API documentation.
+Modified distributions must identify their modifications without suggesting
+that Kevin Vavelin or Codetics endorses them.
+
+3. Third-party material
+
+This license applies only to copyright interests owned by Kevin Vavelin or
+Codetics. Third-party material retains its original license and notices,
+including those in NOTICE and licenses/. Nothing here restricts rights granted
+independently under a third-party license or claims ownership of third-party
+contributions.
+
+4. Trademarks
+
+No right to use the Codetics name or marks is granted except for truthful
+attribution as required above. Attribution does not imply endorsement.
+
+5. Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+6. Compliance
+
+Permission under this license is conditional on compliance with its terms.
+Separate written terms may be obtained from Codetics at https://codetics.fr.
+
+License identifier: LicenseRef-Codetics-Attribution-1.0
+This is a custom license; it is not the unmodified Apache or MIT license.

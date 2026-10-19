@@ -1,0 +1,51 @@
+export const columns: Record<string, [string, string][]> = {
+  stations: [
+    ["name", "Station"],
+    ["id", "Identity"],
+    ["connected", "Connected"],
+    ["vendor", "Manufacturer"],
+    ["last_seen", "Last seen"],
+  ],
+  transactions: [
+    ["id", "Session"],
+    ["station_id", "Station"],
+    ["connector_id", "Connector"],
+    ["started_at", "Started"],
+    ["stopped_at", "Stopped"],
+    ["energy_kwh", "Energy · kWh"],
+  ],
+  commands: [
+    ["action", "Command"],
+    ["station_id", "Station"],
+    ["state", "State"],
+    ["created_at", "Requested"],
+    ["completed_at", "Completed"],
+  ],
+  tokens: [
+    ["uid", "Token"],
+    ["type", "Type"],
+    ["enabled", "Enabled"],
+    ["user_id", "User"],
+    ["expires_at", "Expires"],
+  ],
+  users: [
+    ["display_name", "Name"],
+    ["email", "Email"],
+    ["role", "Role"],
+    ["enabled", "Enabled"],
+    ["email_verified", "Email verified"],
+  ],
+  roaming: [
+    ["name", "Partner"],
+    ["country_code", "Country"],
+    ["party_id", "Party ID"],
+    ["local_role", "Our role"],
+    ["registered", "Registered"],
+  ],
+  audit: [
+    ["action", "Action"],
+    ["actor", "Actor"],
+    ["target", "Target"],
+    ["created_at", "Time"],
+  ],
+};
