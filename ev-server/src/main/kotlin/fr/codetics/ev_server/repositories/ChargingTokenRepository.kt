@@ -10,4 +10,6 @@ interface ChargingTokenRepository : StoreRepository<ChargingTokenEntity, Chargin
     fun findAllByKeyTenantId(tenant: UUID, pageable: Pageable): Page<ChargingTokenEntity>
 
     fun findAllByKeyTenantIdAndUserId(tenant: UUID, user: UUID): List<ChargingTokenEntity>
+
+    fun findAllByKeyTenantIdAndVehicleId(tenant: UUID, vehicle: UUID): List<ChargingTokenEntity>
 }

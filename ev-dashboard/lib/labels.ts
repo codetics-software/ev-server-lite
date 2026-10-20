@@ -140,6 +140,9 @@ const values: Record<string, string> = {
   USER_CREATE: "Création d’un utilisateur",
   USER_UPDATE: "Modification d’un utilisateur",
   TOKEN_SAVE: "Enregistrement d’un badge",
+  STATION_AUTOCHARGE: "Réglage de la recharge automatique",
+  AUTOCHARGE_ENROLL: "Activation de la recharge automatique d’un véhicule",
+  AUTOCHARGE_REVOKE: "Révocation de la recharge automatique d’un véhicule",
   OCPI_PARTNER_CREATE: "Création d’un partenaire d’itinérance",
   OCPI_PARTNER_DISABLE: "Désactivation d’un partenaire",
   OCPI_CREDENTIALS: "Échange des identifiants OCPI",
@@ -226,6 +229,7 @@ const values: Record<string, string> = {
   Type1: "Type 1",
   Type3: "Type 3",
   PUSH: "Envoi par l’équipement",
+  VID: "Véhicule",
 };
 
 export const ocpiModuleLabels: Record<string, string> = {
@@ -290,6 +294,8 @@ const fields: Record<string, string> = {
   registered: "Enregistré",
   remote_url: "Adresse du partenaire",
   vehicle_id: "Véhicule",
+  vid: "Identifiant du véhicule",
+  auto_charge: "Recharge automatique",
   stop_reason: "Motif d’arrêt",
   authorization_status: "Autorisation",
   tariff_snapshot: "Tarif appliqué",

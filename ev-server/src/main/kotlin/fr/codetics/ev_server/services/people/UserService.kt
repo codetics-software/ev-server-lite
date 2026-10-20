@@ -177,6 +177,10 @@ class UserService(
         return db.atomic {
             val account = account(user.tenantId, id)
             chargingTokens.findAllByKeyTenantIdAndUserId(user.tenantId, id).forEach { token ->
+                if (token.vehicleId != null) {
+                    chargingTokens.delete(token)
+                    return@forEach
+                }
                 token.userId = null
                 token.enabled = false
                 token.defaultToken = false

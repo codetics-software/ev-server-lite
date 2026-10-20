@@ -9,4 +9,6 @@ export type Badge = {
   expires_at: string | null;
   default?: boolean;
   last_used_at?: string | null;
+  vehicle_id?: string | null;
+  vehicle_name?: string | null;
 };

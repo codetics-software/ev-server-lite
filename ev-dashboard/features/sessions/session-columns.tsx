@@ -35,7 +35,10 @@ export function sessionColumns({
           onClick={(event) => event.stopPropagation()}
         >
           <span className="font-medium tabular-nums">n° {session.id}</span>
-          <SessionState session={session} />
+          <span className="flex flex-wrap gap-1">
+            <SessionState session={session} />
+            {session.auto_charge && <ToneBadge tone="progress">Automatique</ToneBadge>}
+          </span>
         </Link>
       ),
     },

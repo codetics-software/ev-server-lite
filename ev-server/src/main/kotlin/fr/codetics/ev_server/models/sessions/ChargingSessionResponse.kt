@@ -2,6 +2,7 @@ package fr.codetics.ev_server.models.sessions
 
 import fr.codetics.ev_server.models.entities.TransactionEntity
 import fr.codetics.ev_server.ocpp.AuthorizationStatus
+import fr.codetics.ev_server.ocpp.VehicleIds
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
@@ -39,6 +40,8 @@ data class ChargingSessionResponse(
     val publicPayment: Boolean = false,
     val softStopped: Boolean = false,
     val vehicleId: UUID? = null,
+    val autoCharge: Boolean = false,
+    val vid: String? = null,
     val errors: List<String>? = null,
 ) {
     companion object {
@@ -93,6 +96,8 @@ data class ChargingSessionResponse(
                 publicPayment = publicPayment,
                 softStopped = transaction.softStopped,
                 vehicleId = transaction.vehicleId,
+                autoCharge = VehicleIds.isVid(transaction.tokenUid),
+                vid = transaction.vid,
             )
     }
 }

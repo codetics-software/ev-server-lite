@@ -26,6 +26,16 @@ La notification Stripe signée doit correspondre au compte connecté, à la sess
 
 Le suivi de consommation et de durée demande l’arrêt à l’épuisement du crédit. Le relevé final déclenche le calcul et le remboursement du solde. Les opérations Stripe sont reprises avec des clés d’idempotence ; le suivi ne prétend jamais qu’une borne est arrêtée avant sa confirmation.
 
+## Recharge automatique (AutoCharge)
+
+La borne identifie le véhicule par son adresse MAC (EVCCID), transmise en OCPP 1.6 sous la forme `VID:92D50A693F80` dans `Authorize` puis `StartTransaction`. Cet identifiant n’est pas un secret : il peut être copié. La fonction est donc désactivée par défaut et entourée de garde-fous.
+
+- Un administrateur l’active borne par borne. Le serveur envoie alors la clé `AutoChargeEnabled` à la borne, et la resynchronise au démarrage. Le serveur refuse les identifiants `VID:` d’une borne désactivée, quel que soit son paramétrage.
+- Un `Authorize` n’est accepté que dans les 30 secondes qui suivent le branchement observé sur un connecteur. Un `StartTransaction` doit concerner le connecteur ayant reçu cet identifiant, ou arriver dans les deux minutes suivant le branchement. Le débranchement efface l’identifiant observé.
+- Un conducteur enregistre son véhicule à partir d’une de ses sessions des dernières 24 heures, pendant laquelle la borne a transmis l’identifiant. Seul un administrateur peut saisir une adresse à la main. Un identifiant ne peut appartenir qu’à un seul véhicule.
+- L’identifiant enregistré est un badge de type `VID` lié à un utilisateur et à un véhicule. Il suit les mêmes règles que les autres badges (activation, expiration, contrôle d’accès du site) et ne passe jamais par l’itinérance. Il est révoqué à la suppression du véhicule ou de l’utilisateur, ainsi qu’au changement de propriétaire du véhicule.
+- Un identifiant inconnu est refusé sans notification. La borne revient au parcours habituel : badge, application ou QR code.
+
 ## Persistance
 
 La base de production est PostgreSQL ou MongoDB, choisie au démarrage d’après le schéma de `DATABASE_URL`. Les deux partagent les mêmes entités, les mêmes dépôts Spring Data et la même API : seules la configuration et quelques opérations du paquet `persistence` diffèrent.

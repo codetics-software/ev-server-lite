@@ -44,6 +44,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { StationCommandForm } from "./station-command-form";
 import { StationActionDialog, StationActionMenu, type ActionRequest } from "./station-actions";
+import { StationAutoCharge } from "./station-autocharge";
 import { StationCharging } from "./station-charging";
 import { StationCommandsLog } from "./station-commands-log";
 import { StationConnectorsPanel } from "./station-connectors-panel";
@@ -65,6 +66,7 @@ export function StationDetailScreen({ id }: { id: string }) {
   const { user } = useWorkspaceSession();
   const router = useRouter();
   const [revision, refresh] = useRevision();
+  const [commands, refreshCommands] = useRevision();
   const [request, setRequest] = useState<ActionRequest | null>(null);
   const [secret, setSecret] = useState<ProvisionedStation | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -111,6 +113,7 @@ export function StationDetailScreen({ id }: { id: string }) {
               {!station.enabled ? "Désactivée" : station.connected ? "Connectée" : "Hors ligne"}
             </ToneBadge>
             {station.public && <ToneBadge tone="progress">Publique</ToneBadge>}
+            {station.auto_charge && <ToneBadge tone="progress">Recharge automatique</ToneBadge>}
             <span className="text-xs text-muted-foreground">
               Dernier signal {relative(station.last_seen)}
             </span>
@@ -215,12 +218,21 @@ export function StationDetailScreen({ id }: { id: string }) {
         <TabsContent value="connectors" className="pt-4">
           <StationConnectorsPanel station={station} canOperate={operate} onAction={setRequest} />
         </TabsContent>
-        <TabsContent value="properties" className="pt-4">
+        <TabsContent value="properties" className="flex flex-col gap-6 pt-4">
           <StationProperties
             key={`${station.name}:${station.site_area_id}:${station.connectors?.length}`}
             station={station}
             canEdit={operate}
             onSaved={refresh}
+          />
+          <StationAutoCharge
+            station={station}
+            canEdit={admin}
+            onChanged={() => {
+              refresh();
+              refreshCommands();
+            }}
+            onShowCommands={() => setTab("commands")}
           />
         </TabsContent>
         <TabsContent value="parameters" className="pt-4">
@@ -236,7 +248,7 @@ export function StationDetailScreen({ id }: { id: string }) {
           <StationEvents stationId={station.id} />
         </TabsContent>
         <TabsContent value="commands" className="pt-4">
-          <StationCommandsLog stationId={station.id} revision={0} />
+          <StationCommandsLog stationId={station.id} revision={commands} />
         </TabsContent>
         {admin && (
           <TabsContent value="advanced" className="max-w-2xl pt-4">

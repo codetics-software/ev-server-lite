@@ -99,12 +99,21 @@ function MyBadges() {
     {
       id: "badge",
       header: "Badge",
-      cell: (badge) => (
-        <span className="flex flex-col">
-          <span className="font-medium">{badge.visual_id || badge.uid}</span>
-          <span className="text-xs text-muted-foreground">{badge.description ?? badge.uid}</span>
-        </span>
-      ),
+      cell: (badge) =>
+        badge.vehicle_id ? (
+          <span className="flex flex-col items-start gap-1">
+            <span className="font-mono text-xs font-medium">{badge.uid}</span>
+            <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <ToneBadge tone="progress">Véhicule</ToneBadge>
+              {badge.vehicle_name ?? badge.description}
+            </span>
+          </span>
+        ) : (
+          <span className="flex flex-col">
+            <span className="font-medium">{badge.visual_id || badge.uid}</span>
+            <span className="text-xs text-muted-foreground">{badge.description ?? badge.uid}</span>
+          </span>
+        ),
     },
     {
       id: "state",

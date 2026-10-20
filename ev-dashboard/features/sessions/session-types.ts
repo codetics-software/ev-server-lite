@@ -26,6 +26,8 @@ export type ChargingSession = {
   invoice_id?: string | null;
   roaming_partner?: string | null;
   public_payment?: boolean;
+  auto_charge?: boolean;
+  vid?: string | null;
   errors?: string[];
 };
 

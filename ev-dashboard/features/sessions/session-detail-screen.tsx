@@ -3,10 +3,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InvoiceDownload } from "@/features/billing/invoice-download";
+import { AutoChargeOffer } from "@/features/cars/autocharge-offer";
 import { ConfirmButton } from "@/features/shared/confirm-button";
 import { PageHeader } from "@/features/shared/page-header";
 import { EmptyState, ErrorState, LoadingState } from "@/features/shared/states";
-import { ErrorBadges, StateBadge } from "@/features/shared/status-badge";
+import { ErrorBadges, StateBadge, ToneBadge } from "@/features/shared/status-badge";
 import { useAction } from "@/features/shared/use-action";
 import { canWrite, isAdmin, isStaff, useWorkspace } from "@/features/workspace/workspace-context";
 import { useApi, useRevision } from "@/hooks/use-api";
@@ -84,6 +85,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
         meta={
           <>
             <SessionState session={session} />
+            {session.auto_charge && <ToneBadge tone="progress">Recharge automatique</ToneBadge>}
             {session.billing_status && session.billing_status !== "NONE" && (
               <StateBadge state={session.billing_status} />
             )}
@@ -162,6 +164,9 @@ export function SessionDetailScreen({ id }: { id: string }) {
         />
         <Metric label="Prix" value={money(session.price, session.currency)} />
       </dl>
+      {session.vid && !session.auto_charge && session.user_id === user.id && (
+        <AutoChargeOffer vid={session.vid} />
+      )}
       {session.errors && session.errors.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="text-muted-foreground">Anomalies :</span>
@@ -225,7 +230,18 @@ export function SessionDetailScreen({ id }: { id: string }) {
                   )}
                 </Detail>
               )}
-              <Detail label="Badge">{display(session.token_uid)}</Detail>
+              <Detail label={session.auto_charge ? "Identifiant" : "Badge"}>
+                {session.auto_charge ? (
+                  <span className="font-mono">{display(session.token_uid)}</span>
+                ) : (
+                  display(session.token_uid)
+                )}
+              </Detail>
+              {session.vid && (
+                <Detail label="Véhicule identifié">
+                  <span className="font-mono">{session.vid}</span>
+                </Detail>
+              )}
               <Detail label="Début">{date(session.started_at)}</Detail>
               <Detail label="Fin">{active ? "En cours" : date(session.stopped_at)}</Detail>
               <Detail label="Batterie">
@@ -233,7 +249,10 @@ export function SessionDetailScreen({ id }: { id: string }) {
                   ? `${percent(session.state_of_charge_start)} → ${percent(session.state_of_charge)}`
                   : "—"}
               </Detail>
-              <Detail label="Autorisation">{display(session.authorization_status)}</Detail>
+              <Detail label="Autorisation">
+                {display(session.authorization_status)}
+                {session.auto_charge && " · recharge automatique"}
+              </Detail>
               <Detail label="Motif d’arrêt">{display(session.stop_reason)}</Detail>
               {session.roaming_partner && (
                 <Detail label="Partenaire d’itinérance">{session.roaming_partner}</Detail>

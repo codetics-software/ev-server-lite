@@ -3,6 +3,7 @@ package fr.codetics.ev_server.ocpp
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.core.sha256
+import fr.codetics.ev_server.models.entities.ChargingTokenEntity
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
 import fr.codetics.ev_server.models.entities.ConnectorEntity
 import fr.codetics.ev_server.models.entities.ConnectorKey
@@ -14,6 +15,7 @@ import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationEventEntity
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.entities.TransactionEntity
+import fr.codetics.ev_server.models.organization.CarData
 import fr.codetics.ev_server.repositories.ChargingTokenRepository
 import fr.codetics.ev_server.repositories.ConnectorRepository
 import fr.codetics.ev_server.repositories.MeterValueRepository
@@ -124,9 +126,7 @@ class OcppService(
                 val uid = payload.path("idTag").asText()
                 val decision = authorize(station, uid)
                 record(station, "AUTHORIZE", status = decision.status.name, info = uid)
-                if (decision.status != AuthorizationStatus.Accepted) {
-                    events.publishEvent(BadgeRejected(station, uid, decision.status))
-                }
+                rejected(station, uid, decision.status)
                 mapOf("idTagInfo" to mapOf("status" to decision.status))
             }
             "StatusNotification" -> {
@@ -189,9 +189,22 @@ class OcppService(
         val status: AuthorizationStatus,
         val userId: UUID? = null,
         val partnerId: UUID? = null,
+        val vehicleId: UUID? = null,
     )
 
-    private fun authorize(station: StationEntity, uid: String, connector: Int? = null): Decision {
+    private fun rejected(station: StationEntity, uid: String, status: AuthorizationStatus) {
+        if (status == AuthorizationStatus.Accepted) return
+        if (VehicleIds.isVid(uid) && status == AuthorizationStatus.Invalid) return
+        events.publishEvent(BadgeRejected(station, uid, status))
+    }
+
+    private fun authorize(
+        station: StationEntity,
+        uid: String,
+        connector: Int? = null,
+        stopping: Boolean = false,
+    ): Decision {
+        if (VehicleIds.isVid(uid)) return authorizeVehicle(station, uid, connector, stopping)
         val tenant = station.key.tenantId
         payments.authorization(tenant, station.key.stationId, connector, uid)?.let {
             return Decision(it)
@@ -205,6 +218,57 @@ class OcppService(
             return Decision(AuthorizationStatus.Invalid)
         }
 
+        return permit(station, token)
+    }
+
+    private fun authorizeVehicle(
+        station: StationEntity,
+        raw: String,
+        number: Int?,
+        stopping: Boolean,
+    ): Decision {
+        val uid = VehicleIds.normalize(raw) ?: return Decision(AuthorizationStatus.Invalid)
+        if (!station.autoCharge) return Decision(AuthorizationStatus.Invalid)
+        if (!stopping && !plugged(station, uid, number)) return Decision(AuthorizationStatus.Invalid)
+
+        val tenant = station.key.tenantId
+        val token =
+            tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null)?.takeIf {
+                it.type == VehicleIds.TOKEN_TYPE && it.userId != null && it.vehicleId != null
+            } ?: return Decision(AuthorizationStatus.Invalid)
+        val car = organization.find(tenant, "cars", requireNotNull(token.vehicleId), CarData::class.java)
+        if (car == null || car.data.userId != token.userId) return Decision(AuthorizationStatus.Invalid)
+
+        return permit(station, token).copy(vehicleId = token.vehicleId)
+    }
+
+    private fun plugged(station: StationEntity, uid: String, number: Int?): Boolean {
+        val now = Instant.now()
+        fun within(plug: ConnectorEntity, window: Duration) =
+            plug.pluggedAt?.let { !it.plus(window).isBefore(now) } == true
+
+        if (number != null) {
+            val plug = connector(station, number)
+            if (plug.vid != uid && !(plug.vid == null && within(plug, VehicleIds.START_WINDOW))) return false
+            plug.vid = uid
+            connectors.save(plug)
+            return true
+        }
+
+        val candidates =
+            connectors
+                .findAllByKeyTenantIdAndKeyStationIdOrderByKeyConnectorId(station.key.tenantId, station.key.stationId)
+                .filter { it.key.connectorId > 0 }
+                .filter { it.vid == uid || (it.vid == null && within(it, VehicleIds.AUTHORIZE_WINDOW)) }
+        candidates.singleOrNull()?.let {
+            it.vid = uid
+            connectors.save(it)
+        }
+        return candidates.isNotEmpty()
+    }
+
+    private fun permit(station: StationEntity, token: ChargingTokenEntity): Decision {
+        val tenant = station.key.tenantId
         val owner = token.userId?.let { id -> users.findByTenantIdAndId(tenant, id) }
         val userDisabled = token.userId != null && (owner == null || !owner.enabled || owner.deletedAt != null)
 
@@ -250,6 +314,13 @@ class OcppService(
         connector.status = payload.path("status").asText()
         connector.errorCode = payload.path("errorCode").asText()
         connector.statusAt = timestamp
+        if (connector.status in VehicleIds.PLUGGED && previous !in VehicleIds.PLUGGED) {
+            connector.pluggedAt = Instant.now()
+            connector.vid = null
+        } else if (connector.status !in VehicleIds.PLUGGED && connector.status != "Faulted") {
+            connector.pluggedAt = null
+            connector.vid = null
+        }
         connectors.save(connector)
 
         if (previous != connector.status || previousError != connector.errorCode) {
@@ -281,8 +352,9 @@ class OcppService(
             throw OcppFault("GenericError", "Une session est déjà en cours sur ce connecteur.")
         }
 
-        val uid = payload.path("idTag").asText()
+        val uid = payload.path("idTag").asText().let { VehicleIds.normalize(it) ?: it }
         val decision = authorize(station, uid, number)
+        val vid = connector(station, number).vid
         val location = organization.location(station)
         val transaction =
             transactions.save(
@@ -292,7 +364,10 @@ class OcppService(
                     connectorId = number,
                     tokenUid = uid,
                     userId = decision.userId,
-                    vehicleId = decision.userId?.let { users.findByTenantIdAndId(tenant, it)?.defaultCarId },
+                    vehicleId =
+                        decision.vehicleId
+                            ?: decision.userId?.let { users.findByTenantIdAndId(tenant, it)?.defaultCarId },
+                    vid = vid,
                     startedAt = Instant.parse(payload.path("timestamp").asText()),
                     meterStartWh = payload.path("meterStart").decimalValue(),
                     authorizationStatus = decision.status,
@@ -304,9 +379,7 @@ class OcppService(
             ).also { db.flush() }
 
         payments.started(transaction)
-        if (decision.status != AuthorizationStatus.Accepted) {
-            events.publishEvent(BadgeRejected(station, uid, decision.status))
-        }
+        rejected(station, uid, decision.status)
         events.publishEvent(TransactionStarted(station, transaction))
         return mapOf(
             "transactionId" to transaction.id,
@@ -344,7 +417,7 @@ class OcppService(
 
         val uid = payload.get("idTag")?.asText() ?: transaction.tokenUid
         payments.stopped(transaction)
-        return mapOf("idTagInfo" to mapOf("status" to authorize(station, uid).status))
+        return mapOf("idTagInfo" to mapOf("status" to authorize(station, uid, stopping = true).status))
     }
 
     fun close(

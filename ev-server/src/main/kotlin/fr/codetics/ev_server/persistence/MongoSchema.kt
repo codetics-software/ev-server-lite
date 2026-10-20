@@ -44,6 +44,7 @@ class MongoSchema(private val mongo: MongoTemplate) : InitializingBean {
             "oauth_identities" to index("userId" to ASC),
             "records" to index("_id.tenantId" to ASC, "_id.kind" to ASC, "name" to ASC),
             "charging_tokens" to index("_id.tenantId" to ASC, "userId" to ASC),
+            "charging_tokens" to index("_id.tenantId" to ASC, "vehicleId" to ASC),
             "charging_transactions" to index("tenantId" to ASC, "startedAt" to DESC),
             "charging_transactions" to
                 index(

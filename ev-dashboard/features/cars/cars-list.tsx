@@ -17,6 +17,8 @@ import type { RecordItem } from "@/lib/api-types";
 import { display, kw, kwh } from "@/lib/format";
 import { IconCar, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
+import { AutoChargeOffer } from "./autocharge-offer";
+import { AutoChargePanel } from "./autocharge-panel";
 import { CarForm } from "./car-forms";
 
 function columns(users?: Map<string, string>): Column<RecordItem>[] {
@@ -82,6 +84,7 @@ export function MyCars() {
   const action = useAction();
   return (
     <section className="flex flex-col gap-4" aria-label="Mes véhicules">
+      <AutoChargeOffer revision={revision} onEnrolled={refresh} />
       <Button className="w-fit" onClick={() => setEditing(null)}>
         <IconPlus data-icon="inline-start" />
         Ajouter un véhicule
@@ -122,6 +125,7 @@ export function MyCars() {
             refresh();
           }}
         />
+        {editing && <AutoChargePanel car={editing} mine onChanged={refresh} />}
         {editing && (
           <div className="border-t pt-4">
             <ConfirmButton
@@ -194,6 +198,7 @@ export function CarsList({ userId }: { userId?: string }) {
             refresh();
           }}
         />
+        {editing && <AutoChargePanel car={editing} mine={false} />}
         {editing && (
           <div className="border-t pt-4">
             <ConfirmButton

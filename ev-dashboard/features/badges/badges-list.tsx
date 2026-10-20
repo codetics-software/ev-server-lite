@@ -19,10 +19,15 @@ import { EmptyState, ErrorState, ListState } from "@/features/shared/states";
 import { ToneBadge } from "@/features/shared/status-badge";
 import { useAction } from "@/features/shared/use-action";
 import { usePaged } from "@/features/shared/use-paged";
-import { canWrite, isAdmin, useWorkspace } from "@/features/workspace/workspace-context";
+import {
+  canWrite,
+  isAdmin,
+  useComponent,
+  useWorkspace,
+} from "@/features/workspace/workspace-context";
 import { api } from "@/lib/api";
 import { date, relative } from "@/lib/format";
-import { IconDots, IconTag } from "@tabler/icons-react";
+import { IconDots, IconTag, IconTrash } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { BadgeForm } from "./badge-form";
@@ -49,6 +54,7 @@ export function BadgesList({
 }) {
   const user = useWorkspace();
   const write = canWrite(user);
+  const cars = useComponent("cars");
   const [search, setSearch] = useState("");
   const list = usePaged<Badge>("tokens", { search, userId }, { revision });
   const [editing, setEditing] = useState<Badge | null | undefined>();
@@ -61,14 +67,20 @@ export function BadgesList({
       id: "uid",
       header: "Badge",
       sort: (badge) => badge.visual_id || badge.uid,
-      cell: (badge) => (
-        <span className="flex flex-col">
-          <span className="font-medium">{badge.visual_id || badge.uid}</span>
-          <span className="font-mono text-xs text-muted-foreground">
-            {badge.visual_id ? badge.uid : badge.description || badge.type}
+      cell: (badge) =>
+        badge.vehicle_id ? (
+          <span className="flex flex-col items-start gap-1">
+            <span className="font-mono text-xs font-medium">{badge.uid}</span>
+            <ToneBadge tone="progress">Véhicule</ToneBadge>
           </span>
-        </span>
-      ),
+        ) : (
+          <span className="flex flex-col">
+            <span className="font-medium">{badge.visual_id || badge.uid}</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              {badge.visual_id ? badge.uid : badge.description || badge.type}
+            </span>
+          </span>
+        ),
     },
     {
       id: "state",
@@ -105,7 +117,29 @@ export function BadgesList({
     {
       id: "description",
       header: "Description",
-      cell: (badge) => <span className="block max-w-64 truncate">{badge.description || "—"}</span>,
+      cell: (badge) =>
+        badge.vehicle_id ? (
+          <span className="flex max-w-64 flex-col">
+            {cars ? (
+              <Link
+                href="/cars"
+                className="truncate hover:text-primary dark:hover:text-sidebar-primary"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {badge.vehicle_name || badge.description || "Véhicule"}
+              </Link>
+            ) : (
+              <span className="truncate">
+                {badge.vehicle_name || badge.description || "Véhicule"}
+              </span>
+            )}
+            <span className="text-xs text-muted-foreground">
+              Recharge automatique, gérée depuis la fiche du véhicule
+            </span>
+          </span>
+        ) : (
+          <span className="block max-w-64 truncate">{badge.description || "—"}</span>
+        ),
     },
     {
       id: "used",
@@ -126,79 +160,100 @@ export function BadgesList({
             header: "Actions",
             srOnlyHeader: true,
             align: "right" as const,
-            cell: (badge: Badge) => (
-              <div onClick={(event) => event.stopPropagation()} className="flex justify-end">
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Actions du badge ${badge.uid}`}
-                      />
+            cell: (badge: Badge) =>
+              badge.vehicle_id ? (
+                <div onClick={(event) => event.stopPropagation()} className="flex justify-end">
+                  <ConfirmButton
+                    title="Révoquer cet identifiant de véhicule ?"
+                    description="Les bornes ne démarreront plus automatiquement la recharge de ce véhicule."
+                    confirmLabel="Révoquer"
+                    variant="ghost"
+                    size="icon-sm"
+                    ariaLabel={`Révoquer ${badge.uid}`}
+                    onConfirm={() =>
+                      action.run(
+                        "revoke",
+                        () => api(`tokens/${encodeURIComponent(badge.uid)}`, { method: "DELETE" }),
+                        { success: "Identifiant du véhicule révoqué.", onDone: list.refresh },
+                      )
                     }
                   >
-                    <IconDots />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem onClick={() => setEditing(badge)}>
-                        Modifier
-                      </DropdownMenuItem>
-                      {badge.user_id ? (
+                    <IconTrash />
+                  </ConfirmButton>
+                </div>
+              ) : (
+                <div onClick={(event) => event.stopPropagation()} className="flex justify-end">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Actions du badge ${badge.uid}`}
+                        />
+                      }
+                    >
+                      <IconDots />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => setEditing(badge)}>
+                          Modifier
+                        </DropdownMenuItem>
+                        {badge.user_id ? (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              action.run(
+                                "unassign",
+                                () =>
+                                  api(`tokens/${encodeURIComponent(badge.uid)}/unassign`, {
+                                    method: "POST",
+                                  }),
+                                {
+                                  success: "Badge retiré de l’utilisateur.",
+                                  onDone: list.refresh,
+                                },
+                              )
+                            }
+                          >
+                            Retirer l’utilisateur
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => setAssigning(badge)}>
+                            Attribuer à un utilisateur
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           onClick={() =>
                             action.run(
-                              "unassign",
+                              "toggle",
                               () =>
-                                api(`tokens/${encodeURIComponent(badge.uid)}/unassign`, {
+                                api("tokens", {
                                   method: "POST",
+                                  body: JSON.stringify({
+                                    uid: badge.uid,
+                                    visualId: badge.visual_id ?? undefined,
+                                    description: badge.description ?? undefined,
+                                    userId: badge.user_id ?? undefined,
+                                    enabled: !badge.enabled,
+                                    expiresAt: badge.expires_at ?? undefined,
+                                    default: badge.default ?? false,
+                                  }),
                                 }),
                               {
-                                success: "Badge retiré de l’utilisateur.",
+                                success: badge.enabled ? "Badge bloqué." : "Badge débloqué.",
                                 onDone: list.refresh,
                               },
                             )
                           }
                         >
-                          Retirer l’utilisateur
+                          {badge.enabled ? "Bloquer" : "Débloquer"}
                         </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => setAssigning(badge)}>
-                          Attribuer à un utilisateur
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem
-                        onClick={() =>
-                          action.run(
-                            "toggle",
-                            () =>
-                              api("tokens", {
-                                method: "POST",
-                                body: JSON.stringify({
-                                  uid: badge.uid,
-                                  visualId: badge.visual_id ?? undefined,
-                                  description: badge.description ?? undefined,
-                                  userId: badge.user_id ?? undefined,
-                                  enabled: !badge.enabled,
-                                  expiresAt: badge.expires_at ?? undefined,
-                                  default: badge.default ?? false,
-                                }),
-                              }),
-                            {
-                              success: badge.enabled ? "Badge bloqué." : "Badge débloqué.",
-                              onDone: list.refresh,
-                            },
-                          )
-                        }
-                      >
-                        {badge.enabled ? "Bloquer" : "Débloquer"}
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ),
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ),
           },
         ]
       : []),
@@ -242,7 +297,7 @@ export function BadgesList({
           rows={list.items}
           columns={columns}
           rowKey={(badge) => badge.uid}
-          onRowClick={write ? setEditing : undefined}
+          onRowClick={write ? (badge) => !badge.vehicle_id && setEditing(badge) : undefined}
         />
       </ListState>
       <Pager

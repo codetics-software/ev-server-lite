@@ -45,5 +45,6 @@ class StationEntity(
     var ocppVersion: String = "1.6",
     var firmwareStatus: String? = null,
     var diagnosticsStatus: String? = null,
+    var autoCharge: Boolean = false,
     var createdAt: Instant = Instant.now(),
 )

@@ -21,6 +21,7 @@ import fr.codetics.ev_server.models.people.UserRole
 import fr.codetics.ev_server.persistence.Queries
 import fr.codetics.ev_server.persistence.count
 import fr.codetics.ev_server.persistence.eq
+import fr.codetics.ev_server.repositories.ChargingTokenRepository
 import fr.codetics.ev_server.repositories.PublicEvseRepository
 import fr.codetics.ev_server.repositories.RecordRepository
 import fr.codetics.ev_server.repositories.SiteUserRepository
@@ -44,6 +45,7 @@ class RecordService(
     private val stations: StationRepository,
     private val siteUsers: SiteUserRepository,
     private val publicEvses: PublicEvseRepository,
+    private val chargingTokens: ChargingTokenRepository,
     private val queries: Queries,
 ) {
     private fun authorize(kind: String, user: AppPrincipal, write: Boolean = false) {
@@ -150,6 +152,9 @@ class RecordService(
                 )
             }
 
+            if (kind == "cars" && db.decode(record.data).path("userId").textValue() != body.data["userId"]?.toString()) {
+                revokeVehicleIds(user, id)
+            }
             record.name = body.name.trim()
             record.data = encoded
             record.updatedAt = Instant.now()
@@ -168,9 +173,17 @@ class RecordService(
             if (kind == "sites") {
                 siteUsers.deleteAll(siteUsers.findAllByKeyTenantIdAndKeySiteId(user.tenantId, id))
             }
+            if (kind == "cars") revokeVehicleIds(user, id)
             records.deleteById(RecordKey(user.tenantId, kind, id))
             db.audit(user.tenantId, user.id.toString(), "RECORD_DELETE", "$kind/$id")
             MutationResponse()
+        }
+    }
+
+    private fun revokeVehicleIds(user: AppPrincipal, car: UUID) {
+        chargingTokens.findAllByKeyTenantIdAndVehicleId(user.tenantId, car).forEach { token ->
+            chargingTokens.delete(token)
+            db.audit(user.tenantId, user.id.toString(), "AUTOCHARGE_REVOKE", "$car/${token.key.uid}")
         }
     }
 

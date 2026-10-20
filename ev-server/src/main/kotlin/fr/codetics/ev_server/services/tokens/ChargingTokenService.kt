@@ -25,6 +25,7 @@ import fr.codetics.ev_server.persistence.page
 import fr.codetics.ev_server.repositories.ChargingTokenRepository
 import fr.codetics.ev_server.repositories.TransactionRepository
 import fr.codetics.ev_server.repositories.UserRepository
+import fr.codetics.ev_server.services.organization.Organization
 import java.util.UUID
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
@@ -37,6 +38,7 @@ class ChargingTokenService(
     private val tokens: ChargingTokenRepository,
     private val users: UserRepository,
     private val transactions: TransactionRepository,
+    private val organization: Organization,
     private val queries: Queries,
 ) {
     fun list(
@@ -77,7 +79,10 @@ class ChargingTokenService(
             users.findAllByTenantIdAndIdIn(tenant, page.mapNotNull { it.userId }.toSet()).associate {
                 it.id to it.displayName
             }
-        return page.map { ChargingTokenResponse.from(it, it.userId?.let(names::get)) }
+        val cars =
+            if (page.none { it.vehicleId != null }) emptyMap()
+            else organization.cars(tenant).associate { it.id to it.name }
+        return page.map { ChargingTokenResponse.from(it, it.userId?.let(names::get), it.vehicleId?.let(cars::get)) }
     }
 
     fun save(body: TokenInput, user: AppPrincipal): MutationResponse {
@@ -115,6 +120,7 @@ class ChargingTokenService(
         requireUser(user.tenantId, userId)
         return db.atomic {
             val token = find(user.tenantId, uid)
+            ensure(token.vehicleId == null) { VEHICLE_TOKEN }
             ensure(token.userId == null || token.userId == userId) { "Ce badge est déjà attribué à un autre utilisateur." }
             token.userId = userId
             tokens.save(token)
@@ -126,6 +132,7 @@ class ChargingTokenService(
     fun unassign(user: AppPrincipal, uid: String): MutationResponse =
         db.atomic {
             val token = find(user.tenantId, uid)
+            ensure(token.vehicleId == null) { VEHICLE_TOKEN }
             token.userId = null
             token.defaultToken = false
             tokens.save(token)
@@ -207,6 +214,10 @@ class ChargingTokenService(
         if (users.findByTenantIdAndId(tenant, id)?.takeIf { it.deletedAt == null } == null) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur indisponible.")
         }
+    }
+
+    private companion object {
+        const val VEHICLE_TOKEN = "Un identifiant de véhicule se gère depuis la fiche du véhicule."
     }
 
     private fun validate(body: TokenInput) {

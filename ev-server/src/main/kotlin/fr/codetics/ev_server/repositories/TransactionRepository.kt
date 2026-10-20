@@ -22,6 +22,12 @@ interface TransactionRepository : StoreRepository<TransactionEntity, Int> {
 
     fun findAllByTenantIdAndStoppedAtIsNull(tenant: UUID): List<TransactionEntity>
 
+    fun findAllByTenantIdAndUserIdAndVidIsNotNullAndStartedAtAfter(
+        tenant: UUID,
+        user: UUID,
+        after: java.time.Instant,
+    ): List<TransactionEntity>
+
     fun findAllByTenantIdAndStationIdAndStoppedAtIsNull(
         tenant: UUID,
         station: String,

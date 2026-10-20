@@ -33,6 +33,7 @@ export type Station = {
   maximum_power_kw?: number | null;
   template_id?: string | null;
   exclude_from_smart_charging?: boolean;
+  auto_charge?: boolean;
   firmware_status?: string | null;
   diagnostics_status?: string | null;
   connectors?: StationConnector[];

@@ -2,6 +2,7 @@ package fr.codetics.ev_server.controllers.stations
 
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.models.commands.CommandInput
+import fr.codetics.ev_server.models.stations.AutoChargeSetting
 import fr.codetics.ev_server.models.commands.CommandReceipt
 import fr.codetics.ev_server.models.stations.ParameterInput
 import fr.codetics.ev_server.models.stations.StationInput
@@ -112,6 +113,14 @@ class StationController(
         @RequestBody input: ParameterInput,
         @AuthenticationPrincipal user: AppPrincipal,
     ) = stations.changeParameter(user, id, input)
+
+    @PutMapping("/{id}/autocharge")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun autoCharge(
+        @PathVariable id: String,
+        @RequestBody input: AutoChargeSetting,
+        @AuthenticationPrincipal user: AppPrincipal,
+    ) = stations.autoCharge(user, id, input)
 
     @PostMapping("/{id}/template/apply")
     @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")

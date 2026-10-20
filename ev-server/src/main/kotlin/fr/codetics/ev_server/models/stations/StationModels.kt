@@ -35,6 +35,8 @@ data class StationUpdate(
 
 data class ParameterInput(val key: String, val value: String)
 
+data class AutoChargeSetting(val enabled: Boolean)
+
 data class PowerLimitInput(val connectorId: Int = 0, val limitKw: BigDecimal)
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
@@ -60,6 +62,7 @@ data class StationResponse(
     val excludeFromSmartCharging: Boolean = false,
     val firmwareStatus: String? = null,
     val diagnosticsStatus: String? = null,
+    val autoCharge: Boolean = false,
 ) {
     companion object {
         fun from(
@@ -89,6 +92,7 @@ data class StationResponse(
                 excludeFromSmartCharging = station.excludeFromSmartCharging,
                 firmwareStatus = station.firmwareStatus,
                 diagnosticsStatus = station.diagnosticsStatus,
+                autoCharge = station.autoCharge,
             )
     }
 }

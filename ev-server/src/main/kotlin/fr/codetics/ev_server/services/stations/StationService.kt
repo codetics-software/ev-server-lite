@@ -16,6 +16,7 @@ import fr.codetics.ev_server.models.entities.ConnectorKey
 import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.entities.TransactionEntity
+import fr.codetics.ev_server.models.stations.AutoChargeSetting
 import fr.codetics.ev_server.models.stations.ConnectorResponse
 import fr.codetics.ev_server.models.stations.ParameterInput
 import fr.codetics.ev_server.models.stations.ProvisionedStation
@@ -309,6 +310,24 @@ class StationService(
         db.audit(user.tenantId, user.id.toString(), "STATION_PARAMETER_CHANGE", "$stationId/${input.key}")
         return CommandReceipt(id)
     }
+
+    fun autoCharge(user: AppPrincipal, stationId: String, input: AutoChargeSetting): CommandReceipt =
+        db.atomic {
+            val station =
+                db.lock<StationEntity>(StationKey(user.tenantId, stationId))?.takeUnless { it.deleted }
+                    ?: throw NotFound("Borne introuvable.")
+            station.autoCharge = input.enabled
+            stations.save(station)
+            if (!input.enabled) {
+                connectors.findAllByKeyTenantIdAndKeyStationIdOrderByKeyConnectorId(user.tenantId, stationId).forEach {
+                    it.vid = null
+                    connectors.save(it)
+                }
+            }
+            val id = configuration.syncAutoCharge(station, force = true)
+            db.audit(user.tenantId, user.id.toString(), "STATION_AUTOCHARGE", "$stationId/${input.enabled}")
+            CommandReceipt(requireNotNull(id))
+        }
 
     fun applyTemplate(user: AppPrincipal, stationId: String): TemplateApplication =
         db.atomic {

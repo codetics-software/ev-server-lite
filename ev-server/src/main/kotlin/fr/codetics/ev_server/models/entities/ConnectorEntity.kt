@@ -32,4 +32,6 @@ class ConnectorEntity(
     @Column(name = "current_power_w") var currentPowerW: BigDecimal? = null,
     var currentSoc: Int? = null,
     var meterAt: Instant? = null,
+    var pluggedAt: Instant? = null,
+    var vid: String? = null,
 )

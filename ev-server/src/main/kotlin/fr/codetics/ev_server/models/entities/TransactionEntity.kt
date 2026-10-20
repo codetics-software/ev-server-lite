@@ -27,6 +27,7 @@ class TransactionEntity(
     var tokenUid: String = "",
     var userId: UUID? = null,
     var vehicleId: UUID? = null,
+    var vid: String? = null,
     var startedAt: Instant = Instant.now(),
     var stoppedAt: Instant? = null,
     var meterStartWh: BigDecimal = BigDecimal.ZERO,

@@ -15,6 +15,7 @@ import fr.codetics.ev_server.repositories.StationParameterRepository
 import fr.codetics.ev_server.repositories.StationRepository
 import fr.codetics.ev_server.services.organization.Organization
 import java.time.Instant
+import java.util.UUID
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 
@@ -65,6 +66,19 @@ class StationConfigurationService(
         return TemplateApplication(template.id, queued)
     }
 
+    fun syncAutoCharge(station: StationEntity, force: Boolean = false): UUID? {
+        val tenant = station.key.tenantId
+        val value = station.autoCharge.toString()
+        val current = parameters.findById(StationParameterKey(tenant, station.key.stationId, AUTO_CHARGE_KEY)).orElse(null)
+        if (!force && (current?.value ?: "false").equals(value, ignoreCase = true)) return null
+        return queue.command(
+            tenant,
+            station.key.stationId,
+            "ChangeConfiguration",
+            db.json.valueToTree(mapOf("key" to AUTO_CHARGE_KEY, "value" to value)),
+        )
+    }
+
     @EventListener
     fun booted(event: StationBooted) {
         val station = event.station
@@ -77,6 +91,7 @@ class StationConfigurationService(
             )
         }
         apply(station)
+        syncAutoCharge(station)
     }
 
     @EventListener
@@ -110,5 +125,9 @@ class StationConfigurationService(
                 parameters.save(parameter)
             }
         }
+    }
+
+    companion object {
+        const val AUTO_CHARGE_KEY = "AutoChargeEnabled"
     }
 }
