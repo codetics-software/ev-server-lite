@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 data class PartnerInput(
@@ -34,22 +36,10 @@ class OcpiAdminController(
     private val vault: SecretVault,
     private val transport: OcpiTransport,
     private val partners: PartnerRepository,
+    private val service: OcpiPartnerService,
 ) {
     @GetMapping
-    fun list(@AuthenticationPrincipal user: AppPrincipal): List<Map<String, Any?>> {
-        return partners.findAllByTenantIdOrderByName(user.tenantId).map { partner ->
-            mapOf(
-                "id" to partner.id,
-                "name" to partner.name,
-                "country_code" to partner.countryCode,
-                "party_id" to partner.partyId,
-                "local_role" to partner.localRole,
-                "remote_url" to partner.remoteUrl,
-                "registered" to partner.registered,
-                "enabled" to partner.enabled,
-            )
-        }
-    }
+    fun list(@AuthenticationPrincipal user: AppPrincipal) = service.list(user)
 
     @PostMapping
     fun create(
@@ -112,4 +102,54 @@ class OcpiAdminController(
             mapOf("success" to true)
         }
     }
+
+    @PutMapping("/{id}")
+    fun update(
+        @PathVariable id: UUID,
+        @RequestBody body: PartnerUpdate,
+        @AuthenticationPrincipal user: AppPrincipal,
+    ) = service.update(user, id, body)
+
+    @PostMapping("/{id}/register")
+    fun register(
+        @PathVariable id: UUID,
+        @RequestBody body: PartnerRegistration,
+        @AuthenticationPrincipal user: AppPrincipal,
+    ) = service.register(user, id, body)
+
+    @PostMapping("/{id}/unregister")
+    fun unregister(@PathVariable id: UUID, @AuthenticationPrincipal user: AppPrincipal) =
+        service.unregister(user, id)
+
+    @PostMapping("/{id}/ping")
+    fun ping(@PathVariable id: UUID, @AuthenticationPrincipal user: AppPrincipal) =
+        service.ping(user, id)
+
+    @PostMapping("/{id}/push/{module}")
+    fun push(
+        @PathVariable id: UUID,
+        @PathVariable module: String,
+        @AuthenticationPrincipal user: AppPrincipal,
+    ) = service.push(user, id, module)
+
+    @PostMapping("/{id}/pull/{module}")
+    fun pull(
+        @PathVariable id: UUID,
+        @PathVariable module: String,
+        @AuthenticationPrincipal user: AppPrincipal,
+    ) = service.pull(user, id, module)
+
+    @GetMapping("/{id}/jobs")
+    fun jobs(@PathVariable id: UUID, @AuthenticationPrincipal user: AppPrincipal) =
+        service.jobs(user, id)
+
+    @GetMapping("/{id}/objects")
+    fun objects(
+        @PathVariable id: UUID,
+        @AuthenticationPrincipal user: AppPrincipal,
+        @RequestParam module: String,
+        @RequestParam(defaultValue = "SENDER") direction: String,
+        @RequestParam(defaultValue = "0") offset: Int,
+        @RequestParam(defaultValue = "50") limit: Int,
+    ) = service.objects(user, id, module, direction, offset, limit)
 }

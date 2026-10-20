@@ -110,7 +110,7 @@ class OcpiCredentials(
         }
     }
 
-    private fun ourCredentials(role: String, token: String): Map<String, Any> {
+    fun ourCredentials(role: String, token: String): Map<String, Any> {
         return mapOf(
             "token" to token,
             "url" to "${properties.ocpi.publicUrl.trimEnd('/')}/ocpi/$role/versions",

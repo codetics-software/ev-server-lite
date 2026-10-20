@@ -84,7 +84,24 @@ class OcpiTransport(
         method: String = "GET",
         body: Any? = null,
         token: String? = null,
-    ): JsonNode {
+    ): JsonNode = exchange(partner, url, method, body, token).data
+
+    fun page(partner: PartnerEntity, url: String): OcpiPage = exchange(partner, url, "GET", null, null)
+
+    fun endpoint(partner: PartnerEntity, module: String): String? =
+        runCatching { db.decode(partner.remoteEndpoints) }.getOrNull()
+            ?.firstOrNull { it.path("identifier").asText() == module }
+            ?.path("url")
+            ?.asText()
+            ?.trimEnd('/')
+
+    private fun exchange(
+        partner: PartnerEntity,
+        url: String,
+        method: String,
+        body: Any?,
+        token: String?,
+    ): OcpiPage {
         val pinned =
             partner.remoteUrl
                 ?: throw OcpiFault(3001, "Configurez d’abord l’adresse de découverte distante.")
@@ -113,16 +130,20 @@ class OcpiTransport(
             val bytes = response.body().use { stream -> stream.readNBytes(2_097_153) }
 
             if (response.statusCode() !in 200..299 || bytes.size > 2_097_152) {
-                throw OcpiFault(3001, "Le service distant a refusé la demande.")
+                throw OcpiFault(3001, "Le service distant a refusé la demande (${response.statusCode()}).")
             }
 
-            val json = db.json.readTree(bytes)
+            val json = if (bytes.isEmpty()) db.json.createObjectNode().put("status_code", 1000) else db.json.readTree(bytes)
 
             if (json.path("status_code").intValue() != 1000) {
-                throw OcpiFault(3001, "L’opération OCPI distante a échoué.")
+                throw OcpiFault(3001, "L’opération OCPI distante a échoué (${json.path("status_code").intValue()}).")
             }
 
-            return json.path("data")
+            val next =
+                response.headers().firstValue("Link").orElse(null)?.let { link ->
+                    Regex("<([^>]+)>\\s*;\\s*rel=\"?next\"?").find(link)?.groupValues?.get(1)
+                }
+            return OcpiPage(json.path("data"), next)
         } catch (fault: OcpiFault) {
             throw fault
         } catch (_: Exception) {
@@ -130,3 +151,5 @@ class OcpiTransport(
         }
     }
 }
+
+data class OcpiPage(val data: JsonNode, val next: String?)

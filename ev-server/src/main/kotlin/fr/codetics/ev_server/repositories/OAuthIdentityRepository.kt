@@ -2,5 +2,8 @@ package fr.codetics.ev_server.repositories
 
 import fr.codetics.ev_server.models.entities.OAuthIdentityEntity
 import fr.codetics.ev_server.models.entities.OAuthIdentityKey
+import java.util.UUID
 
-interface OAuthIdentityRepository : StoreRepository<OAuthIdentityEntity, OAuthIdentityKey>
+interface OAuthIdentityRepository : StoreRepository<OAuthIdentityEntity, OAuthIdentityKey> {
+    fun deleteAllByUserId(userId: UUID)
+}

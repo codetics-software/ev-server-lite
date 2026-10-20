@@ -22,4 +22,8 @@ class ChargingTokenEntity(
     var type: String = "RFID",
     var enabled: Boolean = true,
     var expiresAt: Instant? = null,
+    var visualId: String? = null,
+    var description: String? = null,
+    var defaultToken: Boolean = false,
+    var lastUsedAt: Instant? = null,
 )

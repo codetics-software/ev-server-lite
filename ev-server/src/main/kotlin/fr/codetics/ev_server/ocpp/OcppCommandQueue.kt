@@ -12,6 +12,7 @@ import fr.codetics.ev_server.repositories.StationRepository
 import java.time.Clock
 import java.time.Instant
 import java.util.UUID
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import tools.jackson.databind.JsonNode
@@ -22,6 +23,7 @@ class OcppCommandQueue(
     private val stations: StationRepository,
     private val commands: CommandRepository,
     private val clock: Clock,
+    private val events: ApplicationEventPublisher,
 ) {
     fun complete(station: StationIdentity, frame: JsonNode) {
         val success = frame[0].intValue() == 3
@@ -54,11 +56,20 @@ class OcppCommandQueue(
                 command.result = db.encode(if (success) frame[2] else frame)
                 command.completedAt = Instant.now(clock)
                 commands.save(command)
+                events.publishEvent(
+                    CommandCompleted(command, success, if (success) frame[2] else frame[4])
+                )
             }
         }
     }
 
-    fun command(tenant: UUID, station: String, action: String, payload: JsonNode): UUID {
+    fun command(
+        tenant: UUID,
+        station: String,
+        action: String,
+        payload: JsonNode,
+        callback: String? = null,
+    ): UUID {
         try {
             OcppValidation.validate(action, payload, true)
         } catch (fault: OcppFault) {
@@ -67,7 +78,7 @@ class OcppCommandQueue(
 
         val device = stations.findById(StationKey(tenant, station)).orElse(null)
 
-        if (device == null || !device.enabled) {
+        if (device == null || !device.enabled || device.deleted) {
             throw NotFound("Borne introuvable ou désactivée.")
         }
 
@@ -78,6 +89,7 @@ class OcppCommandQueue(
                     stationId = station,
                     action = action,
                     request = db.encode(payload),
+                    callback = callback,
                 )
             )
 
@@ -96,6 +108,7 @@ class OcppCommandQueue(
                     locked.state = CommandState.TIMED_OUT
                     locked.completedAt = Instant.now(clock)
                     commands.save(locked)
+                    events.publishEvent(CommandCompleted(locked, false, db.json.nullNode()))
                 }
             }
         }
@@ -133,6 +146,7 @@ class OcppCommandQueue(
                 locked.state = CommandState.FAILED
                 locked.completedAt = Instant.now(clock)
                 commands.save(locked)
+                events.publishEvent(CommandCompleted(locked, false, db.json.nullNode()))
             }
         }
     }

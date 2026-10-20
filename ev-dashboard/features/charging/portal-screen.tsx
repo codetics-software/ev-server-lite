@@ -24,7 +24,7 @@ export function PortalScreen({ workspace, evseId }: { workspace: string; evseId:
     revision,
   );
   return (
-    <PortalLayout>
+    <PortalLayout workspace={workspace}>
       {error ? (
         <Alert variant="destructive">
           <AlertTitle>Point de charge indisponible</AlertTitle>

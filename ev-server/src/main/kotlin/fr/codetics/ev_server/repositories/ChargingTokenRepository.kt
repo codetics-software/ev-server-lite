@@ -8,4 +8,6 @@ import org.springframework.data.domain.Pageable
 
 interface ChargingTokenRepository : StoreRepository<ChargingTokenEntity, ChargingTokenKey> {
     fun findAllByKeyTenantId(tenant: UUID, pageable: Pageable): Page<ChargingTokenEntity>
+
+    fun findAllByKeyTenantIdAndUserId(tenant: UUID, user: UUID): List<ChargingTokenEntity>
 }

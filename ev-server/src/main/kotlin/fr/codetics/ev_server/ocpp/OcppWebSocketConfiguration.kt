@@ -4,6 +4,7 @@ import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.repositories.StationRepository
 import fr.codetics.ev_server.repositories.TenantRepository
 import fr.codetics.ev_server.security.AccountService
+import fr.codetics.ev_server.services.stations.RegistrationTokenService
 import java.util.Base64
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
@@ -24,11 +25,14 @@ class OcppWebSocketConfiguration(
     private val tenants: TenantRepository,
     private val passwords: PasswordEncoder,
     private val accounts: AccountService,
+    private val registrations: RegistrationTokenService,
 ) : WebSocketConfigurer {
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
         registry
             .addHandler(gateway, "/ocpp/{tenant}/{station}")
-            .addInterceptors(StationHandshake(stations, tenants, passwords, accounts))
+            .addInterceptors(
+                StationHandshake(stations, tenants, passwords, accounts, registrations)
+            )
     }
 }
 
@@ -40,6 +44,7 @@ private class StationHandshake(
     private val tenants: TenantRepository,
     private val passwords: PasswordEncoder,
     private val accounts: AccountService,
+    private val registrations: RegistrationTokenService,
 ) : HandshakeInterceptor {
     override fun beforeHandshake(
         request: ServerHttpRequest,
@@ -70,7 +75,11 @@ private class StationHandshake(
             val tenant =
                 tenants.findBySlugAndActiveTrue(slug)
                     ?: throw IllegalArgumentException("Espace client inconnu.")
-            val device = stations.findById(StationKey(tenant.id, station)).orElse(null)
+            val known =
+                stations.findById(StationKey(tenant.id, station)).orElse(null)?.takeUnless {
+                    it.deleted
+                }
+            val device = known ?: registrations.register(tenant.id, station, credentials[1])
             require(
                 device != null &&
                     device.enabled &&

@@ -1,6 +1,7 @@
 package fr.codetics.ev_server.repositories
 
 import fr.codetics.ev_server.models.entities.UserEntity
+import fr.codetics.ev_server.models.people.UserRole
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -11,4 +12,12 @@ interface UserRepository : StoreRepository<UserEntity, UUID> {
     fun findByTenantIdAndId(tenantId: UUID, id: UUID): UserEntity?
 
     fun findAllByTenantId(tenantId: UUID, pageable: Pageable): Page<UserEntity>
+
+    fun findAllByTenantIdAndRoleAndEnabledTrue(tenantId: UUID, role: UserRole): List<UserEntity>
+
+    fun findAllByTenantIdAndIdIn(tenantId: UUID, ids: Collection<UUID>): List<UserEntity>
+
+    fun findAllByEnabledTrueAndDeletedAtIsNullAndInactivityNotifiedAtIsNullAndCreatedAtBefore(
+        before: java.time.Instant
+    ): List<UserEntity>
 }

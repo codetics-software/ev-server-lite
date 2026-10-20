@@ -8,6 +8,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Entity
@@ -24,4 +26,12 @@ class UserEntity(
     var emailVerified: Boolean = false,
     var eulaVersion: String? = null,
     var createdAt: Instant = Instant.now(),
+    var phone: String? = null,
+    var locale: String = "fr",
+    var lastLoginAt: Instant? = null,
+    var defaultCarId: UUID? = null,
+    @JdbcTypeCode(SqlTypes.JSON) var notificationPreferences: String = "{}",
+    var stripeCustomerId: String? = null,
+    var deletedAt: Instant? = null,
+    var inactivityNotifiedAt: Instant? = null,
 )

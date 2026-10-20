@@ -5,6 +5,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Entity
@@ -16,4 +18,6 @@ class TenantEntity(
     var name: String = "",
     var active: Boolean = true,
     var createdAt: Instant = Instant.now(),
+    @JdbcTypeCode(SqlTypes.JSON) var components: String = "{}",
+    var hasLogo: Boolean = false,
 )

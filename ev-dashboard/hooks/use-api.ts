@@ -3,21 +3,24 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
-export function useApi<T>(path: string, revision = 0) {
+export function useApi<T>(path: string | null, revision: number | string = 0) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!path) {
+      return;
+    }
     const controller = new AbortController();
     let active = true;
 
-    async function load() {
+    async function load(target: string) {
       setLoading(true);
       setError(null);
 
       try {
-        const result = await api<T>(path, { signal: controller.signal });
+        const result = await api<T>(target, { signal: controller.signal });
 
         if (active) {
           setData(result);
@@ -35,7 +38,7 @@ export function useApi<T>(path: string, revision = 0) {
       }
     }
 
-    load();
+    load(path);
 
     return () => {
       active = false;
@@ -43,5 +46,10 @@ export function useApi<T>(path: string, revision = 0) {
     };
   }, [path, revision]);
 
-  return { data, error, loading };
+  return { data: path ? data : null, error: path ? error : null, loading: path ? loading : false };
+}
+
+export function useRevision() {
+  const [revision, setRevision] = useState(0);
+  return [revision, () => setRevision((value) => value + 1)] as const;
 }

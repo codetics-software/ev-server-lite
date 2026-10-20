@@ -7,6 +7,7 @@ import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.models.entities.WorkspacePaymentSettings
 import fr.codetics.ev_server.models.workspaces.WorkspacePaymentInput
+import fr.codetics.ev_server.models.workspaces.UserBillingSettings
 import fr.codetics.ev_server.models.workspaces.WorkspacePaymentResponse
 import fr.codetics.ev_server.repositories.TenantRepository
 import fr.codetics.ev_server.repositories.WorkspacePaymentSettingsRepository
@@ -33,6 +34,11 @@ class StripeConnectService(
             ready,
             current?.country ?: "FR",
             current?.currency ?: "EUR",
+            UserBillingSettings(
+                current?.userBillingEnabled == true,
+                current?.userBillingMode ?: "PER_SESSION",
+                current?.taxRateId,
+            ),
         )
     }
 

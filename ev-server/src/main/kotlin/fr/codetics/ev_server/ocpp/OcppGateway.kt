@@ -3,11 +3,14 @@ package fr.codetics.ev_server.ocpp
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.models.entities.StationEntity
+import fr.codetics.ev_server.models.entities.StationEventEntity
 import fr.codetics.ev_server.models.entities.StationKey
+import fr.codetics.ev_server.repositories.StationEventRepository
 import fr.codetics.ev_server.repositories.StationRepository
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.*
@@ -20,6 +23,8 @@ class OcppGateway(
     private val service: OcppService,
     private val stations: StationRepository,
     private val queue: OcppCommandQueue,
+    private val stationEvents: StationEventRepository,
+    private val events: ApplicationEventPublisher,
 ) : TextWebSocketHandler(), SubProtocolCapable {
     private val log = LoggerFactory.getLogger(javaClass)
     private val sessions = ConcurrentHashMap<StationIdentity, WebSocketSession>()
@@ -56,9 +61,23 @@ class OcppGateway(
                 station.connected = connected
                 station.lastSeen = Instant.now()
                 stations.save(station)
+                stationEvents.save(
+                    StationEventEntity(
+                        tenantId = identity.tenant,
+                        stationId = identity.station,
+                        type = if (connected) "CONNECTION" else "DISCONNECTION",
+                    )
+                )
+                events.publishEvent(StationConnectionChanged(station, connected))
             }
         }
     }
+
+    fun disconnect(identity: StationIdentity) {
+        sessions[identity]?.close(CloseStatus.POLICY_VIOLATION)
+    }
+
+    fun isConnected(identity: StationIdentity) = sessions[identity]?.isOpen == true
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         val station = identity(session)

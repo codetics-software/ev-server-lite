@@ -73,7 +73,10 @@ export async function proxy(request: NextRequest, path: string) {
           for (const value of values) {
             response.headers.append(name, value);
           }
-        } else if (["content-type", "location", "retry-after"].includes(name) && values.length) {
+        } else if (
+          ["content-type", "content-disposition", "location", "retry-after"].includes(name) &&
+          values.length
+        ) {
           response.headers.set(name, values[values.length - 1]);
         }
       }
@@ -92,7 +95,7 @@ export async function proxy(request: NextRequest, path: string) {
     const response = new NextResponse(upstream.body, {
       status: upstream.status,
     });
-    for (const key of ["content-type", "location", "retry-after"]) {
+    for (const key of ["content-type", "content-disposition", "location", "retry-after"]) {
       const value = upstream.headers.get(key);
       if (value) {
         response.headers.set(key, value);

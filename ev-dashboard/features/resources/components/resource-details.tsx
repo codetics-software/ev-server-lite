@@ -9,9 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { StationDetail } from "@/features/stations/station-detail";
 import { api } from "@/lib/api";
-import type { Row, User } from "@/lib/api-types";
+import type { Row } from "@/lib/api-types";
 import { display } from "@/lib/format";
 import { fieldLabel } from "@/lib/labels";
 import { useState } from "react";
@@ -22,21 +21,12 @@ type Props = {
   section: string;
   title: string;
   record: Row | null;
-  user: User;
   canDelete: boolean;
   onClose: () => void;
   onDeleted: () => void;
 };
 
-export function ResourceDetails({
-  section,
-  title,
-  record,
-  user,
-  canDelete,
-  onClose,
-  onDeleted,
-}: Props) {
+export function ResourceDetails({ section, title, record, canDelete, onClose, onDeleted }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const entries = record ? { ...record, ...((record.data as Row) ?? {}) } : {};
@@ -75,9 +65,7 @@ export function ResourceDetails({
           </DialogTitle>
           <DialogDescription>{title}</DialogDescription>
         </DialogHeader>
-        {record && section === "stations" ? (
-          <StationDetail station={String(record.id)} user={user} />
-        ) : (
+        {record && (
           <dl className="flex flex-col gap-3">
             {Object.entries(entries)
               .filter(([key]) => key !== "data")

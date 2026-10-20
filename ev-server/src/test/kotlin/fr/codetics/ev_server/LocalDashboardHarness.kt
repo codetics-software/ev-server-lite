@@ -12,6 +12,7 @@ import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.entities.TenantEntity
 import fr.codetics.ev_server.models.entities.UserEntity
 import fr.codetics.ev_server.models.people.UserRole
+import fr.codetics.ev_server.models.workspaces.WorkspaceComponents
 import fr.codetics.ev_server.ocpp.OcppService
 import fr.codetics.ev_server.repositories.*
 import fr.codetics.ev_server.repositories.ChargingTokenRepository
@@ -20,6 +21,7 @@ import fr.codetics.ev_server.repositories.StationRepository
 import fr.codetics.ev_server.repositories.TenantRepository
 import fr.codetics.ev_server.repositories.UserRepository
 import jakarta.servlet.http.Cookie
+import java.math.BigDecimal
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
@@ -166,6 +168,55 @@ private fun createBrowserFixtures(
     val driver = requireNotNull(accounts["DRIVER"])
     tokens.save(ChargingTokenEntity(ChargingTokenKey(tenant.id, "TEST-DRIVER"), driver.id))
 
+    tenant.components =
+        db.encode(
+            WorkspaceComponents(
+                smartCharging = true,
+                assets = true,
+                billing = true,
+            )
+        )
+    tenants.save(tenant)
+    fun record(kind: String, name: String, data: Map<String, Any?>) =
+        records.save(RecordEntity(key = RecordKey(tenant.id, kind), name = name, data = db.encode(data))).key.id
+    val company = record("companies", "Codetics", mapOf("city" to "Paris", "country" to "FR"))
+    val cities =
+        listOf(
+            Triple("Paris", "48.8566", "2.3522"),
+            Triple("Lyon", "45.7640", "4.8357"),
+            Triple("Bordeaux", "44.8378", "-0.5792"),
+            Triple("Nantes", "47.2184", "-1.5536"),
+        )
+    val areas =
+        cities.map { (city, latitude, longitude) ->
+            val site =
+                record(
+                    "sites",
+                    city,
+                    mapOf(
+                        "companyId" to company.toString(),
+                        "address" to "1 place de la Gare",
+                        "city" to city,
+                        "country" to "FR",
+                        "latitude" to latitude,
+                        "longitude" to longitude,
+                        "public" to (city != "Nantes"),
+                    ),
+                )
+            record(
+                "site-areas",
+                "$city · Parking",
+                mapOf("siteId" to site.toString(), "maximumPowerKw" to "44", "smartCharging" to (city == "Paris")),
+            )
+        }
+    tokens.save(
+        ChargingTokenEntity(
+            ChargingTokenKey(tenant.id, "VISITOR-01"),
+            visualId = "0042",
+            description = "Badge visiteur",
+        )
+    )
+
     val names = listOf("Paris · Atelier", "Lyon · République", "Bordeaux · Quai", "Nantes · Campus")
 
     names.forEachIndexed { index, name ->
@@ -176,6 +227,8 @@ private fun createBrowserFixtures(
                 name,
                 requireNotNull(passwords.encode(randomToken())),
                 connected = index != 3,
+                siteAreaId = areas[index],
+                maximumPowerKw = BigDecimal(22),
             )
         )
         stationCall(
@@ -213,6 +266,30 @@ private fun createBrowserFixtures(
             )
         val transactionId = db.json.readTree(start)[2].path("transactionId").intValue()
 
+        stationCall(
+            db,
+            ocpp,
+            tenant.id,
+            id,
+            "MeterValues",
+            mapOf(
+                "connectorId" to 1,
+                "transactionId" to transactionId,
+                "meterValue" to
+                    (1..6).map { step ->
+                        mapOf(
+                            "timestamp" to startedAt.plusSeconds(step * 300L).toString(),
+                            "sampledValue" to
+                                listOf(
+                                    mapOf("value" to "${100000 + step * 1800}", "measurand" to "Energy.Active.Import.Register", "unit" to "Wh"),
+                                    mapOf("value" to "${21 - step}", "measurand" to "Power.Active.Import", "unit" to "kW"),
+                                    mapOf("value" to "${30 + step * 5}", "measurand" to "SoC", "unit" to "Percent"),
+                                ),
+                        )
+                    },
+            ),
+        )
+
         if (index > 0) {
             stationCall(
                 db,
@@ -230,24 +307,36 @@ private fun createBrowserFixtures(
         }
     }
 
-    records.saveAll(
-        listOf(
-            RecordEntity(
-                key = RecordKey(tenant.id, "assets"),
-                name = "Atelier — compteur principal",
-                data = db.encode(mapOf("type" to "METER", "maximumPowerKw" to "120")),
-            ),
-            RecordEntity(
-                key = RecordKey(tenant.id, "assets"),
-                name = "Campus — production solaire",
-                data = db.encode(mapOf("type" to "SOLAR", "maximumPowerKw" to "36")),
-            ),
-            RecordEntity(
-                key = RecordKey(tenant.id, "sites"),
-                name = "Paris · Atelier",
-                data = db.encode(mapOf("address" to "Paris", "country" to "FR")),
-            ),
-        )
+    record(
+        "assets",
+        "Atelier — compteur principal",
+        mapOf("siteAreaId" to areas[0].toString(), "type" to "CONSUMPTION", "kind" to "BUILDING", "maximumPowerKw" to "120", "staticPowerKw" to "8"),
+    )
+    record(
+        "assets",
+        "Campus — production solaire",
+        mapOf("siteAreaId" to areas[3].toString(), "type" to "PRODUCTION", "kind" to "SOLAR", "maximumPowerKw" to "36"),
+    )
+    record(
+        "charging-station-templates",
+        "Codetics AC22",
+        mapOf(
+            "vendor" to "Codetics",
+            "model" to "AC22",
+            "maximumPowerKw" to "22",
+            "connectors" to listOf(mapOf("connectorId" to 1, "type" to "Type2", "maximumPowerKw" to "22", "phases" to 3)),
+            "parameters" to listOf(mapOf("key" to "HeartbeatInterval", "value" to "60")),
+        ),
+    )
+    record(
+        "pricing-definitions",
+        "Heures creuses",
+        mapOf(
+            "currency" to "EUR",
+            "energyPrice" to "0.25",
+            "restrictions" to mapOf("timeFrom" to "22:00", "timeTo" to "06:00"),
+            "priority" to 10,
+        ),
     )
 
     val tariff =

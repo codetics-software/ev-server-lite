@@ -158,7 +158,7 @@ class AuthController(
     @GetMapping("/eula")
     fun eula(): Map<String, String> {
         return mapOf(
-            "version" to "1.0",
+            "version" to EULA_VERSION,
             "attribution" to "Supervision de recharge Lite — Kevin Vavelin, Codetics",
             "url" to "https://codetics.fr",
         )
@@ -168,9 +168,9 @@ class AuthController(
     fun accept(@AuthenticationPrincipal user: AppPrincipal): Map<String, Boolean> {
         return db.atomic {
             val account = users.findById(user.id).orElseThrow()
-            account.eulaVersion = "1.0"
+            account.eulaVersion = EULA_VERSION
             users.save(account)
-            db.audit(user.tenantId, user.id.toString(), "EULA_ACCEPT", "1.0")
+            db.audit(user.tenantId, user.id.toString(), "EULA_ACCEPT", EULA_VERSION)
             mapOf("success" to true)
         }
     }

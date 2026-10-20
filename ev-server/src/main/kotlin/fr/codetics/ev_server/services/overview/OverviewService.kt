@@ -31,8 +31,8 @@ class OverviewService(
         return OverviewResponse(
             stations =
                 StationTotals(
-                    stations.countByKeyTenantId(tenantId),
-                    stations.countByKeyTenantIdAndConnectedTrue(tenantId),
+                    stations.countByKeyTenantIdAndDeletedFalse(tenantId),
+                    stations.countByKeyTenantIdAndConnectedTrueAndDeletedFalse(tenantId),
                 ),
             transactions =
                 SessionTotals(

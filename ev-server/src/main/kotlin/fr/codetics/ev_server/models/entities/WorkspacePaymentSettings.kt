@@ -17,6 +17,9 @@ class WorkspacePaymentSettings(
     var country: String = "FR",
     var currency: String = "EUR",
     var enabled: Boolean = false,
+    var userBillingEnabled: Boolean = false,
+    var userBillingMode: String = "PER_SESSION",
+    var taxRateId: String? = null,
     var updatedAt: Instant = Instant.now(),
     @Version var revision: Long = 0,
 )

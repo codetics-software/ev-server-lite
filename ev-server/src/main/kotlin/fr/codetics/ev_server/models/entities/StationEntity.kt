@@ -6,6 +6,7 @@ import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import java.io.Serializable
+import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 import org.hibernate.annotations.JdbcTypeCode
@@ -32,4 +33,17 @@ class StationEntity(
     var lastSeen: Instant? = null,
     var connected: Boolean = false,
     @JdbcTypeCode(SqlTypes.JSON) var metadata: String = "{}",
+    var siteAreaId: UUID? = null,
+    var publicStation: Boolean = false,
+    var latitude: BigDecimal? = null,
+    var longitude: BigDecimal? = null,
+    var maximumPowerKw: BigDecimal? = null,
+    var templateId: UUID? = null,
+    var excludeFromSmartCharging: Boolean = false,
+    var deleted: Boolean = false,
+    var lastBoot: Instant? = null,
+    var ocppVersion: String = "1.6",
+    var firmwareStatus: String? = null,
+    var diagnosticsStatus: String? = null,
+    var createdAt: Instant = Instant.now(),
 )

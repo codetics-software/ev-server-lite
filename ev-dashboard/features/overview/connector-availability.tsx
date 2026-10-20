@@ -44,7 +44,18 @@ export function ConnectorAvailability({
             >
               <span>{statusLabels[status] ?? status}</span>
               <div className="h-2 overflow-hidden rounded-sm bg-muted" aria-hidden="true">
-                <div className="h-full bg-primary" style={{ width: `${(count / total) * 100}%` }} />
+                <div
+                  className={
+                    status === "Faulted"
+                      ? "h-full bg-destructive"
+                      : status === "Charging"
+                        ? "h-full bg-chart-3"
+                        : status === "Available"
+                          ? "h-full bg-primary"
+                          : "h-full bg-muted-foreground/40"
+                  }
+                  style={{ width: `${(count / total) * 100}%` }}
+                />
               </div>
               <span className="text-right tabular-nums">{count}</span>
             </div>

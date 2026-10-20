@@ -6,7 +6,9 @@ import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
+import org.springframework.web.server.ResponseStatusException
 
 @Component
 class SecretVault(private val properties: AppProperties) {
@@ -17,8 +19,11 @@ class SecretVault(private val properties: AppProperties) {
     val configured = keyBytes.size == 32
 
     private val secret by lazy {
-        check(configured) {
-            "Configurez APP_ENCRYPTION_KEY avec une clé aléatoire de 32 octets encodée en Base64."
+        if (!configured) {
+            throw ResponseStatusException(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Configurez APP_ENCRYPTION_KEY avec une clé aléatoire de 32 octets encodée en Base64.",
+            )
         }
         SecretKeySpec(keyBytes, "AES")
     }

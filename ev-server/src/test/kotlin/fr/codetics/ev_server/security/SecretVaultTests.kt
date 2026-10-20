@@ -5,6 +5,7 @@ import java.util.Base64
 import javax.crypto.AEADBadTagException
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.springframework.web.server.ResponseStatusException
 
 class SecretVaultTests {
     private val vault = SecretVault(AppProperties(encryptionKey = "A".repeat(43) + "="))
@@ -35,7 +36,7 @@ class SecretVaultTests {
             val unconfigured = SecretVault(AppProperties(encryptionKey = it))
 
             assertFalse(unconfigured.configured)
-            assertThrows(IllegalStateException::class.java) { unconfigured.encrypt("secret") }
+            assertThrows(ResponseStatusException::class.java) { unconfigured.encrypt("secret") }
         }
     }
 }

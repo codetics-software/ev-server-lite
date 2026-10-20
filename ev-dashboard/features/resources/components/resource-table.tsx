@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { StateBadge } from "@/features/shared/status-badge";
 import type { Row } from "@/lib/api-types";
 import { formatCell, valueAt } from "../resource-format";
 import type { ResourceColumn } from "../types";
@@ -47,7 +48,9 @@ export function ResourceTable({ rows, columns, canEdit, onView, onEdit }: Props)
                 key={key}
                 className={isNumericColumn(key) ? "text-right tabular-nums" : "max-w-64 truncate"}
               >
-                {typeof valueAt(row, key) === "boolean" || ["state", "role"].includes(key) ? (
+                {key === "state" ? (
+                  <StateBadge state={valueAt(row, key)} />
+                ) : typeof valueAt(row, key) === "boolean" || key === "role" ? (
                   <Badge variant="secondary">{formatCell(row, key)}</Badge>
                 ) : (
                   formatCell(row, key)

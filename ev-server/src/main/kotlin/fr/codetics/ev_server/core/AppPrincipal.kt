@@ -9,4 +9,6 @@ data class AppPrincipal(
     val email: String,
     val name: String,
     val role: UserRole,
+    val platformAdmin: Boolean = false,
+    val eulaAccepted: Boolean = true,
 )

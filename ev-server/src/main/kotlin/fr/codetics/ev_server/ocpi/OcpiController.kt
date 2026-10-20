@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import tools.jackson.databind.JsonNode
@@ -51,6 +52,7 @@ class OcpiController(
     private val credentials: OcpiCredentials,
     private val catalog: OcpiCatalog,
     private val properties: AppProperties,
+    private val roaming: OcpiRoaming,
 ) {
     private fun partner(
         role: String,
@@ -83,7 +85,7 @@ class OcpiController(
     fun endpoints(@PathVariable role: String, request: HttpServletRequest): Any {
         partner(role, request, false)
         val endpoints =
-            (catalog.modules + "credentials").sorted().map { module ->
+            (catalog.modules + "credentials" + (if (role == "cpo") setOf("commands") else emptySet())).sorted().map { module ->
                 mapOf("identifier" to module, "url" to "${base(role)}/2.1.1/$module/")
             }
 
@@ -102,6 +104,17 @@ class OcpiController(
     ): Any {
         val partner = partner(role, request, false)
         return credentials.exchange(partner, request.method, body)
+    }
+
+    @PostMapping("/2.1.1/commands/{type}")
+    fun command(
+        @PathVariable role: String,
+        @PathVariable type: String,
+        request: HttpServletRequest,
+        @RequestBody(required = false) body: JsonNode?,
+    ): Any {
+        val partner = partner(role, request)
+        return roaming.command(partner, type, body)
     }
 
     @RequestMapping(

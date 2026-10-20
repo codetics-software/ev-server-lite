@@ -11,4 +11,6 @@ interface ConnectorRepository : StoreRepository<ConnectorEntity, ConnectorKey> {
     ): List<ConnectorEntity>
 
     fun findAllByKeyTenantId(tenant: UUID): List<ConnectorEntity>
+
+    fun findAllByStatusAndStatusAtBefore(status: String, before: java.time.Instant): List<ConnectorEntity>
 }

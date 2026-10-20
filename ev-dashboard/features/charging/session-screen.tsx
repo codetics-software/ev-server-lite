@@ -84,7 +84,7 @@ export function SessionScreen({ id, portalPath }: { id: string; portalPath: stri
   }
 
   return (
-    <PortalLayout>
+    <PortalLayout workspace={portalPath.split("/")[2]}>
       <div className="page-heading">
         <div>
           <h1>Votre session de recharge</h1>

@@ -67,7 +67,7 @@ export function ResourcePage({ section, user }: { section: string; user: User })
       <section className="flex min-w-0 flex-col gap-5" aria-label={title}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground tabular-nums">
-            {list.total.toLocaleString("fr-FR")} {title.toLowerCase()}
+            {list.total.toLocaleString("fr-FR")} élément{list.total > 1 ? "s" : ""}
           </p>
           <ResourceToolbar
             search={list.search}
@@ -126,7 +126,6 @@ export function ResourcePage({ section, user }: { section: string; user: User })
         section={section}
         title={title}
         record={detail}
-        user={user}
         canDelete={access.canDelete}
         onClose={() => setDetail(null)}
         onDeleted={list.refresh}

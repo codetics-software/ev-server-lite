@@ -20,6 +20,27 @@ interface TransactionRepository : StoreRepository<TransactionEntity, Int> {
 
     fun findByTenantIdAndStationIdAndId(tenant: UUID, station: String, id: Int): TransactionEntity?
 
+    fun findAllByTenantIdAndStoppedAtIsNull(tenant: UUID): List<TransactionEntity>
+
+    fun findAllByTenantIdAndStationIdAndStoppedAtIsNull(
+        tenant: UUID,
+        station: String,
+    ): List<TransactionEntity>
+
+    fun findAllByStoppedAtIsNull(): List<TransactionEntity>
+
+    fun findByTenantIdAndId(tenant: UUID, id: Int): TransactionEntity?
+
+    fun findFirstByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(
+        tenant: UUID,
+        station: String,
+        connector: Int,
+    ): TransactionEntity?
+
+    fun existsByTenantIdAndStationIdAndStoppedAtIsNull(tenant: UUID, station: String): Boolean
+
+    fun findFirstByTenantIdOrderByStartedAtAsc(tenant: UUID): TransactionEntity?
+
     fun existsByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(
         tenant: UUID,
         station: String,

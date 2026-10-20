@@ -3,8 +3,10 @@ package fr.codetics.ev_server.persistence
 import com.mongodb.MongoException
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import com.mongodb.client.model.ReturnDocument
+import fr.codetics.ev_server.models.entities.AssetConsumptionEntity
 import fr.codetics.ev_server.models.entities.AuditEntity
 import fr.codetics.ev_server.models.entities.MeterValueEntity
+import fr.codetics.ev_server.models.entities.StationEventEntity
 import fr.codetics.ev_server.models.entities.TransactionEntity
 import java.math.BigDecimal
 import java.util.UUID
@@ -62,6 +64,8 @@ class MongoStore(private val mongo: MongoTemplate) : Store {
         )
     }
 
+    override fun <T : Any> insert(entity: T): T = mongo.insert(entity)
+
     override fun flush() = Unit
 
     override fun isTransient(error: Throwable): Boolean =
@@ -115,6 +119,8 @@ class MongoSequences(private val factory: MongoDatabaseFactory) : BeforeConvertC
             is TransactionEntity -> if (entity.id == null) entity.id = next(collection).toInt()
             is AuditEntity -> if (entity.id == null) entity.id = next(collection)
             is MeterValueEntity -> if (entity.id == null) entity.id = next(collection)
+            is StationEventEntity -> if (entity.id == null) entity.id = next(collection)
+            is AssetConsumptionEntity -> if (entity.id == null) entity.id = next(collection)
         }
         return entity
     }

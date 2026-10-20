@@ -6,7 +6,10 @@ export default function NotFound() {
       <p className="text-sm text-muted-foreground">Erreur 404</p>
       <h1 className="text-3xl font-semibold">Page introuvable</h1>
       <p>Cette page n’existe pas ou n’est plus disponible.</p>
-      <Link href="/" className="text-sm text-primary underline underline-offset-4">
+      <Link
+        href="/"
+        className="text-sm text-primary underline underline-offset-4 dark:text-sidebar-primary"
+      >
         Retour à la supervision
       </Link>
     </main>

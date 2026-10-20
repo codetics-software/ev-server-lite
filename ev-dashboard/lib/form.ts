@@ -52,3 +52,29 @@ export function integerBetween(min: number, max: number, message: string): Rule<
 export function isInvalid(field: { state: { meta: { isTouched: boolean; isValid: boolean } } }) {
   return field.state.meta.isTouched && !field.state.meta.isValid;
 }
+
+export function optionalNumber(
+  min = -Infinity,
+  max = Infinity,
+  message = "Saisissez un nombre valide.",
+): Rule<string> {
+  return (value) => {
+    if (!value.trim()) {
+      return undefined;
+    }
+    const number = Number(value);
+    return Number.isFinite(number) && number >= min && number <= max ? undefined : message;
+  };
+}
+
+export function toNumber(value: string | number | null | undefined): number | undefined {
+  if (value === null || value === undefined || String(value).trim() === "") {
+    return undefined;
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+export function asText(value: unknown): string {
+  return value === null || value === undefined ? "" : String(value);
+}

@@ -9,6 +9,7 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public retryAfter: number | null = null,
+    public type: string | null = null,
   ) {
     super(message);
     this.name = "ApiError";
@@ -62,6 +63,13 @@ function readableDetail(detail: string | undefined, status: number) {
   if (/\n\s*at\s|(?:java|kotlin|org\.springframework|com\.stripe)\.|Exception\b/.test(trimmed)) {
     return null;
   }
+  if (
+    /^(No (static resource|endpoint|handler)|Request method|Required|Failed to|Content-Type)/i.test(
+      trimmed,
+    )
+  ) {
+    return null;
+  }
   return trimmed;
 }
 
@@ -77,6 +85,7 @@ export async function errorFromResponse(response: Response): Promise<ApiError> {
     response.status,
     readableDetail(problem.detail, response.status) ?? fallbackMessage(response.status),
     retryAfterSeconds(response),
+    problem.type ?? null,
   );
 }
 
@@ -107,10 +116,10 @@ async function csrfHeader(signal: AbortSignal | null | undefined) {
   return { name: body.headerName, token: body.token };
 }
 
-export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request(path: string, options: RequestInit): Promise<Response> {
   const method = options.method || "GET";
   const headers = new Headers(options.headers);
-  if (options.body) {
+  if (options.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
   if (!["GET", "HEAD"].includes(method)) {
@@ -126,6 +135,11 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   if (!response.ok) {
     throw await errorFromResponse(response);
   }
+  return response;
+}
+
+export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await request(path, options);
   const text = await response.text();
   if (!text) {
     return undefined as T;
@@ -135,4 +149,50 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   } catch {
     throw new ApiError(response.status, "La réponse du serveur est illisible.");
   }
+}
+
+function filenameFrom(response: Response, fallback: string) {
+  const header = response.headers.get("content-disposition") ?? "";
+  const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(header);
+  return match ? decodeURIComponent(match[1]) : fallback;
+}
+
+export function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function download(path: string, filename: string) {
+  const response = await request(path, { method: "GET", headers: { Accept: "text/csv" } });
+  saveBlob(await response.blob(), filenameFrom(response, filename));
+}
+
+export async function upload<T>(
+  path: string,
+  body: BodyInit,
+  contentType: string,
+  method = "POST",
+) {
+  return api<T>(path, { method, body, headers: { "Content-Type": contentType } });
+}
+
+export function query(parameters: Record<string, string | number | boolean | null | undefined>) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(parameters)) {
+    if (value !== null && value !== undefined && value !== "") {
+      search.set(key, String(value));
+    }
+  }
+  const text = search.toString();
+  return text ? `?${text}` : "";
+}
+
+export function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
 }

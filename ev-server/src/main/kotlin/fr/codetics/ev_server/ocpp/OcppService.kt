@@ -9,22 +9,37 @@ import fr.codetics.ev_server.models.entities.ConnectorKey
 import fr.codetics.ev_server.models.entities.MeterValueEntity
 import fr.codetics.ev_server.models.entities.OcppCallEntity
 import fr.codetics.ev_server.models.entities.OcppCallKey
+import fr.codetics.ev_server.models.entities.SiteUserKey
 import fr.codetics.ev_server.models.entities.StationEntity
+import fr.codetics.ev_server.models.entities.StationEventEntity
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.entities.TransactionEntity
 import fr.codetics.ev_server.repositories.ChargingTokenRepository
 import fr.codetics.ev_server.repositories.ConnectorRepository
 import fr.codetics.ev_server.repositories.MeterValueRepository
 import fr.codetics.ev_server.repositories.OcppCallRepository
+import fr.codetics.ev_server.repositories.SiteUserRepository
+import fr.codetics.ev_server.repositories.StationEventRepository
 import fr.codetics.ev_server.repositories.StationRepository
 import fr.codetics.ev_server.repositories.TransactionRepository
 import fr.codetics.ev_server.repositories.UserRepository
 import fr.codetics.ev_server.services.billing.ChargingPaymentLifecycle
+import fr.codetics.ev_server.services.organization.Organization
+import fr.codetics.ev_server.services.pricing.PricingService
 import java.math.BigDecimal
+import java.math.RoundingMode
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import tools.jackson.databind.JsonNode
+
+data class RoamingDecision(val status: AuthorizationStatus, val partnerId: UUID)
+
+interface RoamingAuthorization {
+    fun authorize(station: StationEntity, uid: String): RoamingDecision?
+}
 
 @Service
 class OcppService(
@@ -37,6 +52,12 @@ class OcppService(
     private val meters: MeterValueRepository,
     private val users: UserRepository,
     private val payments: ChargingPaymentLifecycle,
+    private val organization: Organization,
+    private val siteUsers: SiteUserRepository,
+    private val stationEvents: StationEventRepository,
+    private val pricing: PricingService,
+    private val roaming: List<RoamingAuthorization>,
+    private val events: ApplicationEventPublisher,
 ) {
     fun call(tenant: UUID, station: String, id: String, action: String, payload: JsonNode): String {
         OcppValidation.validate(action, payload)
@@ -46,7 +67,7 @@ class OcppService(
                 db.lock<StationEntity>(StationKey(tenant, station))
                     ?: throw OcppFault("SecurityError", "Borne inconnue.")
 
-            if (!device.enabled) {
+            if (!device.enabled || device.deleted) {
                 throw OcppFault("SecurityError", "La borne est désactivée.")
             }
 
@@ -81,10 +102,14 @@ class OcppService(
 
         return when (action) {
             "BootNotification" -> {
+                val firstBoot = station.lastBoot == null
                 station.vendor = payload.path("chargePointVendor").asText()
                 station.model = payload.path("chargePointModel").asText()
                 station.firmwareVersion = payload.get("firmwareVersion")?.asText()
                 station.metadata = db.encode(payload)
+                station.lastBoot = Instant.now()
+                record(station, "BOOT", info = "${station.vendor} ${station.model}")
+                events.publishEvent(StationBooted(station, firstBoot))
 
                 mapOf(
                     "status" to "Accepted",
@@ -96,7 +121,13 @@ class OcppService(
                 mapOf("currentTime" to Instant.now().toString())
             }
             "Authorize" -> {
-                authorization(tenant, identity, payload.path("idTag").asText())
+                val uid = payload.path("idTag").asText()
+                val decision = authorize(station, uid)
+                record(station, "AUTHORIZE", status = decision.status.name, info = uid)
+                if (decision.status != AuthorizationStatus.Accepted) {
+                    events.publishEvent(BadgeRejected(station, uid, decision.status))
+                }
+                mapOf("idTagInfo" to mapOf("status" to decision.status))
             }
             "StatusNotification" -> {
                 updateStatus(station, payload)
@@ -120,11 +151,32 @@ class OcppService(
                 emptyMap<String, Any>()
             }
             "DataTransfer" -> {
+                record(
+                    station,
+                    "DATA_TRANSFER",
+                    info =
+                        listOfNotNull(
+                                payload.path("vendorId").asText(),
+                                payload.get("messageId")?.asText(),
+                            )
+                            .joinToString(" / "),
+                )
                 mapOf("status" to "UnknownVendorId")
             }
-            "DiagnosticsStatusNotification",
+            "DiagnosticsStatusNotification" -> {
+                val status = payload.path("status").asText()
+                station.diagnosticsStatus = status
+                record(station, "DIAGNOSTICS", status = status)
+                db.audit(tenant, "station:$identity", action, status)
+                events.publishEvent(StationNotification(station, "DIAGNOSTICS", status))
+                emptyMap<String, Any>()
+            }
             "FirmwareStatusNotification" -> {
-                db.audit(tenant, "station:$identity", action, payload.path("status").asText())
+                val status = payload.path("status").asText()
+                station.firmwareStatus = status
+                record(station, "FIRMWARE", status = status)
+                db.audit(tenant, "station:$identity", action, status)
+                events.publishEvent(StationNotification(station, "FIRMWARE", status))
                 emptyMap<String, Any>()
             }
             else -> {
@@ -133,34 +185,49 @@ class OcppService(
         }
     }
 
-    private fun authorization(tenant: UUID, station: String, uid: String): Map<String, Any> {
-        return mapOf("idTagInfo" to mapOf("status" to authorize(tenant, station, uid)))
-    }
+    private data class Decision(
+        val status: AuthorizationStatus,
+        val userId: UUID? = null,
+        val partnerId: UUID? = null,
+    )
 
-    private fun authorize(
-        tenant: UUID,
-        station: String,
-        uid: String,
-        connector: Int? = null,
-    ): AuthorizationStatus {
-        payments.authorization(tenant, station, connector, uid)?.let {
-            return it
+    private fun authorize(station: StationEntity, uid: String, connector: Int? = null): Decision {
+        val tenant = station.key.tenantId
+        payments.authorization(tenant, station.key.stationId, connector, uid)?.let {
+            return Decision(it)
         }
-        val token =
-            tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null)
-                ?: return AuthorizationStatus.Invalid
-        val userDisabled =
-            token.userId?.let { id -> users.findByTenantIdAndId(tenant, id)?.enabled != true }
-                ?: false
+        val token = tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null)
+
+        if (token == null) {
+            roaming.firstNotNullOfOrNull { it.authorize(station, uid) }?.let {
+                return Decision(it.status, partnerId = it.partnerId)
+            }
+            return Decision(AuthorizationStatus.Invalid)
+        }
+
+        val owner = token.userId?.let { id -> users.findByTenantIdAndId(tenant, id) }
+        val userDisabled = token.userId != null && (owner == null || !owner.enabled || owner.deletedAt != null)
 
         if (!token.enabled || userDisabled) {
-            return AuthorizationStatus.Blocked
+            return Decision(AuthorizationStatus.Blocked, token.userId)
         }
         if (token.expiresAt?.isBefore(Instant.now()) == true) {
-            return AuthorizationStatus.Expired
+            return Decision(AuthorizationStatus.Expired, token.userId)
         }
 
-        return AuthorizationStatus.Accepted
+        val site = organization.location(station).site
+        if (site != null && site.data.accessControl) {
+            val allowed =
+                token.userId != null &&
+                    siteUsers.existsById(SiteUserKey(tenant, site.id, token.userId!!))
+            if (!allowed) {
+                return Decision(AuthorizationStatus.Blocked, token.userId)
+            }
+        }
+
+        token.lastUsedAt = Instant.now()
+        tokens.save(token)
+        return Decision(AuthorizationStatus.Accepted, token.userId)
     }
 
     private fun connector(station: StationEntity, number: Int): ConnectorEntity {
@@ -178,10 +245,24 @@ class OcppService(
             return
         }
 
+        val previous = connector.status
+        val previousError = connector.errorCode
         connector.status = payload.path("status").asText()
         connector.errorCode = payload.path("errorCode").asText()
         connector.statusAt = timestamp
         connectors.save(connector)
+
+        if (previous != connector.status || previousError != connector.errorCode) {
+            record(
+                station,
+                "STATUS",
+                connector.key.connectorId,
+                connector.status,
+                connector.errorCode,
+                payload.get("info")?.asText()?.take(500),
+            )
+            events.publishEvent(ConnectorStatusChanged(station, connector, previous))
+        }
     }
 
     private fun start(station: StationEntity, payload: JsonNode): Map<String, Any?> {
@@ -201,8 +282,8 @@ class OcppService(
         }
 
         val uid = payload.path("idTag").asText()
-        val status = authorize(tenant, identity, uid, number)
-        val token = tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null)
+        val decision = authorize(station, uid, number)
+        val location = organization.location(station)
         val transaction =
             transactions.save(
                 TransactionEntity(
@@ -210,15 +291,27 @@ class OcppService(
                     stationId = identity,
                     connectorId = number,
                     tokenUid = uid,
-                    userId = token?.userId,
+                    userId = decision.userId,
+                    vehicleId = decision.userId?.let { users.findByTenantIdAndId(tenant, it)?.defaultCarId },
                     startedAt = Instant.parse(payload.path("timestamp").asText()),
                     meterStartWh = payload.path("meterStart").decimalValue(),
-                    authorizationStatus = status,
+                    authorizationStatus = decision.status,
+                    siteAreaId = location.area?.id,
+                    siteId = location.site?.id,
+                    roamingPartnerId = decision.partnerId,
+                    lastEnergyWh = payload.path("meterStart").decimalValue(),
                 )
             ).also { db.flush() }
 
         payments.started(transaction)
-        return mapOf("transactionId" to transaction.id, "idTagInfo" to mapOf("status" to status))
+        if (decision.status != AuthorizationStatus.Accepted) {
+            events.publishEvent(BadgeRejected(station, uid, decision.status))
+        }
+        events.publishEvent(TransactionStarted(station, transaction))
+        return mapOf(
+            "transactionId" to transaction.id,
+            "idTagInfo" to mapOf("status" to decision.status),
+        )
     }
 
     private fun stop(station: StationEntity, payload: JsonNode): Map<String, Any> {
@@ -230,12 +323,7 @@ class OcppService(
             throw OcppFault("PropertyConstraintViolation", "La fin de session précède son début.")
         }
 
-        if (transaction.stoppedAt == null) {
-            transaction.stoppedAt = stoppedAt
-            transaction.meterStopWh = meterStop
-            transaction.stopReason = payload.get("reason")?.asText() ?: "Local"
-            transactions.save(transaction)
-
+        if (transaction.stoppedAt == null || transaction.softStopped) {
             if (payload.has("transactionData")) {
                 saveMeters(
                     station,
@@ -244,6 +332,7 @@ class OcppService(
                     payload.path("transactionData"),
                 )
             }
+            close(station, transaction, stoppedAt, meterStop, payload.get("reason")?.asText() ?: "Local")
         } else if (
             transaction.stoppedAt != stoppedAt || transaction.meterStopWh?.compareTo(meterStop) != 0
         ) {
@@ -255,7 +344,42 @@ class OcppService(
 
         val uid = payload.get("idTag")?.asText() ?: transaction.tokenUid
         payments.stopped(transaction)
-        return authorization(station.key.tenantId, station.key.stationId, uid)
+        return mapOf("idTagInfo" to mapOf("status" to authorize(station, uid).status))
+    }
+
+    fun close(
+        station: StationEntity,
+        transaction: TransactionEntity,
+        stoppedAt: Instant,
+        meterStop: BigDecimal,
+        reason: String,
+        soft: Boolean = false,
+    ) {
+        if (transaction.chargingEndedAt != null || (transaction.lastPowerW?.let { it < IDLE_W } == true)) {
+            val since = transaction.lastMeterAt ?: stoppedAt
+            if (stoppedAt.isAfter(since)) {
+                transaction.inactivitySeconds += Duration.between(since, stoppedAt).seconds
+            }
+        }
+        transaction.stoppedAt = stoppedAt
+        transaction.meterStopWh = meterStop
+        transaction.stopReason = reason
+        transaction.softStopped = soft
+        pricing.price(transaction, station, stoppedAt)?.let { priced ->
+            transaction.price = priced.price
+            transaction.currency = priced.currency
+            transaction.pricingDefinitionId = priced.definitionId
+        }
+        transactions.save(transaction)
+
+        connectors.findById(
+            ConnectorKey(station.key.tenantId, station.key.stationId, transaction.connectorId)
+        ).ifPresent { connector ->
+            connector.currentPowerW = null
+            connector.currentSoc = null
+            connectors.save(connector)
+        }
+        events.publishEvent(TransactionStopped(station, transaction))
     }
 
     private fun verifyTransaction(
@@ -298,40 +422,98 @@ class OcppService(
                 )
             }
         meters.saveAll(readings)
-        if (transaction != null) {
-            val active = verifyTransaction(station, transaction, connector)
-            values.forEach { reading ->
-                val sampledAt = Instant.parse(reading.path("timestamp").asText())
-                reading.path("sampledValue").forEach { sample ->
-                    energyRegisterWh(sample)?.let { payments.observed(active, it, sampledAt) }
-                }
+        val parsed = values.toList().map(MeterReadings::parse).sortedBy { it.at }
+        val latest = parsed.lastOrNull() ?: return
+
+        val plug = connector(station, connector)
+        if (plug.meterAt == null || !latest.at.isBefore(plug.meterAt)) {
+            latest.powerW?.let { plug.currentPowerW = it }
+            latest.soc?.let { plug.currentSoc = it }
+            plug.meterAt = latest.at
+            connectors.save(plug)
+        }
+
+        if (transaction == null) return
+        val active = verifyTransaction(station, transaction, connector)
+        parsed.forEach { reading ->
+            reading.energyWh?.let { payments.observed(active, it, reading.at) }
+            if (active.stoppedAt == null) track(active, reading)
+        }
+        transactions.save(active)
+        if (active.stoppedAt == null) {
+            if (plug.currentPowerW == null && active.lastPowerW != null) {
+                plug.currentPowerW = active.lastPowerW
+                connectors.save(plug)
             }
+            events.publishEvent(TransactionUpdated(station, active))
         }
     }
 
-    private fun energyRegisterWh(sample: JsonNode): BigDecimal? {
-        val register =
-            sample.path("measurand").asText(ENERGY_REGISTER) == ENERGY_REGISTER &&
-                sample.path("format").asText("Raw") == "Raw" &&
-                !sample.has("phase") &&
-                sample.path("location").asText("Outlet") == "Outlet"
-        if (!register) {
-            return null
+    private fun track(transaction: TransactionEntity, reading: MeterReading) {
+        val previousAt = transaction.lastMeterAt
+        if (previousAt != null && !reading.at.isAfter(previousAt)) return
+        if (reading.at.isBefore(transaction.startedAt)) return
+
+        val power =
+            reading.powerW
+                ?: reading.energyWh?.let { energy ->
+                    val previousEnergy = transaction.lastEnergyWh ?: transaction.meterStartWh
+                    val since = previousAt ?: transaction.startedAt
+                    val seconds = Duration.between(since, reading.at).seconds
+                    if (seconds <= 0) null
+                    else
+                        (energy - previousEnergy)
+                            .max(BigDecimal.ZERO)
+                            .multiply(BigDecimal(3600))
+                            .divide(BigDecimal(seconds), 3, RoundingMode.HALF_UP)
+                }
+
+        if (previousAt != null && (transaction.lastPowerW?.let { it < IDLE_W } == true)) {
+            transaction.inactivitySeconds += Duration.between(previousAt, reading.at).seconds
         }
-        val value =
-            sample.path("value").asText().takeIf { it.length <= 30 }?.toBigDecimalOrNull()
-                ?: return null
-        if (value.signum() < 0) {
-            return null
+
+        reading.energyWh?.let { energy ->
+            transaction.lastEnergyWh = (transaction.lastEnergyWh ?: energy).max(energy)
         }
-        return when (sample.path("unit").asText("Wh")) {
-            "Wh" -> value
-            "kWh" -> value * BigDecimal(1000)
-            else -> null
+        reading.soc?.let { soc ->
+            if (transaction.socStart == null) transaction.socStart = soc
+            transaction.socLast = soc
         }
+        if (power != null) {
+            val delivered =
+                (transaction.lastEnergyWh ?: transaction.meterStartWh) - transaction.meterStartWh
+            if (power < IDLE_W && delivered > BigDecimal.ZERO) {
+                if (transaction.chargingEndedAt == null) transaction.chargingEndedAt = reading.at
+            } else if (power >= IDLE_W) {
+                transaction.chargingEndedAt = null
+            }
+            transaction.lastPowerW = power
+        }
+        transaction.lastMeterAt = reading.at
     }
 
-    private companion object {
-        const val ENERGY_REGISTER = "Energy.Active.Import.Register"
+    private fun record(
+        station: StationEntity,
+        type: String,
+        connector: Int? = null,
+        status: String? = null,
+        errorCode: String? = null,
+        info: String? = null,
+    ) {
+        stationEvents.save(
+            StationEventEntity(
+                tenantId = station.key.tenantId,
+                stationId = station.key.stationId,
+                type = type,
+                connectorId = connector,
+                status = status,
+                errorCode = errorCode,
+                info = info?.take(1000),
+            )
+        )
+    }
+
+    companion object {
+        val IDLE_W = BigDecimal(100)
     }
 }

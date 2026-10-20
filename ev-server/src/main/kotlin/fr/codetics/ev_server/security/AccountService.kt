@@ -22,12 +22,14 @@ import fr.codetics.ev_server.repositories.MailRepository
 import fr.codetics.ev_server.repositories.OAuthIdentityRepository
 import fr.codetics.ev_server.repositories.TenantRepository
 import fr.codetics.ev_server.repositories.UserRepository
+import fr.codetics.ev_server.services.people.UserRegistered
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -46,16 +48,23 @@ class AccountService(
     private val rateLimiter: RateLimiter,
     private val properties: AppProperties,
     private val clock: Clock,
+    private val events: ApplicationEventPublisher,
 ) {
     private val dummyPassword = passwords.encode(randomToken())
 
-    private fun principal(user: UserEntity): AppPrincipal {
+    private fun principal(user: UserEntity, tenant: TenantEntity? = null): AppPrincipal {
+        val slug = (tenant ?: tenants.findById(user.tenantId).orElse(null))?.slug
         return AppPrincipal(
             id = user.id,
             tenantId = user.tenantId,
             email = user.email,
             name = user.displayName,
             role = user.role,
+            platformAdmin =
+                user.role == UserRole.ADMIN &&
+                    slug == properties.bootstrap.tenant &&
+                    user.email in properties.platformAdmins(),
+            eulaAccepted = user.eulaVersion == EULA_VERSION,
         )
     }
 
@@ -63,11 +72,11 @@ class AccountService(
         val user = users.findById(id).orElse(null) ?: return null
         val tenant = tenants.findById(user.tenantId).orElse(null) ?: return null
 
-        if (!user.enabled || !tenant.active) {
+        if (!user.enabled || user.deletedAt != null || !tenant.active) {
             return null
         }
 
-        return principal(user)
+        return principal(user, tenant)
     }
 
     fun authenticateToken(raw: String): AppPrincipal? {
@@ -102,7 +111,7 @@ class AccountService(
         val user = organization?.let { users.findByTenantIdAndEmail(it.id, normalizedEmail) }
         val passwordMatches = passwords.matches(password, user?.passwordHash ?: dummyPassword)
 
-        if (!passwordMatches || user == null || !user.enabled) {
+        if (!passwordMatches || user == null || !user.enabled || user.deletedAt != null) {
             throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Identifiants incorrects.")
         }
 
@@ -113,7 +122,7 @@ class AccountService(
             )
         }
 
-        return principal(user)
+        return principal(user, organization)
     }
 
     fun issue(user: AppPrincipal): String {
@@ -124,6 +133,11 @@ class AccountService(
         tokens.save(
             AccessTokenEntity(tokenHash = sha256(raw), userId = user.id, expiresAt = expiresAt)
         )
+        users.findById(user.id).ifPresent { account ->
+            account.lastLoginAt = Instant.now(clock)
+            account.inactivityNotifiedAt = null
+            users.save(account)
+        }
         db.audit(user.tenantId, user.id.toString(), "AUTH_SIGN_IN", user.id.toString())
 
         return raw
@@ -172,6 +186,7 @@ class AccountService(
                         )
                     )
                 challenge(user, ChallengeKind.VERIFY)
+                events.publishEvent(UserRegistered(user))
             }
         }
     }
@@ -194,7 +209,9 @@ class AccountService(
         val raw = randomToken()
         val (path, action) =
             when (kind) {
-                ChallengeKind.RESET -> "reset-password" to "Réinitialiser le mot de passe"
+                ChallengeKind.RESET ->
+                    if (user.passwordHash == null) "define-password" to "Définir votre mot de passe"
+                    else "reset-password" to "Réinitialiser le mot de passe"
                 ChallengeKind.VERIFY -> "verify-email" to "Vérifier l’adresse électronique"
             }
 
@@ -242,6 +259,7 @@ class AccountService(
 
             if (kind == ChallengeKind.RESET) {
                 user.passwordHash = passwords.encode(password)
+                user.emailVerified = true
                 tokens.deleteAllByUserId(user.id)
             } else {
                 user.emailVerified = true
@@ -333,10 +351,13 @@ class AccountService(
                     emailVerified = true,
                 )
             )
+        events.publishEvent(UserRegistered(user))
 
         return principal(user)
     }
 }
+
+const val EULA_VERSION = "1.0"
 
 private val CHALLENGE_TTL: Duration = Duration.ofMinutes(30)
 private val EMAIL = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")

@@ -16,30 +16,37 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { api } from "@/lib/api";
-import type { User } from "@/lib/api-types";
+import type { User, Workspace } from "@/lib/api-types";
+import { initials } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
 import { IconLogout } from "@tabler/icons-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { navigationFor } from "./navigation-access";
+import { groups, sectionHref, type Section } from "./navigation";
+import { homeFor, sectionLabel } from "./navigation-access";
+import { workspaceLogo } from "./workspace-context";
 
-export function WorkspaceSidebar({ user, section }: { user: User; section: string }) {
+export function WorkspaceSidebar({
+  user,
+  workspace,
+  section,
+  items,
+  revision,
+}: {
+  user: User;
+  workspace: Workspace | null;
+  section: string;
+  items: readonly Section[];
+  revision: number;
+}) {
   const router = useRouter();
   const sidebar = useSidebar();
   const [error, setError] = useState("");
   const [signingOut, setSigningOut] = useState(false);
-  const visible = navigationFor(user);
-  const groups = ["Espace client", "Exploitation", "Réseau", "Gestion", "Administration"].filter(
-    (group) => visible.some((item) => item.group === group),
-  );
-  const initials = user.name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
+  const logo = workspaceLogo(workspace, revision);
+  const visibleGroups = groups.filter((group) => items.some((item) => item.group === group));
 
   async function signOut() {
     setSigningOut(true);
@@ -55,25 +62,40 @@ export function WorkspaceSidebar({ user, section }: { user: User; section: strin
 
   return (
     <Sidebar variant="inset">
-      <SidebarHeader className="px-5 pb-5 pt-6">
+      <SidebarHeader className="px-4 pb-4 pt-5">
         <Link
-          href={user.role === "DRIVER" ? "/transactions" : "/"}
-          className="flex items-center gap-3"
-          aria-label="Codetics Supervision"
+          href={homeFor(user)}
+          className="flex min-w-0 items-center gap-3"
+          aria-label={workspace?.name ?? "Codetics Supervision"}
         >
-          <CodeticsMark />
-          <span>
-            <span className="block text-base font-semibold tracking-tight">Codetics</span>
-            <span className="block text-xs text-sidebar-foreground/70">Supervision</span>
+          {logo ? (
+            <Image
+              src={logo}
+              alt=""
+              width={40}
+              height={40}
+              unoptimized
+              className="size-9 shrink-0 rounded-md object-contain"
+            />
+          ) : (
+            <CodeticsMark />
+          )}
+          <span className="min-w-0">
+            <span className="block truncate text-base font-semibold tracking-tight">
+              {logo && workspace ? workspace.name : "Codetics"}
+            </span>
+            <span className="block truncate text-xs text-sidebar-foreground/70">
+              {logo ? "Supervision · Codetics" : (workspace?.name ?? "Supervision")}
+            </span>
           </span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        {groups.map((group) => (
+        {visibleGroups.map((group) => (
           <SidebarGroup key={group}>
             <SidebarGroupLabel>{group}</SidebarGroupLabel>
             <SidebarMenu>
-              {visible
+              {items
                 .filter((item) => item.group === group)
                 .map((item) => (
                   <SidebarMenuItem key={item.id}>
@@ -82,13 +104,13 @@ export function WorkspaceSidebar({ user, section }: { user: User; section: strin
                       onClick={() => sidebar.setOpenMobile(false)}
                       render={
                         <Link
-                          href={item.id === "overview" ? "/" : `/${item.id}`}
+                          href={sectionHref(item.id)}
                           aria-current={section === item.id ? "page" : undefined}
                         />
                       }
                     >
                       <item.icon stroke={1.5} />
-                      <span>{item.label}</span>
+                      <span>{sectionLabel(item, user)}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -104,7 +126,7 @@ export function WorkspaceSidebar({ user, section }: { user: User; section: strin
         )}
         <div className="flex items-center gap-3">
           <Avatar>
-            <AvatarFallback>{initials || "C"}</AvatarFallback>
+            <AvatarFallback>{initials(user.name)}</AvatarFallback>
           </Avatar>
           <Link href="/account" className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium">{user.name}</span>

@@ -11,22 +11,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
 import { email, isInvalid, lengthBetween, maxLength, required, rules } from "@/lib/form";
 import { revalidateLogic, useForm, useStore } from "@tanstack/react-form";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthIntro } from "./auth-intro";
 
 const titles: Record<string, string> = {
   login: "Se connecter",
   register: "Créer votre compte",
   "forgot-password": "Rétablir votre accès",
-  "reset-password": "Choisir un nouveau mot de passe",
+  "reset-password": "Définir votre mot de passe",
+  "define-password": "Définir votre mot de passe",
   "verify-email": "Vérifier votre adresse électronique",
 };
 
@@ -40,12 +43,18 @@ export function AuthScreen({ action }: { action: string }) {
   const hasTenant = ["login", "forgot-password"].includes(action);
   const hasName = action === "register";
   const hasEmail = ["login", "register", "forgot-password"].includes(action);
-  const hasPassword = ["login", "register", "reset-password"].includes(action);
+  const hasPassword = ["login", "register", "reset-password", "define-password"].includes(action);
+  const [accepted, setAccepted] = useState(false);
+  const [logoFailed, setLogoFailed] = useState("");
   const form = useForm({
     defaultValues: { tenant: "", name: "", email: "", password: "" },
     validationLogic: revalidateLogic(),
     onSubmit: async ({ value }) => {
       setError("");
+      if (action === "register" && !accepted) {
+        setError("Acceptez les conditions d’utilisation pour créer votre compte.");
+        return;
+      }
 
       const parameters = new URLSearchParams(window.location.search);
       const payload = {
@@ -60,6 +69,7 @@ export function AuthScreen({ action }: { action: string }) {
         register: "auth/signon",
         "forgot-password": "auth/password/reset/request",
         "reset-password": "auth/password/reset",
+        "define-password": "auth/password/reset",
         "verify-email": "auth/mail/check",
       };
 
@@ -86,6 +96,23 @@ export function AuthScreen({ action }: { action: string }) {
     },
   });
   const pending = useStore(form.store, (state) => state.isSubmitting);
+  const tenant = useStore(form.store, (state) => state.values.tenant.trim().toLowerCase());
+  const [logoTenant, setLogoTenant] = useState("");
+
+  useEffect(() => {
+    const initial = new URLSearchParams(window.location.search).get("espace");
+    if (initial) {
+      form.setFieldValue("tenant", initial);
+    }
+  }, [form]);
+
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setLogoTenant(/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(tenant) ? tenant : ""),
+      400,
+    );
+    return () => clearTimeout(timer);
+  }, [tenant]);
 
   return (
     <main className="grid min-h-svh lg:grid-cols-2" aria-busy={providersLoading}>
@@ -93,9 +120,26 @@ export function AuthScreen({ action }: { action: string }) {
       <section className="flex items-center justify-center p-5 sm:p-12">
         <Card className="w-full max-w-sm">
           <CardHeader>
+            {logoTenant && logoFailed !== logoTenant && (
+              <Image
+                src={`/api/backend/api/v1/public/workspaces/${encodeURIComponent(logoTenant)}/logo`}
+                alt=""
+                width={48}
+                height={48}
+                unoptimized
+                className="mb-2 size-12 rounded-lg object-contain"
+                onError={() => setLogoFailed(logoTenant)}
+              />
+            )}
             <CardDescription>Codetics Supervision</CardDescription>
             <CardTitle className="text-2xl">{titles[action]}</CardTitle>
-            <CardDescription>Renseignez votre espace client et vos identifiants.</CardDescription>
+            <CardDescription>
+              {action === "define-password"
+                ? "Choisissez le mot de passe de votre nouveau compte. Il contient au moins 16 caractères."
+                : action === "reset-password"
+                  ? "Nouveau compte ou mot de passe oublié : choisissez un mot de passe d’au moins 16 caractères."
+                  : "Renseignez votre espace client et vos identifiants."}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             {message ? (
@@ -247,6 +291,27 @@ export function AuthScreen({ action }: { action: string }) {
                       }}
                     </form.Field>
                   )}
+                  {action === "register" && (
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id="eula"
+                        checked={accepted}
+                        onCheckedChange={(checked) => setAccepted(checked === true)}
+                      />
+                      <FieldLabel htmlFor="eula" className="font-normal">
+                        <span>
+                          J’accepte les{" "}
+                          <Link
+                            href="/auth/eula"
+                            target="_blank"
+                            className="underline underline-offset-4"
+                          >
+                            conditions d’utilisation
+                          </Link>
+                        </span>
+                      </FieldLabel>
+                    </Field>
+                  )}
                   {error && (
                     <Alert variant="destructive">
                       <AlertDescription>{error}</AlertDescription>
@@ -299,6 +364,7 @@ export function AuthScreen({ action }: { action: string }) {
             ) : (
               <Link href="/auth/login">Retour à la connexion</Link>
             )}
+            <Link href="/auth/eula">Conditions d’utilisation</Link>
             <span>
               Kevin Vavelin, <a href="https://codetics.fr">Codetics</a>
             </span>

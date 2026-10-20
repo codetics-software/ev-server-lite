@@ -27,7 +27,15 @@ class RecordController(private val records: RecordService) {
         @RequestParam(defaultValue = "") search: String,
         @RequestParam(defaultValue = "0") offset: Int,
         @RequestParam(defaultValue = "50") limit: Int,
-    ) = records.list(kind, user, search, offset, limit)
+        @RequestParam filters: Map<String, String>,
+    ) = records.list(kind, user, search, offset, limit, filters)
+
+    @GetMapping("/{id}")
+    fun find(
+        @PathVariable kind: String,
+        @PathVariable id: UUID,
+        @AuthenticationPrincipal user: AppPrincipal,
+    ) = records.find(kind, id, user)
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")

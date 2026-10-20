@@ -1,6 +1,7 @@
 package fr.codetics.ev_server.models.entities
 
 import fr.codetics.ev_server.ocpp.AuthorizationStatus
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -34,4 +35,22 @@ class TransactionEntity(
     @Enumerated(EnumType.STRING)
     var authorizationStatus: AuthorizationStatus = AuthorizationStatus.Invalid,
     @JdbcTypeCode(SqlTypes.JSON) var tariffSnapshot: String = "{}",
+    var siteAreaId: UUID? = null,
+    var siteId: UUID? = null,
+    var lastEnergyWh: BigDecimal? = null,
+    @Column(name = "last_power_w") var lastPowerW: BigDecimal? = null,
+    var lastMeterAt: Instant? = null,
+    var socStart: Int? = null,
+    var socLast: Int? = null,
+    var inactivitySeconds: Long = 0,
+    var chargingEndedAt: Instant? = null,
+    var price: BigDecimal? = null,
+    var currency: String? = null,
+    var pricingDefinitionId: UUID? = null,
+    var billingStatus: String = "NONE",
+    var invoiceId: UUID? = null,
+    var roamingPartnerId: UUID? = null,
+    var softStopped: Boolean = false,
+    var startNotified: Boolean = false,
+    var endOfChargeNotified: Boolean = false,
 )

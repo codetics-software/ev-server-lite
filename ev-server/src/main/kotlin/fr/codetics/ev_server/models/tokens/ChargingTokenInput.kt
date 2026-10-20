@@ -8,4 +8,9 @@ data class TokenInput(
     val userId: UUID? = null,
     val enabled: Boolean = true,
     val expiresAt: Instant? = null,
+    val visualId: String? = null,
+    val description: String? = null,
+    val default: Boolean = false,
 )
+
+data class TokenAssignment(val userId: UUID)

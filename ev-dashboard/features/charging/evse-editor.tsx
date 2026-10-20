@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FormPicker } from "@/features/shared/form-fields";
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
 import type { PageData, Row } from "@/lib/api-types";
@@ -133,27 +134,10 @@ export function EvseEditor({
             <form.Field
               name="stationId"
               validators={{
-                onDynamic: rules(required("Renseignez l’identifiant de la borne.")),
+                onDynamic: rules(required("Choisissez la borne.")),
               }}
             >
-              {(field) => {
-                const invalid = isInvalid(field);
-                return (
-                  <Field data-invalid={invalid}>
-                    <FieldLabel htmlFor="evse-station">Identifiant de la borne</FieldLabel>
-                    <Input
-                      id="evse-station"
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
-                      aria-invalid={invalid}
-                      required
-                    />
-                    {invalid && <FieldError errors={field.state.meta.errors} />}
-                  </Field>
-                );
-              }}
+              {(field) => <FormPicker field={field} source="stations" label="Borne" />}
             </form.Field>
             <form.Field
               name="connectorId"

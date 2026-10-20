@@ -13,6 +13,12 @@ class SqlStore(private val entities: EntityManager) : Store {
     override fun <T : Any> lock(type: Class<T>, id: Any): T? =
         entities.find(type, id, LockModeType.PESSIMISTIC_WRITE)
 
+    override fun <T : Any> insert(entity: T): T {
+        entities.persist(entity)
+        entities.flush()
+        return entity
+    }
+
     override fun flush() = entities.flush()
 
     override fun isTransient(error: Throwable) = false

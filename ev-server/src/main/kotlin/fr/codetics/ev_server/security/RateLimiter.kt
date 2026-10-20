@@ -27,9 +27,12 @@ class RateLimiter(
                 val count =
                     db.isolated {
                         val now = Instant.now(clock)
-                        val counter =
-                            db.lock<AuthAttemptEntity>(hash)
-                                ?: AuthAttemptEntity(subjectHash = hash, windowStart = now)
+                        val counter = db.lock<AuthAttemptEntity>(hash)
+
+                        if (counter == null) {
+                            db.insert(AuthAttemptEntity(subjectHash = hash, windowStart = now, attempts = 1))
+                            return@isolated 1
+                        }
 
                         if (counter.windowStart.isBefore(now.minus(WINDOW))) {
                             counter.windowStart = now

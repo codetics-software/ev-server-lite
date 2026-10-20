@@ -97,6 +97,35 @@ class MongoSchema(private val mongo: MongoTemplate) : InitializingBean {
             "workspace_payment_settings" to
                 index("stripeAccountId" to ASC).unique().partial(exists("stripeAccountId")),
             "mail_outbox" to index("sentAt" to ASC, "attempts" to ASC, "createdAt" to ASC),
+            "stations" to index("_id.tenantId" to ASC, "siteAreaId" to ASC),
+            "charging_tokens" to index("_id.tenantId" to ASC, "visualId" to ASC),
+            "charging_transactions" to
+                index("tenantId" to ASC, "stationId" to ASC, "startedAt" to DESC),
+            "charging_transactions" to
+                index("tenantId" to ASC, "userId" to ASC, "startedAt" to DESC),
+            "charging_transactions" to index("stoppedAt" to ASC, "lastMeterAt" to ASC),
+            "meter_values" to index("transactionId" to ASC, "sampledAt" to ASC),
+            "site_users" to index("_id.tenantId" to ASC, "_id.userId" to ASC),
+            "station_events" to
+                index("tenantId" to ASC, "stationId" to ASC, "createdAt" to DESC),
+            "station_events" to index("createdAt" to ASC),
+            "charging_profiles" to
+                index("tenantId" to ASC, "stationId" to ASC, "createdAt" to DESC),
+            "registration_tokens" to index("tenantId" to ASC, "tokenHash" to ASC).unique(),
+            "notifications" to index("tenantId" to ASC, "createdAt" to DESC),
+            "notifications" to
+                index("tenantId" to ASC, "dedupeKey" to ASC, "createdAt" to ASC),
+            "asset_consumptions" to
+                index("tenantId" to ASC, "assetId" to ASC, "sampledAt" to ASC),
+            "asset_connections" to
+                index("pushTokenHash" to ASC).unique().partial(exists("pushTokenHash")),
+            "invoices" to index("tenantId" to ASC, "createdAt" to DESC),
+            "invoices" to index("status" to ASC),
+            "invoices" to
+                index("stripeInvoiceId" to ASC).unique().partial(exists("stripeInvoiceId")),
+            "ocpi_jobs" to index("tenantId" to ASC, "partnerId" to ASC, "startedAt" to DESC),
+            "ocpi_outbox" to index("sentAt" to ASC, "attempts" to ASC, "nextAttemptAt" to ASC),
+            "smart_charging_plans" to index("tenantId" to ASC),
         )
     }
 }

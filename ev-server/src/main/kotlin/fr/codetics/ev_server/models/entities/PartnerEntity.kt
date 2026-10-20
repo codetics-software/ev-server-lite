@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.Instant
 import java.util.UUID
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
@@ -26,4 +27,8 @@ class PartnerEntity(
     @JdbcTypeCode(SqlTypes.JSON) var remoteEndpoints: String = "[]",
     var registered: Boolean = false,
     var enabled: Boolean = true,
+    var lastPingAt: Instant? = null,
+    var lastPushAt: Instant? = null,
+    var lastPullAt: Instant? = null,
+    var lastError: String? = null,
 )

@@ -32,9 +32,15 @@ class StripeWebhookService(
     private val queue: OcppCommandQueue,
     private val db: Database,
     private val clock: Clock,
+    private val userBilling: UserBillingService,
 ) {
     fun receive(payload: String, signature: String) {
         val event = gateway.verifyEvent(payload, signature)
+        if (events.existsById(event.id)) return
+        if (userBilling.handle(event)) {
+            db.atomic { if (!events.existsById(event.id)) events.save(StripeEventEntity(event.id, event.accountId, event.type)) }
+            return
+        }
         if (
             event.type !in
                 setOf(

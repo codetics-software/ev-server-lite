@@ -83,6 +83,22 @@ Les rôles sont **administrateur**, **exploitant**, **lecteur** et **conducteur*
 
 La création d’espaces depuis `/auth/create-workspace` s’active avec `WORKSPACE_SIGNUP_ENABLED=true`, `MAIL_ENABLED=true` et un serveur SMTP. Le premier administrateur doit vérifier son adresse électronique. L’inscription libre de conducteurs dans l’espace défini par `PUBLIC_TENANT` est une option séparée, désactivée par défaut.
 
+## Fonctionnalités
+
+Chaque espace active ses modules dans **Espace client** : organisation, tarifs, facturation, itinérance, recharge intelligente, statistiques, équipements, véhicules et paiement public.
+
+- **Organisation** : entreprises, sites, zones et équipements. Les bornes sont rattachées à une zone. Un site peut réserver la recharge aux utilisateurs qui lui sont affectés et être publié en itinérance.
+- **Bornes** : édition, suppression, rotation du mot de passe, paramètres OCPP, historique des événements, modèles de configuration appliqués au démarrage, profils de charge, limitation de puissance et jetons d’enregistrement automatique.
+- **Sessions** : prix calculé à la fin de chaque session, courbe de consommation, inactivité, état de charge, arrêt à distance ou local, export CSV et détection des anomalies.
+- **Tarifs** : portée (espace, site, zone, borne, connecteur), validité, jours, plages horaires, seuils d’énergie et de durée, prix d’énergie, de temps, de stationnement et forfait.
+- **Facturation des conducteurs** : moyens de paiement et factures Stripe sur le compte connecté de l’espace, par session ou mensuelle.
+- **Recharge intelligente** : partage de la puissance d’une zone entre les sessions, avec minimum de 6 A, consommation des équipements et profils OCPP `TxProfile`.
+- **Équipements** : relevés Schneider, GreenCom, IoThink, Lacroix, WIT ou envoi direct par jeton.
+- **Itinérance OCPI 2.1.1** : publication des sites, tarifs, sessions et relevés, commandes à distance, autorisation des badges partenaires, envois et récupérations manuels.
+- **Notifications, statistiques et journal** : courriels selon les préférences de chaque utilisateur, statistiques mensuelles exportables, journal filtrable.
+
+Les tâches planifiées signalent les bornes hors ligne et ferment les sessions abandonnées. Elles purgent aussi les historiques selon `app.retention`.
+
 ## Paiement public et QR code
 
 1. Créez un tarif en euros dans **Tarifs**.
@@ -103,6 +119,9 @@ checkout.session.completed
 checkout.session.async_payment_succeeded
 checkout.session.async_payment_failed
 checkout.session.expired
+invoice.paid
+invoice.payment_failed
+invoice.finalized
 ```
 
 L’adresse peut aussi viser directement `/api/v1/stripe/webhook` sur le serveur Java si celui-ci est exposé. Utilisez des clés et une destination de test pour les essais, puis les équivalents de production. Les paiements réels nécessitent un compte Stripe actif et une borne compatible ; les tests locaux utilisent un adaptateur réservé aux tests.

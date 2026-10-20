@@ -48,7 +48,7 @@ async function capture(page, name) {
   const primary = await page
     .locator("html")
     .evaluate((element) => getComputedStyle(element).getPropertyValue("--primary").trim());
-  assert.equal(primary, "#164737", "Le thème vert doit être conservé.");
+  assert.equal(primary, "oklch(0.527 0.154 150.069)", "Le thème vert doit être appliqué.");
   const text = await page.locator("body").innerText();
   assert.doesNotMatch(
     text,
@@ -114,15 +114,14 @@ try {
       await page.getByText("Paris · Atelier", { exact: true }).waitFor();
       await capture(page, "03-bornes");
       await page
-        .getByRole("row")
-        .filter({ hasText: "Paris · Atelier" })
-        .getByRole("button", { name: "Consulter", exact: true })
+        .getByRole("link", { name: /Paris · Atelier/ })
+        .first()
         .click();
-      await page.getByText("Commande OCPP 1.6", { exact: true }).waitFor();
+      await page.getByRole("tab", { name: "Connecteurs", exact: true }).waitFor();
       await capture(page, "04-detail-borne");
-      await page.getByRole("button", { name: "Fermer", exact: true }).click();
 
-      const tokens = await request(page, "tokens");
+      const tokenPage = await request(page, "tokens");
+      const tokens = tokenPage.items ?? tokenPage;
       const token = tokens.find((item) => item.uid === "TEST-DRIVER");
       const expiry = new Date(Date.now() + 86400000).toISOString();
       await request(page, "tokens", "POST", {
@@ -131,23 +130,16 @@ try {
         enabled: true,
         expiresAt: expiry,
       });
-      await workspacePage(page, "tokens", "Badges et accès");
-      await page
-        .getByRole("row")
-        .filter({ hasText: "TEST-DRIVER" })
-        .getByRole("button", { name: "Modifier", exact: true })
-        .click();
-      assert.equal(
-        await page.getByLabel("Identifiant de l’utilisateur (facultatif)").inputValue(),
-        token.user_id,
-      );
+      await workspacePage(page, "tokens", "Badges");
+      await page.getByRole("row").filter({ hasText: "TEST-DRIVER" }).click();
       assert.equal(
         new Date(await page.getByLabel("Expiration (facultative)").inputValue()).valueOf(),
         new Date(expiry).valueOf(),
       );
       await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
       await page.getByRole("dialog").waitFor({ state: "hidden" });
-      const saved = (await request(page, "tokens")).find((item) => item.uid === token.uid);
+      const savedPage = await request(page, "tokens");
+      const saved = (savedPage.items ?? savedPage).find((item) => item.uid === token.uid);
       assert.equal(saved.user_id, token.user_id);
       assert.equal(new Date(saved.expires_at).valueOf(), new Date(expiry).valueOf());
 
@@ -162,9 +154,10 @@ try {
       await page
         .getByLabel("Nom de l’équipement", { exact: true })
         .fill("Compteur de vérification");
-      await page.getByLabel("Puissance (kW)", { exact: true }).fill("22");
+      await page.getByLabel("Puissance maximale (kW)", { exact: true }).fill("22");
       await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
       await page.getByRole("dialog").waitFor({ state: "hidden" });
+      await workspacePage(page, "assets", "Équipements");
       await page.getByText("Compteur de vérification", { exact: true }).waitFor();
       await capture(page, "05-equipements");
       for (const [route, heading, file] of [

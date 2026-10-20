@@ -54,7 +54,11 @@ class SecurityConfiguration {
             csrf
                 .csrfTokenRepository(csrfRepository)
                 .csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
-                .ignoringRequestMatchers("/login/oauth2/code/apple", "/api/v1/stripe/webhook")
+                .ignoringRequestMatchers(
+                    "/login/oauth2/code/apple",
+                    "/api/v1/stripe/webhook",
+                    "/api/v1/public/assets/*/consumptions",
+                )
         }
         http.addFilterBefore(
             AccountAuthenticationFilter(accounts),
@@ -78,6 +82,7 @@ class SecurityConfiguration {
                     "/api/v1/workspaces",
                     "/api/v1/public/evses/*/*/checkout",
                     "/api/v1/public/sessions/*/stop",
+                    "/api/v1/public/assets/*/consumptions",
                     "/api/v1/auth/signin",
                     "/api/v1/auth/signon",
                     "/api/v1/auth/password/reset/request",

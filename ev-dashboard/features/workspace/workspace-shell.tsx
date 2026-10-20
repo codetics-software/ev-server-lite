@@ -1,36 +1,62 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useApi } from "@/hooks/use-api";
+import { ReportErrorButton } from "@/features/notifications/report-error-dialog";
+import { useApi, useRevision } from "@/hooks/use-api";
 import { ApiError } from "@/lib/api";
-import type { User } from "@/lib/api-types";
+import type { User, Workspace } from "@/lib/api-types";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
-import { navigationFor } from "./navigation-access";
-import { WorkspaceContext } from "./workspace-context";
+import { useEffect, useMemo, type ReactNode } from "react";
+import { homeFor, navigationFor, sectionLabel } from "./navigation-access";
+import { sections } from "./navigation";
+import { ThemeToggle } from "./theme-toggle";
+import { resolveComponents, WorkspaceContext } from "./workspace-context";
 import { WorkspaceSidebar } from "./workspace-sidebar";
 
 export function WorkspaceShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [revision, refreshWorkspace] = useRevision();
   const { data: user, error, loading } = useApi<User>("auth/me");
+  const { data: workspace, loading: workspaceLoading } = useApi<Workspace>(
+    user ? "workspace" : null,
+    revision,
+  );
   const section = pathname.split("/").filter(Boolean)[0] ?? "overview";
-  const driverRedirect = user?.role === "DRIVER" && !["transactions", "account"].includes(section);
+  const components = useMemo(() => resolveComponents(workspace), [workspace]);
+  const visible = user ? navigationFor(user, components) : [];
+  const current = visible.find((item) => item.id === section);
+  const known = sections.some((item) => item.id === section);
+  const redirect =
+    user && !workspaceLoading && !current && section === "overview" && user.role === "DRIVER";
 
   useEffect(() => {
     if (error instanceof ApiError && error.status === 401) {
       router.replace("/auth/login");
     }
-    if (driverRedirect) {
-      router.replace("/transactions");
+    if (error instanceof ApiError && error.type?.toLowerCase().includes("eula")) {
+      router.replace("/auth/eula");
     }
-  }, [error, driverRedirect, router]);
+    if (user?.eulaAccepted === false) {
+      router.replace("/auth/eula");
+    }
+    if (redirect && user) {
+      router.replace(homeFor(user));
+    }
+  }, [error, redirect, router, user]);
 
-  if (loading || !user || driverRedirect) {
+  if (
+    loading ||
+    !user ||
+    redirect ||
+    user.eulaAccepted === false ||
+    (workspaceLoading && !workspace)
+  ) {
     return (
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-8" aria-busy={loading}>
+      <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-8" aria-busy={!error}>
         {error ? (
           <Alert variant="destructive">
             <AlertTitle>Impossible d’ouvrir votre espace</AlertTitle>
@@ -46,30 +72,43 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const current = navigationFor(user).find((item) => item.id === section);
-
   return (
-    <WorkspaceContext value={user}>
-      <SidebarProvider style={{ "--sidebar-width": "14.5rem" } as React.CSSProperties}>
-        <WorkspaceSidebar user={user} section={section} />
+    <WorkspaceContext value={{ user, workspace, components, refreshWorkspace, revision }}>
+      <SidebarProvider style={{ "--sidebar-width": "15rem" } as React.CSSProperties}>
+        <WorkspaceSidebar
+          user={user}
+          workspace={workspace}
+          section={section}
+          items={visible}
+          revision={revision}
+        />
         <SidebarInset className="min-w-0">
-          <header className="flex h-12 shrink-0 items-center justify-between gap-4 px-5 lg:px-7">
-            <div className="flex min-w-0 items-center gap-3">
+          <header className="flex h-12 shrink-0 items-center justify-between gap-3 px-4 lg:px-6">
+            <div className="flex min-w-0 items-center gap-2">
               <SidebarTrigger />
-              <span className="truncate text-sm">{current?.label ?? "Accès restreint"}</span>
+              <Separator orientation="vertical" className="h-4" />
+              <span className="truncate text-sm">
+                {current ? sectionLabel(current, user) : "Accès restreint"}
+              </span>
             </div>
-            <span className="hidden text-xs text-muted-foreground sm:block">
-              Codetics · Supervision de recharge
-            </span>
+            <div className="flex items-center gap-1">
+              <span className="mr-2 hidden text-xs text-muted-foreground lg:block">
+                {workspace?.name ?? "Codetics · Supervision de recharge"}
+              </span>
+              <ReportErrorButton user={user} />
+              <ThemeToggle />
+            </div>
           </header>
           <main className="workspace-canvas flex min-w-0 flex-1 flex-col gap-6">
             {current ? (
               children
             ) : (
               <Alert>
-                <AlertTitle>Accès restreint</AlertTitle>
+                <AlertTitle>{known ? "Accès restreint" : "Page introuvable"}</AlertTitle>
                 <AlertDescription>
-                  Votre rôle ne permet pas d’accéder à cette page.
+                  {known
+                    ? "Votre rôle ou la configuration de l’espace ne permet pas d’accéder à cette page."
+                    : "Cette page n’existe pas ou n’est plus disponible."}
                 </AlertDescription>
               </Alert>
             )}

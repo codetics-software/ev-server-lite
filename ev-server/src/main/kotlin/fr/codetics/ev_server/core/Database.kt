@@ -48,6 +48,8 @@ class Database(
 
     fun <T : Any> lock(type: Class<T>, id: Any): T? = store.lock(type, id)
 
+    fun <T : Any> insert(entity: T): T = store.insert(entity)
+
     fun flush() = store.flush()
 
     @Suppress("UNCHECKED_CAST")
