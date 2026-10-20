@@ -12,3 +12,5 @@
 .taste-skill/
 .local/
 .claude/
+*.mp4
+**/*.mp4
