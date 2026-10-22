@@ -27,7 +27,7 @@ ev-dashboard/
 
 ## Démarrage local
 
-Prérequis : **Java 25 ou supérieur**, **Node.js 22 ou supérieur**. Maven est fourni par le projet.
+Prérequis : **Java 25 ou supérieur**, **Node.js 22.23.4, 24.22.1, 26.12.1 ou une version corrective ultérieure de ces branches**. Maven est fourni par le projet.
 
 Dans un premier terminal :
 

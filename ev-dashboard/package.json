@@ -47,6 +47,9 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
+  "engines": {
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
+  },
   "license": "LicenseRef-Codetics-Attribution-1.0",
   "author": "Kevin Vavelin, Codetics"
 }
