@@ -90,7 +90,7 @@ export async function proxy(request: NextRequest, path: string) {
       body,
       redirect: "manual",
       cache: "no-store",
-      signal: AbortSignal.timeout(20_000),
+      signal: AbortSignal.timeout(90_000),
     });
     const response = new NextResponse(upstream.body, {
       status: upstream.status,
