@@ -20,6 +20,7 @@ import { useEffect, type ReactNode } from "react";
 import { ConsumptionChart } from "./consumption-chart";
 import { SessionState } from "./session-columns";
 import { sessionDuration, type ChargingSession, type Consumption } from "./session-types";
+import { SignedMeterDataCard } from "./signed-meter-data";
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -273,6 +274,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
           </CardContent>
         </Card>
       </div>
+      {session.signed_meter_data && <SignedMeterDataCard sessionId={session.id} />}
     </>
   );
 }

@@ -16,7 +16,7 @@ import { FormText } from "@/features/shared/form-fields";
 import { SearchInput } from "@/features/shared/search-input";
 import { EmptyState, ListState } from "@/features/shared/states";
 import { ToneBadge } from "@/features/shared/status-badge";
-import { useAction } from "@/features/shared/use-action";
+import { notifyError, useAction } from "@/features/shared/use-action";
 import { useApi, useRevision } from "@/hooks/use-api";
 import { api } from "@/lib/api";
 import { date } from "@/lib/format";
@@ -24,6 +24,7 @@ import { maxLength, rules } from "@/lib/form";
 import { IconPencil, IconRefresh, IconSettings } from "@tabler/icons-react";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
+import { isProtectedKey, protectedKeyMessage, stationFileName } from "./station-security";
 import type { StationParameter } from "./station-types";
 
 export function StationParameters({ stationId, canEdit }: { stationId: string; canEdit: boolean }) {
@@ -55,7 +56,9 @@ export function StationParameters({ stationId, canEdit }: { stationId: string; c
       id: "access",
       header: "Accès",
       cell: (parameter) =>
-        parameter.readonly ? (
+        isProtectedKey(parameter.key) ? (
+          <ToneBadge tone="neutral">Section Sécurité</ToneBadge>
+        ) : parameter.readonly ? (
           <ToneBadge tone="neutral">Lecture seule</ToneBadge>
         ) : (
           <ToneBadge tone="success">Modifiable</ToneBadge>
@@ -76,7 +79,8 @@ export function StationParameters({ stationId, canEdit }: { stationId: string; c
       align: "right",
       cell: (parameter) =>
         canEdit &&
-        !parameter.readonly && (
+        !parameter.readonly &&
+        !isProtectedKey(parameter.key) && (
           <Button
             variant="ghost"
             size="icon-sm"
@@ -112,7 +116,7 @@ export function StationParameters({ stationId, canEdit }: { stationId: string; c
           <ExportButton
             path="stations/parameters/export"
             parameters={{ stationId }}
-            filename={`parametres-${stationId}`}
+            filename={`parametres-${stationFileName(stationId)}`}
           />
         </div>
       </div>
@@ -173,6 +177,10 @@ function ParameterForm({
     defaultValues: { value: parameter.value ?? "" },
     validationLogic: revalidateLogic(),
     onSubmit: async ({ value }) => {
+      if (isProtectedKey(parameter.key)) {
+        notifyError(protectedKeyMessage);
+        return;
+      }
       await action.run(
         "save",
         () =>

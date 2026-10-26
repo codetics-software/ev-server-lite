@@ -2,6 +2,7 @@ package fr.codetics.ev_server.security
 
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.AppProperties
+import fr.codetics.ev_server.core.ClientAddresses
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.sha256
@@ -34,6 +35,7 @@ class AuthController(
     private val db: Database,
     private val users: UserRepository,
     private val properties: AppProperties,
+    private val addresses: ClientAddresses,
 ) {
     @GetMapping("/csrf")
     fun csrf(token: CsrfToken): Map<String, String> {
@@ -57,7 +59,7 @@ class AuthController(
         request: HttpServletRequest,
         response: HttpServletResponse,
     ): AppPrincipal {
-        val user = accounts.login(body.tenant, body.email, body.password, request.remoteAddr)
+        val user = accounts.login(body.tenant, body.email, body.password, addresses.of(request))
         requestToken(request)?.let(accounts::revoke)
         request.getSession(false)?.invalidate()
         val cookie = sessionCookie(accounts.issue(user), properties.cookieSecure)
@@ -67,7 +69,7 @@ class AuthController(
 
     @PostMapping("/signon")
     fun signup(@RequestBody body: SignupRequest, request: HttpServletRequest): Map<String, String> {
-        accounts.limit("signup:${request.remoteAddr}", 5)
+        accounts.limit("signup:${addresses.of(request)}", 5)
         accounts.register(body.email, body.name, body.password)
         return mapOf(
             "message" to
@@ -109,7 +111,7 @@ class AuthController(
         @RequestBody body: ChallengeRequest,
         request: HttpServletRequest,
     ): Map<String, Boolean> {
-        accounts.limit("reset:${request.remoteAddr}", 20)
+        accounts.limit("reset:${addresses.of(request)}", 20)
         accounts.requestChallenge(body.tenant, body.email, ChallengeKind.RESET)
         return mapOf("accepted" to true)
     }
@@ -125,7 +127,7 @@ class AuthController(
         @RequestBody body: ChallengeRequest,
         request: HttpServletRequest,
     ): Map<String, Boolean> {
-        accounts.limit("verify:${request.remoteAddr}", 20)
+        accounts.limit("verify:${addresses.of(request)}", 20)
         accounts.requestChallenge(body.tenant, body.email, ChallengeKind.VERIFY)
         return mapOf("accepted" to true)
     }

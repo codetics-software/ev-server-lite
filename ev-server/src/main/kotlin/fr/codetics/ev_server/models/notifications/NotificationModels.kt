@@ -25,6 +25,8 @@ enum class NotificationType(val audience: NotificationAudience, val label: Strin
     STATION_OFFLINE(NotificationAudience.ADMIN, "Borne hors ligne"),
     STATION_REGISTERED(NotificationAudience.ADMIN, "Nouvelle borne enregistrée"),
     UNKNOWN_BADGE(NotificationAudience.ADMIN, "Badge inconnu"),
+    STATION_SECURITY_EVENT(NotificationAudience.ADMIN, "Événement de sécurité d’une borne"),
+    STATION_CERTIFICATE_EXPIRING(NotificationAudience.ADMIN, "Certificat de borne à renouveler"),
     NEW_REGISTERED_USER(NotificationAudience.ADMIN, "Nouvel utilisateur"),
     END_USER_ERROR_REPORT(NotificationAudience.ADMIN, "Signalement d’un utilisateur"),
 }

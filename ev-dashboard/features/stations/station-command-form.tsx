@@ -19,6 +19,7 @@ import { useState } from "react";
 
 import { valueLabel } from "@/lib/labels";
 import { commands, isCommandAction, type CommandAction } from "./station-commands";
+import { isProtectedKey, protectedKeyMessage } from "./station-security";
 
 const initialAction: CommandAction = "GetConfiguration";
 
@@ -41,6 +42,17 @@ const jsonObject: Rule<string> = (value) => {
     ? undefined
     : "Renseignez un objet JSON pour les paramètres de la commande.";
 };
+
+function protectedPayload(action: string): Rule<string> {
+  return (value) => {
+    const payload = parsePayload(value) as Record<string, unknown> | null;
+    return action === "ChangeConfiguration" &&
+      typeof payload?.key === "string" &&
+      isProtectedKey(payload.key)
+      ? protectedKeyMessage
+      : undefined;
+  };
+}
 
 export function StationCommandForm({ station }: { station: string }) {
   const [message, setMessage] = useState("");
@@ -112,7 +124,13 @@ export function StationCommandForm({ station }: { station: string }) {
             </Field>
           )}
         </form.Field>
-        <form.Field name="payload" validators={{ onDynamic: rules(jsonObject) }}>
+        <form.Field
+          name="payload"
+          validators={{
+            onDynamic: ({ value, fieldApi }) =>
+              rules(jsonObject, protectedPayload(fieldApi.form.getFieldValue("action")))({ value }),
+          }}
+        >
           {(field) => {
             const invalid = isInvalid(field);
             return (

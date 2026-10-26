@@ -14,7 +14,30 @@ La connexion utilise l’identifiant permanent de l’espace. La création d’u
 
 La connexion WebSocket de la borne, l’état d’un connecteur, une autorisation et une transaction sont des faits distincts. Les commandes possèdent un identifiant de corrélation, une échéance et un résultat persisté. Une commande acceptée ne constitue pas une preuve de démarrage.
 
-Les messages OCPP reçus sont dédupliqués par espace, borne et identifiant de message. La réutilisation d’un identifiant avec un contenu différent est refusée. Les mesures conservent leurs horodatages et leurs échantillons d’origine.
+Les messages OCPP reçus sont dédupliqués par espace, borne et identifiant de message, dans la limite d’une connexion, comme le prévoit OCPP-J. Sur une même connexion, un message répété à l’identique reçoit la réponse enregistrée ; un identifiant réutilisé avec un autre contenu est refusé (`ProtocolError`). Après une reconnexion, seuls `StartTransaction`, `StopTransaction` et `MeterValues` identiques sont rejoués ; tout autre message est traité comme nouveau, car de nombreuses bornes recomptent leurs identifiants depuis 1 au redémarrage. Un `StartTransaction` renvoyé sous un nouvel identifiant (même connecteur, badge, horodatage et index) reçoit la session déjà ouverte. Les mesures conservent leurs horodatages et leurs échantillons d’origine.
+
+Les écarts courants des bornes du marché sont tolérés : horodatages sans fuseau (lus en UTC) ou avec un décalage `+0100`, valeurs de mesure numériques, index décimaux, fabricant et modèle jusqu’à 50 caractères, en-tête `Sec-WebSocket-Protocol` absent. Un code d’erreur inconnu est enregistré comme `OtherError`, le code d’origine étant conservé dans l’événement.
+
+## Sécurité des bornes OCPP
+
+Chaque borne a un profil de sécurité OCPP 1.6 (1 par défaut). Une borne peut se connecter avec un profil plus fort que le sien, jamais plus faible.
+
+| Profil | Exigence |
+|---|---|
+| 0 | Aucune authentification. Réservé aux bornes existantes placées dans ce profil, et seulement si `OCPP_ALLOW_UNAUTHENTICATED=true`. |
+| 1 | Authentification HTTP Basic : identifiant de la borne et mot de passe (`AuthorizationKey`, 40 caractères hexadécimaux). |
+| 2 | Profil 1 sur TLS, terminé par le serveur ou par un mandataire de `OCPP_TRUSTED_PROXIES` qui envoie `X-Forwarded-Proto: https`. |
+| 3 | TLS et certificat client. La chaîne est vérifiée par rapport à `OCPP_CLIENT_CA` et à l’autorité de signature ; le nom commun doit être l’identifiant de la borne, ou l’empreinte SHA-256 doit être celle épinglée. |
+
+Derrière un mandataire, le certificat client est lu dans l’en-tête `OCPP_CLIENT_CERT_HEADER`, seulement si le pair TCP figure dans `OCPP_CLIENT_CERT_PROXIES` (à défaut `OCPP_TRUSTED_PROXIES`). Ce mandataire doit lui-même vérifier le certificat et écraser toute copie envoyée par le client. Un refus de connexion d’une borne connue est consigné dans ses événements (`CONNECTION_REJECTED`) avec son motif, sans aucun secret.
+
+Un administrateur relève le profil à distance : le serveur envoie `ChangeConfiguration SecurityProfile`, continue d’accepter l’ancien profil et n’applique le nouveau qu’à la première connexion qui l’atteint. Un refus ou une absence de réponse annule la demande. Un abaissement ne s’applique que côté serveur, la borne étant à reconfigurer sur place.
+
+Le renouvellement à distance du mot de passe envoie `ChangeConfiguration AuthorizationKey`. L’ancien et le nouveau mot de passe restent acceptés jusqu’à la reconnexion avec le nouveau, ou jusqu’à la révocation explicite de l’ancien. Le nouveau mot de passe n’est affiché qu’une fois et n’est conservé ni dans les commandes ni dans les paramètres de la borne. `SecurityProfile` et `AuthorizationKey` ne peuvent pas être modifiés par les commandes génériques ni par les modèles de borne.
+
+Avec `OCPP_SIGNING_CA_CERTIFICATE` et `OCPP_SIGNING_CA_KEY`, le serveur signe les demandes `SignCertificate` dont le nom commun est l’identifiant de la borne, puis envoie `CertificateSigned`. Seul le dernier certificat accepté par la borne reste valide ; il est révocable depuis le tableau de bord et invalidé à la suppression de la borne. Les administrateurs sont prévenus 30 jours avant l’expiration d’un certificat connu et lors des événements de sécurité critiques (`SecurityEventNotification`).
+
+Les relevés signés (`format: SignedData`, par exemple OCMF pour l’Eichrecht) de début et de fin de session sont conservés tels quels pour une vérification par logiciel de transparence ; une valeur OCMF sert d’index d’énergie lorsqu’aucune valeur brute n’est transmise. Les `DataTransfer` des fournisseurs déclarés sur la borne sont acceptés, les autres reçoivent `UnknownVendorId` ; tous sont consignés.
 
 ## Paiement public
 

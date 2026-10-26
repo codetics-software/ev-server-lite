@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldDescription, FieldGroup, FieldLegend, FieldSet } from "@/components/ui/field";
+import { isProtectedKey, templateKeyMessage } from "@/features/stations/station-security";
 import { connectorTypes } from "@/features/stations/station-types";
 import { FormFooter } from "@/features/shared/form-footer";
 import { FormSelect, FormText } from "@/features/shared/form-fields";
@@ -300,6 +301,7 @@ export function TemplateForm({
                     validators={{
                       onDynamic: rules(
                         matches(/^[A-Za-z0-9_.:-]{1,100}$/, "Nom de paramètre invalide."),
+                        (value: string) => (isProtectedKey(value) ? templateKeyMessage : undefined),
                       ),
                     }}
                   >

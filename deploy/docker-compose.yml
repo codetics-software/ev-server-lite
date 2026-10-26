@@ -1,0 +1,106 @@
+name: ev-supervision
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    profiles: ["local-db"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ev_supervision
+      POSTGRES_USER: ev_supervision
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD manquant dans deploy/.env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ev_supervision -d ev_supervision"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      backend:
+
+  server:
+    build:
+      context: ../ev-server
+    image: ev-supervision/server:local
+    restart: unless-stopped
+    env_file:
+      - path: ./server.env
+        required: true
+    environment:
+      PORT: "8080"
+      DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://postgres:5432/ev_supervision}
+      DATABASE_USER: ${DATABASE_USER:-ev_supervision}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      APP_PUBLIC_URL: https://${APP_HOST:?APP_HOST manquant dans deploy/.env}
+      OCPI_PUBLIC_URL: https://${APP_HOST}
+      COOKIE_SECURE: "true"
+      OCPP_TRUSTED_PROXIES: 172.30.0.10/32
+      OCPP_CLIENT_CERT_PROXIES: 172.30.0.10/32
+      OCPP_CLIENT_CERT_HEADER: X-Client-Cert
+      APP_TRUSTED_PROXIES: 172.30.0.30/32
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError}
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+    stop_grace_period: 40s
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+      interval: 15s
+      timeout: 5s
+      start_period: 120s
+      retries: 5
+    networks:
+      backend:
+      edge:
+        ipv4_address: 172.30.0.20
+
+  dashboard:
+    build:
+      context: ../ev-dashboard
+    image: ev-supervision/dashboard:local
+    restart: unless-stopped
+    environment:
+      EV_SERVER_URL: http://server:8080
+      APP_PUBLIC_URL: https://${APP_HOST}
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      edge:
+        ipv4_address: 172.30.0.30
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_HOST: ${APP_HOST}
+      OCPP_HOST: ${OCPP_HOST:-}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL manquant dans deploy/.env}
+    volumes:
+      - ./caddy:/etc/caddy:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - dashboard
+      - server
+    networks:
+      edge:
+        ipv4_address: 172.30.0.10
+
+networks:
+  backend:
+    internal: true
+  edge:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:

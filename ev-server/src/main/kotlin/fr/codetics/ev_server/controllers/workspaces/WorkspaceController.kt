@@ -1,5 +1,6 @@
 package fr.codetics.ev_server.controllers.workspaces
 
+import fr.codetics.ev_server.core.ClientAddresses
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.models.workspaces.PlatformWorkspaceInput
 import fr.codetics.ev_server.models.workspaces.WorkspaceComponentsInput
@@ -33,6 +34,7 @@ class WorkspaceController(
     private val workspaces: WorkspaceService,
     private val platform: PlatformService,
     private val accounts: AccountService,
+    private val addresses: ClientAddresses,
 ) {
     @GetMapping("/public/workspaces/options")
     fun options() = mapOf("registrationAvailable" to workspaces.registrationAvailable())
@@ -77,7 +79,7 @@ class WorkspaceController(
 
     @PostMapping("/workspaces")
     fun create(@RequestBody input: WorkspaceCreation, request: HttpServletRequest) =
-        accounts.limit("workspace-signup:${request.remoteAddr}", 5).let { workspaces.create(input) }
+        accounts.limit("workspace-signup:${addresses.of(request)}", 5).let { workspaces.create(input) }
 
     @GetMapping("/platform/workspaces")
     @PreAuthorize("hasRole('ADMIN')")

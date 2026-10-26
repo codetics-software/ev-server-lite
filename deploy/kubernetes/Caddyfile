@@ -1,0 +1,26 @@
+{
+	email {$ACME_EMAIL}
+	servers {
+		protocols h1 h2
+	}
+}
+
+# Tableau de bord, API, notifications Stripe, OCPI et bornes en profils 1 et 2.
+{$APP_HOST} {
+	encode zstd gzip
+
+	@protocols path /ocpp/* /ocpi/*
+	handle @protocols {
+		reverse_proxy server:8080 {
+			header_up -X-Client-Cert
+			stream_close_delay 10m
+		}
+	}
+
+	handle {
+		reverse_proxy dashboard:3000
+	}
+}
+
+# Adresse facultative des bornes en profil 3 : voir sites/ocpp-mtls.caddy.example.
+import /etc/caddy/sites/*.caddy

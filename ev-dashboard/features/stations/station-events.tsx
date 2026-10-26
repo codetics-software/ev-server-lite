@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/features/shared/data-table";
 import { OptionSelect } from "@/features/shared/form-fields";
 import { Pager } from "@/features/shared/pager";
@@ -7,8 +8,9 @@ import { EmptyState, ListState } from "@/features/shared/states";
 import { ToneBadge, type Tone } from "@/features/shared/status-badge";
 import { usePaged } from "@/features/shared/use-paged";
 import { date, display } from "@/lib/format";
-import { IconTimeline } from "@tabler/icons-react";
+import { IconPin, IconTimeline } from "@tabler/icons-react";
 import { useState } from "react";
+import { presentedFingerprint, securityEventTone } from "./station-security";
 import type { StationEvent } from "./station-types";
 
 const types = [
@@ -17,14 +19,22 @@ const types = [
   "FIRMWARE",
   "DIAGNOSTICS",
   "CONNECTION",
+  "CONNECTION_REJECTED",
   "DISCONNECTION",
   "HEARTBEAT_LOST",
   "AUTHORIZE",
   "DATA_TRANSFER",
   "REGISTRATION",
+  "SECURITY",
+  "CERTIFICATE",
+  "LOG",
 ];
 
 function eventTone(event: StationEvent): Tone {
+  const security = securityEventTone(event);
+  if (security) {
+    return security;
+  }
   if (event.type === "DISCONNECTION" || event.type === "HEARTBEAT_LOST") {
     return "danger";
   }
@@ -40,7 +50,13 @@ function eventTone(event: StationEvent): Tone {
   return "neutral";
 }
 
-export function StationEvents({ stationId }: { stationId: string }) {
+export function StationEvents({
+  stationId,
+  onPin,
+}: {
+  stationId: string;
+  onPin?: (fingerprint: string) => void;
+}) {
   const [type, setType] = useState("all");
   const list = usePaged<StationEvent>(`stations/${encodeURIComponent(stationId)}/events`, {
     type: type === "all" ? null : type,
@@ -77,11 +93,32 @@ export function StationEvents({ stationId }: { stationId: string }) {
       id: "info",
       header: "Détail",
       cell: (event) => (
-        <span className="block max-w-80 break-words text-muted-foreground">
+        <span className="block max-w-80 wrap-anywhere text-muted-foreground">
           {event.info ?? "—"}
         </span>
       ),
     },
+    ...(onPin
+      ? [
+          {
+            id: "actions",
+            header: "Actions",
+            srOnlyHeader: true,
+            align: "right",
+            cell: (event) => {
+              const fingerprint = presentedFingerprint(event);
+              return (
+                fingerprint && (
+                  <Button variant="outline" size="sm" onClick={() => onPin(fingerprint)}>
+                    <IconPin data-icon="inline-start" />
+                    Épingler l’empreinte présentée
+                  </Button>
+                )
+              );
+            },
+          } satisfies Column<StationEvent>,
+        ]
+      : []),
   ];
   return (
     <section className="flex flex-col gap-4" aria-label="Historique des événements">

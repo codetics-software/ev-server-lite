@@ -1,0 +1,88 @@
+# Une seule réplique : les connexions OCPP et les tâches planifiées ne sont pas
+# encore réparties entre plusieurs instances (docs/deploiement/README.md, « Mise à l’échelle »).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  labels:
+    app.kubernetes.io/name: server
+    app.kubernetes.io/part-of: ev-supervision
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: server
+        app.kubernetes.io/part-of: ev-supervision
+    spec:
+      terminationGracePeriodSeconds: 40
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: server
+          image: ev-server
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: ev-server-env
+          env:
+            - name: PORT
+              value: "8080"
+            - name: OCPP_CLIENT_CERT_HEADER
+              value: X-Client-Cert
+            - name: JAVA_TOOL_OPTIONS
+              value: -XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          startupProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server
+  labels:
+    app.kubernetes.io/name: server
+spec:
+  selector:
+    app.kubernetes.io/name: server
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

@@ -27,5 +27,6 @@ class OcppCallEntity(
     var action: String = "",
     @JdbcTypeCode(SqlTypes.CHAR) @Column(length = 64) var requestHash: String = "",
     @JdbcTypeCode(SqlTypes.JSON) var response: String = "{}",
+    var connectionId: String = "",
     var createdAt: Instant = Instant.now(),
 )

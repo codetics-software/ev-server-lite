@@ -16,3 +16,9 @@ fun randomToken(): String {
     secureRandom.nextBytes(bytes)
     return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
 }
+
+fun stationSecret(): String {
+    val bytes = ByteArray(20)
+    secureRandom.nextBytes(bytes)
+    return bytes.joinToString("") { byte -> "%02x".format(byte) }
+}

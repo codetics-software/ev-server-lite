@@ -2,14 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -31,7 +23,6 @@ import { ReportErrorButton } from "@/features/notifications/report-error-dialog"
 import { SessionsList } from "@/features/sessions/sessions-list";
 import { useLabels } from "@/features/shared/entity-picker";
 import { PageHeader } from "@/features/shared/page-header";
-import { SecretReveal } from "@/features/shared/secret-reveal";
 import { ErrorState, LoadingState } from "@/features/shared/states";
 import { ToneBadge } from "@/features/shared/status-badge";
 import { useAction } from "@/features/shared/use-action";
@@ -39,7 +30,7 @@ import { canWrite, isAdmin, useWorkspaceSession } from "@/features/workspace/wor
 import { useApi, useRevision } from "@/hooks/use-api";
 import { api } from "@/lib/api";
 import { date, display, relative } from "@/lib/format";
-import { IconDots, IconKey, IconRefresh, IconTemplate, IconTrash } from "@tabler/icons-react";
+import { IconDots, IconRefresh, IconTemplate, IconTrash } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { StationCommandForm } from "./station-command-form";
@@ -50,8 +41,12 @@ import { StationCommandsLog } from "./station-commands-log";
 import { StationConnectorsPanel } from "./station-connectors-panel";
 import { StationEvents } from "./station-events";
 import { StationParameters } from "./station-parameters";
+import { StationOcppSettings } from "./station-ocpp-settings";
 import { StationProperties } from "./station-properties";
-import type { ProvisionedStation, Station } from "./station-types";
+import type { SecurityCapabilities } from "./station-security";
+import { PinDialog } from "./station-security-dialogs";
+import { StationSecurityPanel } from "./station-security-panel";
+import type { Station } from "./station-types";
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
@@ -68,7 +63,8 @@ export function StationDetailScreen({ id }: { id: string }) {
   const [revision, refresh] = useRevision();
   const [commands, refreshCommands] = useRevision();
   const [request, setRequest] = useState<ActionRequest | null>(null);
-  const [secret, setSecret] = useState<ProvisionedStation | null>(null);
+  const [pin, setPin] = useState<string | null>(null);
+  const [capabilityRevision, refreshCapabilities] = useRevision();
   const [deleting, setDeleting] = useState(false);
   const [tab, setTab] = useState("connectors");
   const action = useAction();
@@ -78,6 +74,14 @@ export function StationDetailScreen({ id }: { id: string }) {
   const sites = useLabels("sites");
   const operate = canWrite(user);
   const admin = isAdmin(user);
+  const capabilities = useApi<SecurityCapabilities>(
+    "stations/security/capabilities",
+    capabilityRevision,
+  );
+  const securityChanged = () => {
+    refresh();
+    refreshCommands();
+  };
 
   useEffect(() => {
     const timer = setInterval(refresh, 15000);
@@ -114,6 +118,18 @@ export function StationDetailScreen({ id }: { id: string }) {
             </ToneBadge>
             {station.public && <ToneBadge tone="progress">Publique</ToneBadge>}
             {station.auto_charge && <ToneBadge tone="progress">Recharge automatique</ToneBadge>}
+            {station.security_profile === 0 && (
+              <ToneBadge tone="danger">Sans authentification</ToneBadge>
+            )}
+            {station.requested_security_profile != null && (
+              <ToneBadge tone="progress">
+                Profil {station.security_profile ?? 1} → {station.requested_security_profile} en
+                attente
+              </ToneBadge>
+            )}
+            {station.password_rotation_pending && (
+              <ToneBadge tone="warning">Mot de passe en cours de renouvellement</ToneBadge>
+            )}
             <span className="text-xs text-muted-foreground">
               Dernier signal {relative(station.last_seen)}
             </span>
@@ -161,18 +177,6 @@ export function StationDetailScreen({ id }: { id: string }) {
                       <IconTemplate />
                       Appliquer le modèle correspondant
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        action.run(
-                          "secret",
-                          () => api<ProvisionedStation>(`${path}/secret`, { method: "POST" }),
-                          { onDone: setSecret },
-                        )
-                      }
-                    >
-                      <IconKey />
-                      Renouveler le mot de passe OCPP
-                    </DropdownMenuItem>
                     <DropdownMenuItem variant="destructive" onClick={() => setDeleting(true)}>
                       <IconTrash />
                       Supprimer la borne
@@ -199,6 +203,7 @@ export function StationDetailScreen({ id }: { id: string }) {
           value={station.firmware_status ? display(station.firmware_status) : "—"}
         />
         <Info label="Diagnostic" value={display(station.diagnostics_status)} />
+        {station.log_status && <Info label="Journaux" value={display(station.log_status)} />}
         <Info label="Dernier démarrage" value={date(station.last_boot)} />
         <Info label="Dernier contact" value={date(station.last_seen)} />
       </dl>
@@ -207,6 +212,7 @@ export function StationDetailScreen({ id }: { id: string }) {
           <TabsList variant="line">
             <TabsTrigger value="connectors">Connecteurs</TabsTrigger>
             <TabsTrigger value="properties">Propriétés</TabsTrigger>
+            <TabsTrigger value="security">Sécurité</TabsTrigger>
             <TabsTrigger value="parameters">Paramètres OCPP</TabsTrigger>
             <TabsTrigger value="charging">Limitation et profils</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
@@ -234,6 +240,28 @@ export function StationDetailScreen({ id }: { id: string }) {
             }}
             onShowCommands={() => setTab("commands")}
           />
+          <StationOcppSettings
+            key={`${station.heartbeat_interval}:${station.data_transfer_vendors?.join(",")}`}
+            station={station}
+            capabilities={capabilities.data}
+            canEdit={operate}
+            onChanged={securityChanged}
+            onShowCommands={() => setTab("commands")}
+          />
+        </TabsContent>
+        <TabsContent value="security" className="pt-4">
+          <StationSecurityPanel
+            station={station}
+            capabilities={capabilities.data}
+            capabilitiesError={capabilities.error}
+            capabilitiesLoading={capabilities.loading}
+            onRetryCapabilities={refreshCapabilities}
+            admin={admin}
+            operate={operate}
+            onChanged={securityChanged}
+            onPin={setPin}
+            onShowCommands={() => setTab("commands")}
+          />
         </TabsContent>
         <TabsContent value="parameters" className="pt-4">
           <StationParameters stationId={station.id} canEdit={operate} />
@@ -245,7 +273,7 @@ export function StationDetailScreen({ id }: { id: string }) {
           <SessionsList status={null} fixed={{ stationId: station.id }} />
         </TabsContent>
         <TabsContent value="events" className="pt-4">
-          <StationEvents stationId={station.id} />
+          <StationEvents stationId={station.id} onPin={admin ? setPin : undefined} />
         </TabsContent>
         <TabsContent value="commands" className="pt-4">
           <StationCommandsLog stationId={station.id} revision={commands} />
@@ -266,26 +294,14 @@ export function StationDetailScreen({ id }: { id: string }) {
         onClose={() => setRequest(null)}
         onSent={() => setTimeout(refresh, 3000)}
       />
-      <Dialog open={secret !== null} onOpenChange={(open) => !open && setSecret(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Nouveau mot de passe OCPP</DialogTitle>
-            <DialogDescription>
-              L’ancien mot de passe ne fonctionne plus : configurez la borne avec celui-ci.
-            </DialogDescription>
-          </DialogHeader>
-          {secret && (
-            <SecretReveal
-              title="Mot de passe de la borne"
-              message={secret.message}
-              secret={secret.secret}
-            />
-          )}
-          <DialogFooter>
-            <Button onClick={() => setSecret(null)}>Terminer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {admin && (
+        <PinDialog
+          station={station}
+          initial={pin}
+          onClose={() => setPin(null)}
+          onChanged={securityChanged}
+        />
+      )}
       <AlertDialog open={deleting} onOpenChange={setDeleting}>
         <AlertDialogContent>
           <AlertDialogHeader>

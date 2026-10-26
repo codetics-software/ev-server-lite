@@ -53,6 +53,7 @@ class StationConfigurationService(
                 .associateBy { it.key.key }
         var queued = 0
         template.data.parameters.forEach { parameter ->
+            if (StationSecurityService.protectedKey(parameter.key)) return@forEach
             val existing = current[parameter.key]
             if (existing?.readonly == true || existing?.value == parameter.value) return@forEach
             queue.command(
@@ -107,7 +108,8 @@ class StationConfigurationService(
                     parameters.save(
                         StationParameterEntity(
                             StationParameterKey(command.tenantId, command.stationId, key),
-                            entry.get("value")?.asText()?.take(5000),
+                            if (key.equals(StationSecurityService.AUTHORIZATION_KEY, true)) null
+                            else entry.get("value")?.asText()?.take(5000),
                             entry.path("readonly").asBoolean(false),
                             now,
                         )
@@ -118,6 +120,7 @@ class StationConfigurationService(
                 val status = event.result.path("status").asText()
                 if (status !in setOf("Accepted", "RebootRequired")) return
                 val request = db.decode(command.request)
+                if (request.path("key").asText().equals(StationSecurityService.AUTHORIZATION_KEY, true)) return
                 val key = StationParameterKey(command.tenantId, command.stationId, request.path("key").asText())
                 val parameter = parameters.findById(key).orElse(null) ?: StationParameterEntity(key)
                 parameter.value = request.path("value").asText()

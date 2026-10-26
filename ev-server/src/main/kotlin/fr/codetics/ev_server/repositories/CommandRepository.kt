@@ -9,6 +9,13 @@ import org.springframework.data.domain.Pageable
 interface CommandRepository : StoreRepository<CommandEntity, UUID> {
     fun findAllByTenantIdOrderByCreatedAtDesc(tenant: UUID, pageable: Pageable): List<CommandEntity>
 
+    fun findAllByTenantIdAndStationIdAndActionOrderByCreatedAtDesc(
+        tenant: UUID,
+        station: String,
+        action: String,
+        pageable: Pageable,
+    ): List<CommandEntity>
+
     fun findAllByStateInAndDeadlineBefore(
         states: Collection<CommandState>,
         deadline: Instant,

@@ -65,7 +65,7 @@ export function PortalScreen({ workspace, evseId }: { workspace: string; evseId:
           </section>
           {previous && (
             <Link
-              href={`/charge/${workspace}/${evseId}/sessions/${previous}`}
+              href={`/charge/${encodeURIComponent(workspace)}/${encodeURIComponent(evseId)}/sessions/${encodeURIComponent(previous)}`}
               data-slot="button"
               className={buttonVariants({ variant: "outline" })}
             >

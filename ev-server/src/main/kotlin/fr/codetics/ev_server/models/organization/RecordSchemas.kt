@@ -354,6 +354,9 @@ data class TemplateParameter(val key: String, val value: String) {
     fun validate() {
         ensure(key.matches(Regex("[A-Za-z0-9_.:-]{1,100}"))) { "Nom de paramètre OCPP invalide." }
         ensure(value.length <= 500) { "La valeur d’un paramètre OCPP contient 500 caractères au plus." }
+        ensure(!key.equals("SecurityProfile", true) && !key.equals("AuthorizationKey", true)) {
+            "Ce paramètre de sécurité ne peut pas figurer dans un modèle."
+        }
     }
 }
 

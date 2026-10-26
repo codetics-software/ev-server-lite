@@ -1,5 +1,6 @@
 package fr.codetics.ev_server.controllers.billing
 
+import fr.codetics.ev_server.core.ClientAddresses
 import fr.codetics.ev_server.models.billing.CheckoutRequest
 import fr.codetics.ev_server.security.RateLimiter
 import fr.codetics.ev_server.services.billing.ChargingCheckoutService
@@ -16,6 +17,7 @@ class PublicChargingController(
     private val checkout: ChargingCheckoutService,
     private val sessions: PortalSessionService,
     private val limiter: RateLimiter,
+    private val addresses: ClientAddresses,
 ) {
     @GetMapping("/evses/{workspace}/{id}")
     fun evse(@PathVariable workspace: String, @PathVariable id: UUID) = evses.portal(workspace, id)
@@ -27,7 +29,7 @@ class PublicChargingController(
         @RequestBody input: CheckoutRequest,
         request: HttpServletRequest,
     ): Any {
-        limiter.check("public-checkout:${request.remoteAddr}", 10)
+        limiter.check("public-checkout:${addresses.of(request)}", 10)
         return checkout.create(workspace, id, input)
     }
 

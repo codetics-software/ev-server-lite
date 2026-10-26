@@ -43,6 +43,8 @@ data class ChargingSessionResponse(
     val autoCharge: Boolean = false,
     val vid: String? = null,
     val errors: List<String>? = null,
+    val signedMeterData: Boolean = false,
+    val signedMeterFormat: String? = null,
 ) {
     companion object {
         fun energyKwh(transaction: TransactionEntity): BigDecimal? =
@@ -98,6 +100,8 @@ data class ChargingSessionResponse(
                 vehicleId = transaction.vehicleId,
                 autoCharge = VehicleIds.isVid(transaction.tokenUid),
                 vid = transaction.vid,
+                signedMeterData = transaction.signedMeterStart != null || transaction.signedMeterStop != null,
+                signedMeterFormat = transaction.signedMeterFormat,
             )
     }
 }
@@ -111,6 +115,15 @@ data class ConsumptionPoint(
     val amperageA: BigDecimal?,
     val voltageV: BigDecimal?,
     val cumulatedPrice: BigDecimal?,
+)
+
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+data class SignedMeterData(
+    val sessionId: Int?,
+    val stationId: String,
+    val format: String?,
+    val start: String?,
+    val stop: String?,
 )
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)

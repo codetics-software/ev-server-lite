@@ -1,5 +1,6 @@
 package fr.codetics.ev_server.ocpp
 
+import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.core.sha256
@@ -60,8 +61,18 @@ class OcppService(
     private val pricing: PricingService,
     private val roaming: List<RoamingAuthorization>,
     private val events: ApplicationEventPublisher,
+    private val queue: OcppCommandQueue,
+    private val certificates: ChargerCertificates,
+    private val properties: AppProperties,
 ) {
-    fun call(tenant: UUID, station: String, id: String, action: String, payload: JsonNode): String {
+    fun call(
+        tenant: UUID,
+        station: String,
+        id: String,
+        action: String,
+        payload: JsonNode,
+        connection: String = "",
+    ): String {
         OcppValidation.validate(action, payload)
 
         return db.atomic {
@@ -78,20 +89,29 @@ class OcppService(
             val previous = calls.findById(key).orElse(null)
 
             if (previous != null) {
-                if (previous.requestHash != hash) {
+                val sameConnection = previous.connectionId == connection
+                if (previous.requestHash == hash && (sameConnection || action in RETRIED)) {
+                    return@atomic db.encode(db.decode(previous.response))
+                }
+                if (sameConnection) {
                     throw OcppFault(
                         "ProtocolError",
                         "Cet identifiant de message a déjà été utilisé pour une autre demande.",
                     )
                 }
-                return@atomic db.encode(db.decode(previous.response))
             }
 
             device.lastSeen = Instant.now()
             val result = handle(device, action, payload)
             val response = db.encode(listOf(3, id, result))
             calls.save(
-                OcppCallEntity(key = key, action = action, requestHash = hash, response = response)
+                (previous ?: OcppCallEntity(key = key)).apply {
+                    this.action = action
+                    requestHash = hash
+                    this.response = response
+                    connectionId = connection
+                    createdAt = Instant.now()
+                }
             )
             stations.save(device)
             response
@@ -105,9 +125,9 @@ class OcppService(
         return when (action) {
             "BootNotification" -> {
                 val firstBoot = station.lastBoot == null
-                station.vendor = payload.path("chargePointVendor").asText()
-                station.model = payload.path("chargePointModel").asText()
-                station.firmwareVersion = payload.get("firmwareVersion")?.asText()
+                station.vendor = payload.path("chargePointVendor").asText().take(100)
+                station.model = payload.path("chargePointModel").asText().take(100)
+                station.firmwareVersion = payload.get("firmwareVersion")?.asText()?.take(100)
                 station.metadata = db.encode(payload)
                 station.lastBoot = Instant.now()
                 record(station, "BOOT", info = "${station.vendor} ${station.model}")
@@ -116,7 +136,7 @@ class OcppService(
                 mapOf(
                     "status" to "Accepted",
                     "currentTime" to Instant.now().toString(),
-                    "interval" to 60,
+                    "interval" to (station.heartbeatInterval ?: properties.ocpp.heartbeatInterval()),
                 )
             }
             "Heartbeat" -> {
@@ -151,17 +171,51 @@ class OcppService(
                 emptyMap<String, Any>()
             }
             "DataTransfer" -> {
+                val vendor = payload.path("vendorId").asText()
+                val accepted = vendor in dataTransferVendors(station)
+                val status = if (accepted) "Accepted" else "UnknownVendorId"
                 record(
                     station,
                     "DATA_TRANSFER",
+                    status = status,
                     info =
                         listOfNotNull(
-                                payload.path("vendorId").asText(),
+                                vendor,
                                 payload.get("messageId")?.asText(),
+                                payload.get("data")?.let { if (it.isString) it.asText() else db.encode(it) },
                             )
                             .joinToString(" / "),
                 )
-                mapOf("status" to "UnknownVendorId")
+                mapOf("status" to status)
+            }
+            "SecurityEventNotification" -> {
+                val type = payload.path("type").asText()
+                record(
+                    station,
+                    "SECURITY",
+                    status = type,
+                    info = payload.get("techInfo")?.asText(),
+                )
+                db.audit(tenant, "station:$identity", action, type)
+                events.publishEvent(StationNotification(station, "SECURITY", type))
+                emptyMap<String, Any>()
+            }
+            "SignCertificate" -> {
+                mapOf("status" to signCertificate(station, payload.path("csr").asText()))
+            }
+            "LogStatusNotification" -> {
+                val status = payload.path("status").asText()
+                station.logStatus = status
+                record(station, "LOG", status = status, info = payload.get("requestId")?.asText())
+                emptyMap<String, Any>()
+            }
+            "SignedFirmwareStatusNotification" -> {
+                val status = payload.path("status").asText()
+                station.firmwareStatus = status
+                record(station, "FIRMWARE", status = status, info = payload.get("requestId")?.asText())
+                db.audit(tenant, "station:$identity", action, status)
+                events.publishEvent(StationNotification(station, "FIRMWARE", status))
+                emptyMap<String, Any>()
             }
             "DiagnosticsStatusNotification" -> {
                 val status = payload.path("status").asText()
@@ -182,6 +236,35 @@ class OcppService(
             else -> {
                 throw OcppFault("NotSupported", "Action non prise en charge.")
             }
+        }
+    }
+
+    private fun dataTransferVendors(station: StationEntity) =
+        station.dataTransferVendors.split(',').map(String::trim).filter(String::isNotBlank).toSet()
+
+    private fun signCertificate(station: StationEntity, csr: String): String {
+        if (!certificates.signingConfigured) {
+            record(station, "CERTIFICATE", status = "Rejected", info = "Aucune autorité de signature configurée.")
+            return "Rejected"
+        }
+        return try {
+            val signed = certificates.sign(csr, station.key.stationId)
+            queue.command(
+                station.key.tenantId,
+                station.key.stationId,
+                "CertificateSigned",
+                db.json.valueToTree(mapOf("certificateChain" to signed.chain)),
+            )
+            record(
+                station,
+                "CERTIFICATE",
+                status = "Signed",
+                info = "${signed.certificate.subjectX500Principal.name} / ${signed.certificate.notAfter.toInstant()}",
+            )
+            "Accepted"
+        } catch (error: CertificateRequestRejected) {
+            record(station, "CERTIFICATE", status = "Rejected", info = error.message)
+            "Rejected"
         }
     }
 
@@ -303,7 +386,7 @@ class OcppService(
 
     private fun updateStatus(station: StationEntity, payload: JsonNode) {
         val connector = connector(station, payload.path("connectorId").intValue())
-        val timestamp = payload.get("timestamp")?.asText()?.let(Instant::parse) ?: Instant.now()
+        val timestamp = payload.get("timestamp")?.asText()?.let(OcppTime::parse) ?: Instant.now()
 
         if (timestamp.isBefore(connector.statusAt)) {
             return
@@ -312,7 +395,8 @@ class OcppService(
         val previous = connector.status
         val previousError = connector.errorCode
         connector.status = payload.path("status").asText()
-        connector.errorCode = payload.path("errorCode").asText()
+        val reported = payload.path("errorCode").asText()
+        connector.errorCode = if (reported in OcppValidation.errors) reported else "OtherError"
         connector.statusAt = timestamp
         if (connector.status in VehicleIds.PLUGGED && previous !in VehicleIds.PLUGGED) {
             connector.pluggedAt = Instant.now()
@@ -330,7 +414,14 @@ class OcppService(
                 connector.key.connectorId,
                 connector.status,
                 connector.errorCode,
-                payload.get("info")?.asText()?.take(500),
+                listOfNotNull(
+                        reported.takeUnless { it in OcppValidation.errors },
+                        payload.get("vendorErrorCode")?.asText(),
+                        payload.get("info")?.asText(),
+                    )
+                    .joinToString(" / ")
+                    .take(500)
+                    .ifBlank { null },
             )
             events.publishEvent(ConnectorStatusChanged(station, connector, previous))
         }
@@ -341,6 +432,22 @@ class OcppService(
         val identity = station.key.stationId
         val number = payload.path("connectorId").intValue()
         connector(station, number)
+        val startedAt = OcppTime.parse(payload.path("timestamp").asText())
+        val requestedUid = payload.path("idTag").asText().let { VehicleIds.normalize(it) ?: it }
+
+        transactions
+            .findFirstByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(tenant, identity, number)
+            ?.takeIf {
+                it.tokenUid == requestedUid &&
+                    it.startedAt == startedAt &&
+                    it.meterStartWh.compareTo(payload.path("meterStart").decimalValue()) == 0
+            }
+            ?.let { existing ->
+                return mapOf(
+                    "transactionId" to existing.id,
+                    "idTagInfo" to mapOf("status" to existing.authorizationStatus),
+                )
+            }
 
         if (
             transactions.existsByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(
@@ -352,7 +459,7 @@ class OcppService(
             throw OcppFault("GenericError", "Une session est déjà en cours sur ce connecteur.")
         }
 
-        val uid = payload.path("idTag").asText().let { VehicleIds.normalize(it) ?: it }
+        val uid = requestedUid
         val decision = authorize(station, uid, number)
         val vid = connector(station, number).vid
         val location = organization.location(station)
@@ -368,7 +475,7 @@ class OcppService(
                         decision.vehicleId
                             ?: decision.userId?.let { users.findByTenantIdAndId(tenant, it)?.defaultCarId },
                     vid = vid,
-                    startedAt = Instant.parse(payload.path("timestamp").asText()),
+                    startedAt = startedAt,
                     meterStartWh = payload.path("meterStart").decimalValue(),
                     authorizationStatus = decision.status,
                     siteAreaId = location.area?.id,
@@ -388,8 +495,8 @@ class OcppService(
     }
 
     private fun stop(station: StationEntity, payload: JsonNode): Map<String, Any> {
-        val transaction = verifyTransaction(station, payload.path("transactionId").intValue())
-        val stoppedAt = Instant.parse(payload.path("timestamp").asText())
+        var transaction = verifyTransaction(station, payload.path("transactionId").intValue())
+        val stoppedAt = OcppTime.parse(payload.path("timestamp").asText())
         val meterStop = payload.path("meterStop").decimalValue()
 
         if (stoppedAt.isBefore(transaction.startedAt)) {
@@ -398,12 +505,12 @@ class OcppService(
 
         if (transaction.stoppedAt == null || transaction.softStopped) {
             if (payload.has("transactionData")) {
-                saveMeters(
+                transaction = saveMeters(
                     station,
                     transaction.connectorId,
                     transaction.id,
                     payload.path("transactionData"),
-                )
+                ) ?: transaction
             }
             close(station, transaction, stoppedAt, meterStop, payload.get("reason")?.asText() ?: "Local")
         } else if (
@@ -482,7 +589,7 @@ class OcppService(
         connector: Int,
         transaction: Int?,
         values: JsonNode,
-    ) {
+    ): TransactionEntity? {
         val readings =
             values.toList().map { reading ->
                 MeterValueEntity(
@@ -490,13 +597,13 @@ class OcppService(
                     stationId = station.key.stationId,
                     connectorId = connector,
                     transactionId = transaction,
-                    sampledAt = Instant.parse(reading.path("timestamp").asText()),
+                    sampledAt = OcppTime.parse(reading.path("timestamp").asText()),
                     samples = db.encode(reading.path("sampledValue")),
                 )
             }
         meters.saveAll(readings)
         val parsed = values.toList().map(MeterReadings::parse).sortedBy { it.at }
-        val latest = parsed.lastOrNull() ?: return
+        val latest = parsed.lastOrNull() ?: return null
 
         val plug = connector(station, connector)
         if (plug.meterAt == null || !latest.at.isBefore(plug.meterAt)) {
@@ -506,8 +613,23 @@ class OcppService(
             connectors.save(plug)
         }
 
-        if (transaction == null) return
+        if (transaction == null) return null
         val active = verifyTransaction(station, transaction, connector)
+        values.forEach { reading ->
+            MeterReadings.signed(reading).forEach { signed ->
+                when (signed.context) {
+                    "Transaction.Begin" -> active.signedMeterStart = signed.value
+                    "Transaction.End" -> active.signedMeterStop = signed.value
+                    else ->
+                        if (active.signedMeterStart == null) {
+                            active.signedMeterStart = signed.value
+                        } else if (active.stoppedAt == null) {
+                            active.signedMeterStop = signed.value
+                        }
+                }
+                active.signedMeterFormat = signed.format
+            }
+        }
         parsed.forEach { reading ->
             reading.energyWh?.let { payments.observed(active, it, reading.at) }
             if (active.stoppedAt == null) track(active, reading)
@@ -520,6 +642,7 @@ class OcppService(
             }
             events.publishEvent(TransactionUpdated(station, active))
         }
+        return active
     }
 
     private fun track(transaction: TransactionEntity, reading: MeterReading) {
@@ -588,5 +711,6 @@ class OcppService(
 
     companion object {
         val IDLE_W = BigDecimal(100)
+        val RETRIED = setOf("StartTransaction", "StopTransaction", "MeterValues")
     }
 }

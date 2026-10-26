@@ -1,0 +1,26 @@
+{
+  "name": "codetics-supervision-lite-promo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "music": "node scripts/compose-music.mjs",
+    "studio": "remotion studio",
+    "render": "node scripts/compose-music.mjs && remotion render Promo ../codetics-supervision-lite-youtube-16x9.mp4 --codec=h264 --crf=16 --audio-bitrate=320k",
+    "still": "remotion still Promo"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.538",
+    "@remotion/fonts": "4.0.538",
+    "@remotion/media": "4.0.538",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.538"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "typescript": "^5"
+  },
+  "license": "LicenseRef-Codetics-Attribution-1.0",
+  "author": "Kevin Vavelin, Codetics"
+}

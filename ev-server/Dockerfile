@@ -15,9 +15,13 @@ FROM eclipse-temurin:25-jre
 COPY security /opt/security
 RUN /opt/security/distrust-emudhra.sh /opt/security/emudhra-blocked.certs
 
+RUN useradd --system --uid 10001 --home-dir /app ev
+
 WORKDIR /app
 
 COPY --from=build /app/target/ev-server-0.0.1-SNAPSHOT.jar app.jar
+
+USER 10001
 
 ENV JAVA_TOOL_OPTIONS="-Xms64m -Xmx256m -XX:ActiveProcessorCount=1"
 

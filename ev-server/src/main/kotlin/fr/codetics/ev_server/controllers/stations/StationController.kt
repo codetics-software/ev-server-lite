@@ -4,11 +4,14 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.models.commands.CommandInput
 import fr.codetics.ev_server.models.stations.AutoChargeSetting
 import fr.codetics.ev_server.models.commands.CommandReceipt
+import fr.codetics.ev_server.models.stations.OcppSettingsInput
 import fr.codetics.ev_server.models.stations.ParameterInput
+import fr.codetics.ev_server.models.stations.SecurityProfileInput
 import fr.codetics.ev_server.models.stations.StationInput
 import fr.codetics.ev_server.models.stations.StationUpdate
 import fr.codetics.ev_server.services.commands.CommandService
 import fr.codetics.ev_server.services.stations.StationFilter
+import fr.codetics.ev_server.services.stations.StationSecurityService
 import fr.codetics.ev_server.services.stations.StationService
 import java.util.UUID
 import org.springframework.security.access.prepost.PreAuthorize
@@ -29,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController
 class StationController(
     private val stations: StationService,
     private val commands: CommandService,
+    private val security: StationSecurityService,
 ) {
     @GetMapping
     fun list(
@@ -52,6 +56,53 @@ class StationController(
         @AuthenticationPrincipal user: AppPrincipal,
         @RequestParam(required = false) stationId: String?,
     ) = stations.exportParameters(user.tenantId, stationId)
+
+    @GetMapping("/security/capabilities")
+    fun securityCapabilities() = security.capabilities()
+
+    @PutMapping("/{id}/security")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun changeSecurity(
+        @PathVariable id: String,
+        @RequestBody input: SecurityProfileInput,
+        @AuthenticationPrincipal user: AppPrincipal,
+    ) = security.changeProfile(user, id, input)
+
+    @PostMapping("/{id}/secret/remote")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun rotateRemotely(@PathVariable id: String, @AuthenticationPrincipal user: AppPrincipal) =
+        security.rotateRemotely(user, id)
+
+    @DeleteMapping("/{id}/secret/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun cancelRotation(@PathVariable id: String, @AuthenticationPrincipal user: AppPrincipal) =
+        security.cancelRotation(user, id)
+
+    @PostMapping("/{id}/secret/revoke-previous")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun revokePreviousSecret(@PathVariable id: String, @AuthenticationPrincipal user: AppPrincipal) =
+        security.revokePreviousPassword(user, id)
+
+    @PostMapping("/{id}/certificate/revoke")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun revokeCertificate(@PathVariable id: String, @AuthenticationPrincipal user: AppPrincipal) =
+        security.revokeCertificate(user, id)
+
+    @PostMapping("/{id}/certificate/commands")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun certificateCommand(
+        @PathVariable id: String,
+        @RequestBody input: CommandInput,
+        @AuthenticationPrincipal user: AppPrincipal,
+    ) = CommandReceipt(security.certificateCommand(user, id, input.action, input.payload))
+
+    @PutMapping("/{id}/ocpp-settings")
+    @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")
+    fun changeOcppSettings(
+        @PathVariable id: String,
+        @RequestBody input: OcppSettingsInput,
+        @AuthenticationPrincipal user: AppPrincipal,
+    ) = security.changeSettings(user, id, input)
 
     @GetMapping("/{id}")
     fun find(@PathVariable id: String, @AuthenticationPrincipal user: AppPrincipal) =

@@ -30,6 +30,23 @@ export const commands = {
   },
   TriggerMessage: { requestedMessage: "StatusNotification" },
   DataTransfer: { vendorId: "" },
+  ExtendedTriggerMessage: { requestedMessage: "StatusNotification" },
+  GetInstalledCertificateIds: { certificateType: "CentralSystemRootCertificate" },
+  GetLog: {
+    logType: "DiagnosticsLog",
+    requestId: 1,
+    log: { remoteLocation: "https://" },
+    retries: 3,
+  },
+  SignedUpdateFirmware: {
+    requestId: 1,
+    firmware: {
+      location: "https://",
+      retrieveDateTime: new Date().toISOString(),
+      signingCertificate: "-----BEGIN CERTIFICATE-----",
+      signature: "",
+    },
+  },
 } satisfies Record<string, object>;
 
 export type CommandAction = keyof typeof commands;

@@ -29,6 +29,16 @@ export type ChargingSession = {
   auto_charge?: boolean;
   vid?: string | null;
   errors?: string[];
+  signed_meter_data?: boolean;
+  signed_meter_format?: string | null;
+};
+
+export type SignedMeterData = {
+  session_id: number | null;
+  station_id: string;
+  format: "OCMF" | "XML" | "ALFEN" | "OTHER" | null;
+  start: string | null;
+  stop: string | null;
 };
 
 export type SessionInError = { session: ChargingSession; errors: string[] };

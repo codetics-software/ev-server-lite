@@ -22,6 +22,7 @@ import fr.codetics.ev_server.models.sessions.ChargingSessionResponse
 import fr.codetics.ev_server.ocpp.AuthorizationStatus
 import fr.codetics.ev_server.ocpp.BadgeRejected
 import fr.codetics.ev_server.ocpp.ConnectorStatusChanged
+import fr.codetics.ev_server.ocpp.StationNotification
 import fr.codetics.ev_server.ocpp.TransactionStarted
 import fr.codetics.ev_server.ocpp.TransactionStopped
 import fr.codetics.ev_server.ocpp.TransactionUpdated
@@ -257,6 +258,21 @@ class NotificationService(
     }
 
     @TransactionalEventListener(fallbackExecution = true)
+    fun security(event: StationNotification) {
+        safely("security") {
+            if (event.type != "SECURITY" || event.status !in CRITICAL_SECURITY_EVENTS) return@safely
+            notifyAdmins(
+                event.station.key.tenantId,
+                NotificationType.STATION_SECURITY_EVENT,
+                "Événement de sécurité sur ${event.station.name}",
+                "La borne ${event.station.name} (${event.station.key.stationId}) signale l’événement de sécurité ${event.status}.",
+                dedupeKey = "security:${event.station.key.stationId}:${event.status}",
+                window = Duration.ofHours(1),
+            )
+        }
+    }
+
+    @TransactionalEventListener(fallbackExecution = true)
     fun rejected(event: BadgeRejected) {
         safely("rejected") {
             if (event.status != AuthorizationStatus.Invalid) return@safely
@@ -306,5 +322,19 @@ class NotificationService(
                 "Votre compte a été activé par un administrateur. Vous pouvez désormais vous connecter et recharger.",
             )
         }
+    }
+
+    companion object {
+        val CRITICAL_SECURITY_EVENTS =
+            setOf(
+                "TamperDetectionActivated",
+                "SecurityLogWasCleared",
+                "MemoryExhaustion",
+                "InvalidFirmwareSignature",
+                "InvalidFirmwareSigningCertificate",
+                "InvalidCentralSystemCertificate",
+                "InvalidChargePointCertificate",
+                "FirmwareUpdated",
+            )
     }
 }

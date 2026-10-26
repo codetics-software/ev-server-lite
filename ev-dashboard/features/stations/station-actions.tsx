@@ -19,7 +19,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FieldGroup } from "@/components/ui/field";
-import { FormPicker, FormSelect, FormText, type Option } from "@/features/shared/form-fields";
+import {
+  FormPicker,
+  FormSelect,
+  FormText,
+  FormTextarea,
+  type Option,
+} from "@/features/shared/form-fields";
 import { notify, notifyError } from "@/features/shared/use-action";
 import { api, errorMessage } from "@/lib/api";
 import type { CommandReceipt } from "@/lib/api-types";
@@ -34,6 +40,8 @@ import {
   IconClearAll,
   IconCloudDownload,
   IconFileAnalytics,
+  IconFileCertificate,
+  IconFileText,
   IconLockOpen,
   IconPlayerPlay,
   IconPower,
@@ -53,7 +61,8 @@ type FieldKind =
   | "text"
   | "datetime"
   | "number"
-  | "select";
+  | "select"
+  | "textarea";
 
 type FieldSpec = {
   key: string;
@@ -92,6 +101,17 @@ const triggerMessages: Option[] = [
   "FirmwareStatusNotification",
   "DiagnosticsStatusNotification",
 ].map((value) => ({ value, label: value }));
+
+const extendedTriggerMessages: Option[] = [
+  "StatusNotification",
+  "Heartbeat",
+  "MeterValues",
+  "BootNotification",
+  "FirmwareStatusNotification",
+  "LogStatusNotification",
+].map((value) => ({ value, label: value }));
+
+const requestId = () => String(Math.floor(Date.now() / 1000) % 1000000);
 
 const inOneHour = () => toInputDateTime(new Date(Date.now() + 3600000).toISOString());
 const now = () => toInputDateTime(new Date().toISOString());
@@ -234,6 +254,30 @@ export const stationActions: ActionSpec[] = [
       }),
   },
   {
+    id: "extended-trigger",
+    label: "Demander un message (étendu)",
+    description:
+      "Demande à la borne d’envoyer immédiatement un message OCPP (ExtendedTriggerMessage, profil de sécurité).",
+    icon: IconSend,
+    group: "Connecteurs",
+    confirmLabel: "Demander",
+    fields: [
+      {
+        key: "requestedMessage",
+        label: "Message",
+        kind: "select",
+        options: extendedTriggerMessages,
+        initial: () => "StatusNotification",
+      },
+      { key: "connectorId", label: "Cible", kind: "connectorOrStation", initial: () => "0" },
+    ],
+    submit: (station, values) =>
+      sendCommand(station.id, "ExtendedTriggerMessage", {
+        requestedMessage: values.requestedMessage,
+        connectorId: Number(values.connectorId) || undefined,
+      }),
+  },
+  {
     id: "reset-soft",
     label: "Redémarrage logiciel",
     description:
@@ -308,6 +352,79 @@ export const stationActions: ActionSpec[] = [
         location: values.location,
         startTime: fromInputDateTime(values.startTime) ?? undefined,
         stopTime: fromInputDateTime(values.stopTime) ?? undefined,
+      }),
+  },
+  {
+    id: "logs",
+    label: "Demander les journaux",
+    description: "La borne envoie son journal de diagnostic ou de sécurité à l’adresse indiquée.",
+    icon: IconFileText,
+    group: "Maintenance",
+    confirmLabel: "Demander les journaux",
+    fields: [
+      {
+        key: "logType",
+        label: "Journal",
+        kind: "select",
+        options: [
+          { value: "DiagnosticsLog", label: "Diagnostic" },
+          { value: "SecurityLog", label: "Sécurité" },
+        ],
+        initial: () => "DiagnosticsLog",
+      },
+      { key: "remoteLocation", label: "Adresse de dépôt", kind: "text", required: true },
+      { key: "oldestTimestamp", label: "Depuis (facultatif)", kind: "datetime" },
+      { key: "latestTimestamp", label: "Jusqu’à (facultatif)", kind: "datetime" },
+      { key: "retries", label: "Nombre de tentatives", kind: "number", initial: () => "3" },
+    ],
+    submit: (station, values) =>
+      sendCommand(station.id, "GetLog", {
+        logType: values.logType,
+        requestId: Number(requestId()),
+        log: {
+          remoteLocation: values.remoteLocation,
+          oldestTimestamp: fromInputDateTime(values.oldestTimestamp) ?? undefined,
+          latestTimestamp: fromInputDateTime(values.latestTimestamp) ?? undefined,
+        },
+        retries: optionalNumber(values.retries),
+      }),
+  },
+  {
+    id: "signed-firmware",
+    label: "Mettre à jour le micrologiciel signé",
+    description:
+      "La borne télécharge le micrologiciel, vérifie sa signature puis l’installe (SignedUpdateFirmware).",
+    icon: IconFileCertificate,
+    group: "Maintenance",
+    confirmLabel: "Programmer la mise à jour",
+    fields: [
+      {
+        key: "location",
+        label: "Adresse du fichier",
+        kind: "text",
+        required: true,
+        description: "Adresse HTTPS ou FTP accessible par la borne.",
+      },
+      { key: "retrieveDateTime", label: "Date de téléchargement", kind: "datetime", initial: now },
+      {
+        key: "signingCertificate",
+        label: "Certificat de signature (PEM)",
+        kind: "textarea",
+        required: true,
+      },
+      { key: "signature", label: "Signature (base64)", kind: "textarea", required: true },
+      { key: "retries", label: "Nombre de tentatives", kind: "number", initial: () => "3" },
+    ],
+    submit: (station, values) =>
+      sendCommand(station.id, "SignedUpdateFirmware", {
+        requestId: Number(requestId()),
+        firmware: {
+          location: values.location,
+          retrieveDateTime: fromInputDateTime(values.retrieveDateTime),
+          signingCertificate: values.signingCertificate.trim(),
+          signature: values.signature.trim(),
+        },
+        retries: optionalNumber(values.retries),
       }),
   },
 ];
@@ -500,6 +617,16 @@ function ActionForm({
                         label={spec.label}
                         type="datetime-local"
                         description={spec.description}
+                      />
+                    );
+                  case "textarea":
+                    return (
+                      <FormTextarea
+                        field={field}
+                        label={spec.label}
+                        description={spec.description}
+                        className="min-h-24 font-mono text-xs"
+                        required={spec.required}
                       />
                     );
                   case "number":

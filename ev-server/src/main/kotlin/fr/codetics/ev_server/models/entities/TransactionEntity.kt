@@ -54,4 +54,7 @@ class TransactionEntity(
     var softStopped: Boolean = false,
     var startNotified: Boolean = false,
     var endOfChargeNotified: Boolean = false,
+    var signedMeterStart: String? = null,
+    var signedMeterStop: String? = null,
+    var signedMeterFormat: String? = null,
 )

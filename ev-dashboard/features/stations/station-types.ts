@@ -37,6 +37,17 @@ export type Station = {
   firmware_status?: string | null;
   diagnostics_status?: string | null;
   connectors?: StationConnector[];
+  security_profile?: number;
+  requested_security_profile?: number | null;
+  connection_security_profile?: number | null;
+  pinned_certificate_fingerprint?: string | null;
+  certificate_subject?: string | null;
+  certificate_fingerprint?: string | null;
+  certificate_expires_at?: string | null;
+  password_rotation_pending?: boolean;
+  heartbeat_interval?: number | null;
+  data_transfer_vendors?: string[];
+  log_status?: string | null;
 };
 
 export type StationInError = { station: Station; errors: string[] };

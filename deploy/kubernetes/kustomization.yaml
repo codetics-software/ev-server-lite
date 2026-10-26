@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ev-supervision
+
+resources:
+  - namespace.yaml
+  - server.yaml
+  - dashboard.yaml
+  - edge.yaml
+  - network-policy.yaml
+
+configMapGenerator:
+  - name: caddy
+    files:
+      - Caddyfile
+  # Profil 3 : décommenter et fournir ocpp-mtls.caddy (copie de ../caddy/sites/ocpp-mtls.caddy.example)
+  # ainsi que ocpp-client-ca.pem dans ce dossier.
+  # - name: caddy-sites
+  #   files:
+  #     - ocpp-mtls.caddy
+  #     - ocpp-client-ca.pem
+  - name: edge
+    literals:
+      - APP_HOST=supervision.exemple.fr
+      - OCPP_HOST=ocpp.exemple.fr
+      - ACME_EMAIL=exploitation@exemple.fr
+
+images:
+  - name: ev-server
+    newName: REGISTRE/ev-server
+    newTag: "0.0.1"
+  - name: ev-dashboard
+    newName: REGISTRE/ev-dashboard
+    newTag: "0.0.1"

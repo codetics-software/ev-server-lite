@@ -14,10 +14,12 @@ data class AppProperties(
     val mailFrom: String = "noreply@localhost",
     val encryptionKey: String = "",
     val platformAdminEmails: String = "",
+    val trustedProxies: String = "",
     val retention: Retention = Retention(),
     val supervision: Supervision = Supervision(),
     val evDatabase: EvDatabase = EvDatabase(),
     val ocpi: Ocpi = Ocpi(),
+    val ocpp: Ocpp = Ocpp(),
     val bootstrap: Bootstrap = Bootstrap(),
 ) {
     data class Ocpi(
@@ -25,6 +27,21 @@ data class AppProperties(
         val countryCode: String = "FR",
         val partyId: String = "COD",
     )
+
+    data class Ocpp(
+        val trustedProxies: String = "",
+        val clientCertHeader: String = "",
+        val clientCertProxies: String = "",
+        val clientCa: String = "",
+        val signingCaCertificate: String = "",
+        val signingCaKey: String = "",
+        val signedCertificateDays: Long = 365,
+        val allowUnauthenticated: Boolean = false,
+        val heartbeatSeconds: Int = 60,
+        val publicUrl: String = "",
+    ) {
+        fun heartbeatInterval() = heartbeatSeconds.coerceIn(10, 300)
+    }
 
     data class Retention(
         val auditDays: Long = 365,

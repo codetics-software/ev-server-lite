@@ -75,6 +75,8 @@ En production, utilisez HTTPS et PostgreSQL ou MongoDB. Le serveur choisit sa ba
 
 Toute autre adresse arrête le démarrage. Le mandataire inverse doit transmettre les connexions WebSocket OCPP au serveur Java. `EV_SERVER_URL` reste une variable privée du tableau de bord.
 
+Le [guide de déploiement](docs/deploiement/README.md) décrit les images de conteneur, l’entrée des connexions OCPP, les profils de sécurité et une installation Docker Compose ou Kubernetes (`deploy/`), avec des guides pour [Google Cloud](docs/deploiement/gcp.md), [AWS](docs/deploiement/aws.md), [Azure](docs/deploiement/azure.md), [Scaleway](docs/deploiement/scaleway.md) et [Oracle Cloud](docs/deploiement/oracle-cloud.md).
+
 ## Espaces clients
 
 Tous les espaces partagent la même application et peuvent utiliser la même adresse web. La connexion demande explicitement l’identifiant de l’espace. Le serveur déduit l’espace autorisé de la session, jamais du nom de domaine ni d’un identifiant d’espace envoyé avec une opération métier.

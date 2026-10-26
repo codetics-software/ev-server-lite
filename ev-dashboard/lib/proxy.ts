@@ -16,10 +16,24 @@ function problem(status: number, detail: string) {
   );
 }
 
+const ADDRESS = /^[0-9A-Fa-f.:]{2,45}$/;
+
+function forwardedFor(request: NextRequest) {
+  const chain = (request.headers.get("x-forwarded-for") ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => ADDRESS.test(value));
+  const client = request.headers.get("x-real-ip")?.trim() || chain.at(-1);
+  if (client && ADDRESS.test(client) && chain.at(-1) !== client) {
+    chain.push(client);
+  }
+  return chain.slice(-10).join(", ");
+}
+
 export async function proxy(request: NextRequest, path: string) {
   if (
     !/^(api\/v1\/|oauth2\/authorization\/|login\/oauth2\/code\/)/.test(path) ||
-    path.includes("..")
+    path.split("/").some((segment) => segment === "." || segment === "..")
   ) {
     return new NextResponse(null, { status: 404 });
   }
@@ -38,6 +52,10 @@ export async function proxy(request: NextRequest, path: string) {
     if (value) {
       headers.set(key, value);
     }
+  }
+  const forwarded = forwardedFor(request);
+  if (forwarded) {
+    headers.set("x-forwarded-for", forwarded);
   }
   const isMutation = !["GET", "HEAD"].includes(request.method);
   if (isMutation && !["login/oauth2/code/apple", "api/v1/stripe/webhook"].includes(path)) {

@@ -1,0 +1,94 @@
+# Mandataire Caddy : TLS (Let’s Encrypt), WebSocket, certificat client des bornes.
+# Le Service LoadBalancer reste en TCP (couche 4) : le TLS et le mTLS se terminent dans Caddy,
+# ce qui donne le même comportement sur GKE, EKS, AKS, Kapsule et OKE.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: caddy-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge
+  labels:
+    app.kubernetes.io/name: edge
+    app.kubernetes.io/part-of: ev-supervision
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: edge
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: edge
+        app.kubernetes.io/part-of: ev-supervision
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: caddy
+          image: caddy:2.10-alpine
+          ports:
+            - name: http
+              containerPort: 80
+            - name: https
+              containerPort: 443
+          envFrom:
+            - configMapRef:
+                name: edge
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: caddyfile
+              mountPath: /etc/caddy/Caddyfile
+              subPath: Caddyfile
+            - name: sites
+              mountPath: /etc/caddy/sites
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            tcpSocket:
+              port: https
+            periodSeconds: 10
+      volumes:
+        - name: caddyfile
+          configMap:
+            name: caddy
+        - name: sites
+          configMap:
+            name: caddy-sites
+            optional: true
+        - name: data
+          persistentVolumeClaim:
+            claimName: caddy-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edge
+  labels:
+    app.kubernetes.io/name: edge
+  annotations: {}
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  selector:
+    app.kubernetes.io/name: edge
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+    - name: https
+      port: 443
+      targetPort: https

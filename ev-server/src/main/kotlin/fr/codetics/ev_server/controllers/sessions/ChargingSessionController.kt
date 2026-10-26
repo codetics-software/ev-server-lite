@@ -73,6 +73,10 @@ class ChargingSessionController(private val sessions: ChargingSessionService) {
     fun find(@PathVariable id: Int, @AuthenticationPrincipal user: AppPrincipal) =
         sessions.find(user, id)
 
+    @GetMapping("/{id}/signed-data")
+    fun signedData(@PathVariable id: Int, @AuthenticationPrincipal user: AppPrincipal) =
+        sessions.signedData(user, id)
+
     @GetMapping("/{id}/consumptions")
     fun consumptions(@PathVariable id: Int, @AuthenticationPrincipal user: AppPrincipal) =
         sessions.consumptions(user, id)

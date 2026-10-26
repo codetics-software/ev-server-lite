@@ -1,6 +1,5 @@
 package fr.codetics.ev_server.ocpp
 
-import java.time.Instant
 import tools.jackson.databind.JsonNode
 
 class OcppFault(val code: String, override val message: String) : RuntimeException(message)
@@ -18,6 +17,10 @@ object OcppValidation {
             "DataTransfer",
             "DiagnosticsStatusNotification",
             "FirmwareStatusNotification",
+            "SecurityEventNotification",
+            "SignCertificate",
+            "LogStatusNotification",
+            "SignedFirmwareStatusNotification",
         )
     val outbound =
         setOf(
@@ -40,6 +43,13 @@ object OcppValidation {
             "TriggerMessage",
             "UnlockConnector",
             "UpdateFirmware",
+            "ExtendedTriggerMessage",
+            "CertificateSigned",
+            "InstallCertificate",
+            "DeleteCertificate",
+            "GetInstalledCertificateIds",
+            "GetLog",
+            "SignedUpdateFirmware",
         )
     private val required =
         mapOf(
@@ -66,19 +76,30 @@ object OcppValidation {
             "TriggerMessage" to listOf("requestedMessage"),
             "UnlockConnector" to listOf("connectorId"),
             "UpdateFirmware" to listOf("location", "retrieveDate"),
+            "SecurityEventNotification" to listOf("type", "timestamp"),
+            "SignCertificate" to listOf("csr"),
+            "LogStatusNotification" to listOf("status"),
+            "SignedFirmwareStatusNotification" to listOf("status"),
+            "ExtendedTriggerMessage" to listOf("requestedMessage"),
+            "CertificateSigned" to listOf("certificateChain"),
+            "InstallCertificate" to listOf("certificateType", "certificate"),
+            "DeleteCertificate" to listOf("certificateHashData"),
+            "GetInstalledCertificateIds" to listOf("certificateType"),
+            "GetLog" to listOf("logType", "requestId", "log"),
+            "SignedUpdateFirmware" to listOf("requestId", "firmware"),
         )
     private val integers =
         setOf(
             "connectorId",
             "transactionId",
-            "meterStart",
-            "meterStop",
             "reservationId",
+            "requestId",
             "duration",
             "listVersion",
             "retries",
             "retryInterval",
         )
+    private val decimals = setOf("meterStart", "meterStop")
     private val dates = setOf("timestamp", "expiryDate", "retrieveDate", "startTime", "stopTime")
     private val statuses =
         setOf(
@@ -92,7 +113,7 @@ object OcppValidation {
             "Unavailable",
             "Faulted",
         )
-    private val errors =
+    val errors =
         setOf(
             "ConnectorLockFailure",
             "EVCommunicationError",
@@ -111,15 +132,58 @@ object OcppValidation {
             "UnderVoltage",
             "WeakSignal",
         )
+    private val logStatuses =
+        setOf(
+            "BadMessage",
+            "Idle",
+            "NotSupportedOperation",
+            "PermissionDenied",
+            "Uploaded",
+            "UploadFailure",
+            "Uploading",
+        )
+    private val signedFirmwareStatuses =
+        setOf(
+            "Downloaded",
+            "DownloadFailed",
+            "Downloading",
+            "DownloadScheduled",
+            "DownloadPaused",
+            "Idle",
+            "InstallationFailed",
+            "Installing",
+            "Installed",
+            "InstallRebooting",
+            "InstallScheduled",
+            "InstallVerificationFailed",
+            "InvalidSignature",
+            "SignatureVerified",
+        )
+    private val extendedTriggers =
+        setOf(
+            "BootNotification",
+            "LogStatusNotification",
+            "FirmwareStatusNotification",
+            "Heartbeat",
+            "MeterValues",
+            "SignChargePointCertificate",
+            "StatusNotification",
+        )
+    private val rootCertificates = setOf("CentralSystemRootCertificate", "ManufacturerRootCertificate")
     private val textLimits =
         mapOf(
             "idTag" to 20,
             "parentIdTag" to 20,
-            "chargePointVendor" to 20,
-            "chargePointModel" to 20,
+            "chargePointVendor" to 50,
+            "chargePointModel" to 50,
             "vendorId" to 255,
             "key" to 50,
             "value" to 500,
+            "errorCode" to 50,
+            "csr" to 10000,
+            "certificateChain" to 20000,
+            "certificate" to 10000,
+            "techInfo" to 1000,
         )
 
     fun validate(action: String, payload: JsonNode, serverInitiated: Boolean = false) {
@@ -152,6 +216,12 @@ object OcppValidation {
                     "Le paramètre $key doit être un entier positif ou nul.",
                 )
             }
+            if (key in decimals && (!value.isNumber || value.decimalValue().signum() < 0)) {
+                throw OcppFault(
+                    "TypeConstraintViolation",
+                    "Le paramètre $key doit être un nombre positif ou nul.",
+                )
+            }
             if (key in dates) {
                 timestamp(value, key)
             }
@@ -180,7 +250,6 @@ object OcppValidation {
             }
             "StatusNotification" -> {
                 enumeration(payload, "status", statuses)
-                enumeration(payload, "errorCode", errors)
             }
             "Reset" -> {
                 enumeration(payload, "type", setOf("Hard", "Soft"))
@@ -203,6 +272,49 @@ object OcppValidation {
                     setOf("Idle", "Uploaded", "UploadFailed", "Uploading"),
                 )
             }
+            "LogStatusNotification" -> {
+                enumeration(payload, "status", logStatuses)
+            }
+            "SignedFirmwareStatusNotification" -> {
+                enumeration(payload, "status", signedFirmwareStatuses)
+            }
+            "SecurityEventNotification" -> {
+                if (!payload.path("type").isString || payload.path("type").asText().length !in 1..50) {
+                    throw OcppFault("PropertyConstraintViolation", "Valeur invalide : type")
+                }
+            }
+            "ExtendedTriggerMessage" -> {
+                enumeration(payload, "requestedMessage", extendedTriggers)
+            }
+            "InstallCertificate" -> {
+                enumeration(payload, "certificateType", rootCertificates)
+            }
+            "GetInstalledCertificateIds" -> {
+                enumeration(payload, "certificateType", rootCertificates)
+            }
+            "GetLog" -> {
+                enumeration(payload, "logType", setOf("DiagnosticsLog", "SecurityLog"))
+                if (!payload.path("log").path("remoteLocation").isString) {
+                    throw OcppFault("OccurrenceConstraintViolation", "Paramètre manquant : log.remoteLocation")
+                }
+            }
+            "SignedUpdateFirmware" -> {
+                val firmware = payload.path("firmware")
+                listOf("location", "retrieveDateTime", "signingCertificate", "signature").forEach { key ->
+                    if (!firmware.path(key).isString) {
+                        throw OcppFault("OccurrenceConstraintViolation", "Paramètre manquant : firmware.$key")
+                    }
+                }
+                timestamp(firmware.path("retrieveDateTime"), "firmware.retrieveDateTime")
+            }
+            "DeleteCertificate" -> {
+                val hash = payload.path("certificateHashData")
+                listOf("hashAlgorithm", "issuerNameHash", "issuerKeyHash", "serialNumber").forEach { key ->
+                    if (!hash.path(key).isString) {
+                        throw OcppFault("OccurrenceConstraintViolation", "Paramètre manquant : certificateHashData.$key")
+                    }
+                }
+            }
             "FirmwareStatusNotification" -> {
                 enumeration(
                     payload,
@@ -223,7 +335,8 @@ object OcppValidation {
 
     private fun timestamp(value: JsonNode, field: String) {
         try {
-            Instant.parse(value.asText())
+            require(value.isString)
+            OcppTime.parse(value.asText())
         } catch (_: Exception) {
             throw OcppFault("PropertyConstraintViolation", "Valeur invalide : $field")
         }
@@ -252,7 +365,7 @@ object OcppValidation {
             }
 
             samples.forEach { sample ->
-                if (!sample.path("value").isString) {
+                if (!sample.path("value").isString && !sample.path("value").isNumber) {
                     throw OcppFault(
                         "TypeConstraintViolation",
                         "La valeur de mesure doit être une chaîne de caractères.",

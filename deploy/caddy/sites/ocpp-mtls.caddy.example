@@ -1,0 +1,24 @@
+# Profil 3 : copier en ocpp-mtls.caddy et placer à côté le fichier ocpp-client-ca.pem
+# (autorités des certificats de bornes, plus OCPP_SIGNING_CA_CERTIFICATE si le serveur signe les CSR).
+# Caddy refuse toute connexion sans certificat valide ; le serveur Java vérifie à nouveau la chaîne,
+# le CN ou l’empreinte épinglée. Les bornes en profils 1 et 2 utilisent APP_HOST.
+{$OCPP_HOST} {
+	tls {
+		client_auth {
+			mode require_and_verify
+			trust_pool file /etc/caddy/sites/ocpp-client-ca.pem
+		}
+	}
+
+	@ocpp path /ocpp/*
+	handle @ocpp {
+		reverse_proxy server:8080 {
+			header_up X-Client-Cert {http.request.tls.client.certificate_der_base64}
+			stream_close_delay 10m
+		}
+	}
+
+	handle {
+		respond 404
+	}
+}

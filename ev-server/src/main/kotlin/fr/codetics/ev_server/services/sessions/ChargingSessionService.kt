@@ -21,6 +21,7 @@ import fr.codetics.ev_server.models.sessions.ChargingSessionResponse
 import fr.codetics.ev_server.models.sessions.ConsumptionPoint
 import fr.codetics.ev_server.models.sessions.SessionInError
 import fr.codetics.ev_server.models.sessions.SessionStartInput
+import fr.codetics.ev_server.models.sessions.SignedMeterData
 import fr.codetics.ev_server.ocpp.AuthorizationStatus
 import fr.codetics.ev_server.ocpp.MeterReadings
 import fr.codetics.ev_server.ocpp.OcppCommandQueue
@@ -131,6 +132,17 @@ class ChargingSessionService(
         val transaction = session(user, id)
         val priced = organization.pricing(user.tenantId).isNotEmpty()
         return views(user.tenantId, listOf(transaction)).first().copy(errors = errors(transaction, null, priced))
+    }
+
+    fun signedData(user: AppPrincipal, id: Int): SignedMeterData {
+        val transaction = session(user, id)
+        return SignedMeterData(
+            transaction.id,
+            transaction.stationId,
+            transaction.signedMeterFormat,
+            transaction.signedMeterStart,
+            transaction.signedMeterStop,
+        )
     }
 
     fun session(user: AppPrincipal, id: Int): TransactionEntity {

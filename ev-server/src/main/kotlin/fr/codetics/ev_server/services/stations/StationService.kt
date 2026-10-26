@@ -7,7 +7,7 @@ import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.core.pageRequest
-import fr.codetics.ev_server.core.randomToken
+import fr.codetics.ev_server.core.stationSecret
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.api.PageResponse
 import fr.codetics.ev_server.models.commands.CommandReceipt
@@ -138,7 +138,7 @@ class StationService(
     }
 
     fun provision(user: AppPrincipal, input: StationInput): ProvisionedStation {
-        ensure(input.id.matches(STATION_ID)) { "Identifiant de borne invalide." }
+        ensure(input.id.matches(STATION_ID) && input.id != "." && input.id != "..") { "Identifiant de borne invalide." }
         ensure(input.name.isNotBlank() && input.name.length <= 200) {
             "Le nom de la borne doit contenir entre 1 et 200 caractères."
         }
@@ -150,7 +150,7 @@ class StationService(
             if (existing != null && !existing.deleted) {
                 throw ResponseStatusException(HttpStatus.CONFLICT, "Cet identifiant de borne existe déjà.")
             }
-            val secret = randomToken()
+            val secret = stationSecret()
             val station =
                 (existing ?: StationEntity(key, input.name, "")).apply {
                     name = input.name.trim()
@@ -158,6 +158,11 @@ class StationService(
                     siteAreaId = input.siteAreaId
                     enabled = true
                     deleted = false
+                    securityProfile = 1
+                    requestedSecurityProfile = null
+                    pendingSecretHash = null
+                    pinnedCertificateFingerprint = null
+                    issuedCertificateFingerprint = null
                 }
             stations.save(station).also { db.flush() }
             db.audit(user.tenantId, user.id.toString(), "STATION_CREATE", input.id)
@@ -228,7 +233,11 @@ class StationService(
             station.deleted = true
             station.enabled = false
             station.publicStation = false
-            station.secretHash = requireNotNull(passwords.encode(randomToken()))
+            station.secretHash = requireNotNull(passwords.encode(stationSecret()))
+            station.pendingSecretHash = null
+            station.pinnedCertificateFingerprint = null
+            station.issuedCertificateFingerprint = null
+            station.requestedSecurityProfile = null
             stations.save(station)
             db.audit(user.tenantId, user.id.toString(), "STATION_DELETE", stationId)
         }
@@ -237,12 +246,13 @@ class StationService(
     }
 
     fun rotateSecret(user: AppPrincipal, stationId: String): ProvisionedStation {
-        val secret = randomToken()
+        val secret = stationSecret()
         db.atomic {
             val station =
                 db.lock<StationEntity>(StationKey(user.tenantId, stationId))?.takeUnless { it.deleted }
                     ?: throw NotFound("Borne introuvable.")
             station.secretHash = requireNotNull(passwords.encode(secret))
+            station.pendingSecretHash = null
             stations.save(station)
             db.audit(user.tenantId, user.id.toString(), "STATION_SECRET_ROTATE", stationId)
         }
@@ -300,6 +310,9 @@ class StationService(
             parameters.findAllByKeyTenantIdAndKeyStationIdOrderByKeyKey(user.tenantId, stationId)
                 .firstOrNull { it.key.key == input.key }
         ensure(existing?.readonly != true) { "Ce paramètre est en lecture seule." }
+        ensure(!StationSecurityService.protectedKey(input.key)) {
+            "Ce paramètre de sécurité se modifie depuis la section Sécurité de la borne."
+        }
         val id =
             queue.command(
                 user.tenantId,

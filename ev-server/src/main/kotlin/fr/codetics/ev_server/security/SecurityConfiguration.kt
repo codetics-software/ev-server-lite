@@ -72,6 +72,8 @@ class SecurityConfiguration {
                     "/api/v1/auth/providers",
                     "/api/v1/auth/eula",
                     "/actuator/health",
+                    "/actuator/health/liveness",
+                    "/actuator/health/readiness",
                     "/api/v1/public/**",
                 )
                 .permitAll()

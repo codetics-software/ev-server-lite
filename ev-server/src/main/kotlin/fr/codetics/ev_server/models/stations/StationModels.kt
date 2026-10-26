@@ -63,6 +63,17 @@ data class StationResponse(
     val firmwareStatus: String? = null,
     val diagnosticsStatus: String? = null,
     val autoCharge: Boolean = false,
+    val securityProfile: Int = 1,
+    val requestedSecurityProfile: Int? = null,
+    val connectionSecurityProfile: Int? = null,
+    val pinnedCertificateFingerprint: String? = null,
+    val certificateSubject: String? = null,
+    val certificateFingerprint: String? = null,
+    val certificateExpiresAt: Instant? = null,
+    val passwordRotationPending: Boolean = false,
+    val heartbeatInterval: Int? = null,
+    val dataTransferVendors: List<String> = emptyList(),
+    val logStatus: String? = null,
 ) {
     companion object {
         fun from(
@@ -93,6 +104,18 @@ data class StationResponse(
                 firmwareStatus = station.firmwareStatus,
                 diagnosticsStatus = station.diagnosticsStatus,
                 autoCharge = station.autoCharge,
+                securityProfile = station.securityProfile,
+                requestedSecurityProfile = station.requestedSecurityProfile,
+                connectionSecurityProfile = station.connectionSecurityProfile,
+                pinnedCertificateFingerprint = station.pinnedCertificateFingerprint,
+                certificateSubject = station.certificateSubject,
+                certificateFingerprint = station.certificateFingerprint,
+                certificateExpiresAt = station.certificateExpiresAt,
+                passwordRotationPending = station.pendingSecretHash != null,
+                heartbeatInterval = station.heartbeatInterval,
+                dataTransferVendors =
+                    station.dataTransferVendors.split(',').map(String::trim).filter(String::isNotBlank),
+                logStatus = station.logStatus,
             )
     }
 }
@@ -197,4 +220,33 @@ data class ProvisionedStation(
     val secret: String,
     val message: String =
         "Conservez le mot de passe de la borne : il n’est affiché qu’une seule fois.",
+)
+
+data class SecurityProfileInput(
+    val securityProfile: Int,
+    val pinnedCertificateFingerprint: String? = null,
+    val sendToStation: Boolean = true,
+)
+
+data class OcppSettingsInput(
+    val heartbeatInterval: Int? = null,
+    val dataTransferVendors: List<String> = emptyList(),
+)
+
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+data class SecurityChange(
+    val station: StationResponse,
+    val commandId: UUID? = null,
+    val message: String,
+)
+
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+data class OcppSecurityCapabilities(
+    val allowUnauthenticated: Boolean,
+    val clientCertificateAuthority: Boolean,
+    val clientCertificateHeader: Boolean,
+    val trustedProxies: Boolean,
+    val certificateSigning: Boolean,
+    val defaultHeartbeatInterval: Int,
+    val ocppPublicUrl: String?,
 )

@@ -5,7 +5,7 @@ import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
-import fr.codetics.ev_server.core.randomToken
+import fr.codetics.ev_server.core.stationSecret
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.entities.RegistrationTokenEntity
@@ -77,7 +77,7 @@ class RegistrationTokenService(
                 "La zone sélectionnée n’existe pas dans cet espace."
             }
         }
-        val raw = randomToken()
+        val raw = stationSecret()
         return db.atomic {
             val token =
                 registrationTokens.save(
