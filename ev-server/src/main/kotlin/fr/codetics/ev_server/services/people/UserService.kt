@@ -40,6 +40,10 @@ import fr.codetics.ev_server.repositories.ChargingTokenRepository
 import fr.codetics.ev_server.repositories.OAuthIdentityRepository
 import fr.codetics.ev_server.repositories.SiteUserRepository
 import fr.codetics.ev_server.repositories.TenantRepository
+import fr.codetics.ev_server.repositories.TransactionRepository
+import fr.codetics.ev_server.services.notifications.PushService
+import fr.codetics.ev_server.services.stations.StationPhotoService
+import fr.codetics.ev_server.services.tokens.CardOrderService
 import fr.codetics.ev_server.repositories.UserRepository
 import fr.codetics.ev_server.repositories.WorkspacePaymentSettingsRepository
 import fr.codetics.ev_server.security.AccountService
@@ -73,6 +77,10 @@ class UserService(
     private val queries: Queries,
     private val properties: AppProperties,
     private val events: ApplicationEventPublisher,
+    private val transactions: TransactionRepository,
+    private val photos: StationPhotoService,
+    private val push: PushService,
+    private val cardOrders: CardOrderService,
 ) {
     fun list(user: AppPrincipal, offset: Int = 0, limit: Int = 500, filter: UserFilter = UserFilter()): PageResponse<UserResponse> {
         val page =
@@ -174,8 +182,23 @@ class UserService(
 
     fun delete(id: UUID, user: AppPrincipal): MutationResponse {
         ensure(id != user.id) { "Vous ne pouvez pas supprimer votre propre compte." }
+        return erase(id, user)
+    }
+
+    fun deleteOwn(user: AppPrincipal): MutationResponse {
+        ensure(user.role != UserRole.ADMIN) { "Un administrateur ne peut pas supprimer son propre compte." }
+        if (transactions.findAllByTenantIdAndStoppedAtIsNull(user.tenantId).any { it.userId == user.id }) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Terminez votre session de recharge avant de supprimer votre compte.")
+        }
+        return erase(user.id, user)
+    }
+
+    private fun erase(id: UUID, user: AppPrincipal): MutationResponse {
         return db.atomic {
             val account = account(user.tenantId, id)
+            photos.deleteAllOf(user.tenantId, id)
+            cardOrders.forget(user.tenantId, id)
+            push.forget(id)
             chargingTokens.findAllByKeyTenantIdAndUserId(user.tenantId, id).forEach { token ->
                 if (token.vehicleId != null) {
                     chargingTokens.delete(token)

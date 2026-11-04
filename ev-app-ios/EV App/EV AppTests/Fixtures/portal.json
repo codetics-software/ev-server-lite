@@ -1,0 +1,1 @@
+{"id":"ac5107d1-f3ad-4644-ac98-d57810f8034f","workspace":"Réseau Contrat","workspaceSlug":"contrat-c887fa45-d02b-4592-a15f-e9d2a8033eea","name":"Point QR","stationId":"CONTRAT-1","connectorId":1,"connected":true,"status":"Available","available":true,"tariff":{"currency":"EUR","energyPrice":0.39,"timePrice":1.2,"flatPrice":0.5},"minimumCreditMinor":500,"maximumCreditMinor":10000}

@@ -10,6 +10,7 @@ import com.stripe.param.InvoiceCreateParams
 import com.stripe.param.InvoiceItemCreateParams
 import com.stripe.param.SetupIntentCreateParams
 import com.stripe.param.TaxRateListParams
+import com.stripe.param.checkout.SessionCreateParams
 import fr.codetics.ev_server.core.NotFound
 import java.time.Instant
 import java.util.UUID
@@ -56,6 +57,21 @@ class StripeUserBilling(
                     .build(),
                 stripe.options(accountId),
             ).clientSecret
+        )
+
+    override fun setupCheckout(accountId: String, customerId: String, successUrl: String, cancelUrl: String): String =
+        requireNotNull(
+            stripe.client.v1().checkout().sessions().create(
+                SessionCreateParams.builder()
+                    .setMode(SessionCreateParams.Mode.SETUP)
+                    .setCustomer(customerId)
+                    .setCurrency("eur")
+                    .setLocale(SessionCreateParams.Locale.AUTO)
+                    .setSuccessUrl(successUrl)
+                    .setCancelUrl(cancelUrl)
+                    .build(),
+                stripe.options(accountId),
+            ).url
         )
 
     override fun paymentMethods(accountId: String, customerId: String): List<PaymentMethodInfo> {

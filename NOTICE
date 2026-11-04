@@ -8,6 +8,8 @@ Les composants shadcn/ui et leurs dépendances conservent leurs licences
 respectives. Consultez licenses/shadcn-MIT.txt et les métadonnées des dépendances.
 La police Source Sans 3 conserve sa licence dans licenses/SourceSans3-OFL.txt.
 Stripe Java et ZXing conservent leurs licences Apache 2.0.
+L’application Android utilise les icônes Material Symbols (Apache 2.0), MapLibre Native
+(BSD-2-Clause) et les données OpenStreetMap (ODbL), qui conservent leurs licences.
 
 Les noms tiers cités identifient leurs auteurs ou leurs produits ; ils
 n’impliquent aucune approbation de cette application.

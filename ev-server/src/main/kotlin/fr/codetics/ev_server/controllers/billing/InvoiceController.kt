@@ -41,6 +41,9 @@ class InvoiceController(private val billing: UserBillingService) {
     @PostMapping("/account/payment-methods/setup")
     fun setup(@AuthenticationPrincipal user: AppPrincipal) = billing.setup(user)
 
+    @PostMapping("/account/payment-methods/checkout")
+    fun setupCheckout(@AuthenticationPrincipal user: AppPrincipal) = RedirectResponse(billing.setupCheckout(user))
+
     @PostMapping("/account/payment-methods/{id}/default")
     fun setDefault(@PathVariable id: String, @AuthenticationPrincipal user: AppPrincipal) =
         billing.setDefault(user, id)

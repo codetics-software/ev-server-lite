@@ -1,0 +1,1 @@
+{"token": "fixture-token-not-a-real-session-fixture-token", "expires_at": "2026-12-04T09:17:07.338033Z", "user": {"id": "0720d0ed-c8e8-419c-8e01-0c1d0ea9dc6d", "tenantId": "bb9bcbe4-1d14-430a-8130-ac67d4127d16", "email": "driver-afb1d256-3e34-4009-97b2-527553b608ae@example.test", "name": "DRIVER contrat", "role": "DRIVER", "platformAdmin": false, "eulaAccepted": false}}

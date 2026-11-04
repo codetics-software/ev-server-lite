@@ -10,7 +10,13 @@ import org.springframework.stereotype.Component
 
 @Component
 class StripeChargingCheckout(private val stripe: StripeClientProvider) {
-    fun create(details: CheckoutDetails): CreatedCheckout {
+    fun create(details: CheckoutDetails): CreatedCheckout =
+        session(details, "charging_order_id", "charging:${details.orderId}:checkout")
+
+    fun createCard(details: CheckoutDetails): CreatedCheckout =
+        session(details, "card_order_id", "card:${details.orderId}:checkout")
+
+    private fun session(details: CheckoutDetails, metadataKey: String, idempotencyKey: String): CreatedCheckout {
         val price =
             SessionCreateParams.LineItem.PriceData.builder()
                 .setCurrency(details.currency.lowercase())
@@ -35,10 +41,10 @@ class StripeChargingCheckout(private val stripe: StripeClientProvider) {
                         .setQuantity(1L)
                         .build()
                 )
-                .putMetadata("charging_order_id", details.orderId.toString())
+                .putMetadata(metadataKey, details.orderId.toString())
                 .setPaymentIntentData(
                     SessionCreateParams.PaymentIntentData.builder()
-                        .putMetadata("charging_order_id", details.orderId.toString())
+                        .putMetadata(metadataKey, details.orderId.toString())
                         .build()
                 )
                 .putExtraParam(
@@ -54,7 +60,7 @@ class StripeChargingCheckout(private val stripe: StripeClientProvider) {
                 .sessions()
                 .create(
                     parameters,
-                    stripe.options(details.accountId, "charging:${details.orderId}:checkout"),
+                    stripe.options(details.accountId, idempotencyKey),
                 )
         return CreatedCheckout(session.id, requireNotNull(session.url))
     }

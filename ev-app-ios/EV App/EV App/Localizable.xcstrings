@@ -1,7 +1,3498 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-
+  "sourceLanguage": "en",
+  "strings": {
+    "%@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        }
+      }
+    },
+    "%@ %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%@ has an invalid value.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ a une valeur invalide."
+          }
+        }
+      }
+    },
+    "%@ must use HTTPS.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ doit utiliser HTTPS."
+          }
+        }
+      }
+    },
+    "%@ still contains a placeholder.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ contient encore une valeur à remplacer."
+          }
+        }
+      }
+    },
+    "%@ · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ · no. %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · n° %2$lld"
+          }
+        }
+      }
+    },
+    "%@ •••• %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ •••• %2$@"
+          }
+        }
+      }
+    },
+    "%lld available": {
+      "localizations": {
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld disponible"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld disponibles"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "11 kW or more": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "11 kW ou plus"
+          }
+        }
+      }
+    },
+    "150 kW or more": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "150 kW ou plus"
+          }
+        }
+      }
+    },
+    "22 kW or more": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "22 kW ou plus"
+          }
+        }
+      }
+    },
+    "50 kW or more": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "50 kW ou plus"
+          }
+        }
+      }
+    },
+    "A link to choose a new password has been sent to your email address.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un lien pour choisir un nouveau mot de passe a été envoyé à votre adresse électronique."
+          }
+        }
+      }
+    },
+    "AC power": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puissance AC"
+          }
+        }
+      }
+    },
+    "AC power (kW)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puissance AC (kW)"
+          }
+        }
+      }
+    },
+    "About": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À propos"
+          }
+        }
+      }
+    },
+    "About this app": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À propos de cette application"
+          }
+        }
+      }
+    },
+    "Accept and continue": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accepter et continuer"
+          }
+        }
+      }
+    },
+    "Account": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compte"
+          }
+        }
+      }
+    },
+    "Activate": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer"
+          }
+        }
+      }
+    },
+    "Activate a card": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer une carte"
+          }
+        }
+      }
+    },
+    "Activated": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activée"
+          }
+        }
+      }
+    },
+    "Active": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actif"
+          }
+        }
+      }
+    },
+    "Add a demo photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter une photo de démonstration"
+          }
+        }
+      }
+    },
+    "Add a payment method": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un moyen de paiement"
+          }
+        }
+      }
+    },
+    "Add a vehicle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un véhicule"
+          }
+        }
+      }
+    },
+    "Add your vehicle to get better charging estimates and automatic charging.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez votre véhicule pour de meilleures estimations et la recharge automatique."
+          }
+        }
+      }
+    },
+    "All connectors": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tous les connecteurs"
+          }
+        }
+      }
+    },
+    "Any power": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les puissances"
+          }
+        }
+      }
+    },
+    "App not configured": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application non configurée"
+          }
+        }
+      }
+    },
+    "AppConfiguration.plist is missing from the application.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AppConfiguration.plist est absent de l’application."
+          }
+        }
+      }
+    },
+    "Apple Wallet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Cartes"
+          }
+        }
+      }
+    },
+    "Apple Wallet is not available for this badge on this server or device.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Cartes n’est pas disponible pour ce badge sur ce serveur ou cet appareil."
+          }
+        }
+      }
+    },
+    "Ask my operator to add it": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demander à mon exploitant de l’ajouter"
+          }
+        }
+      }
+    },
+    "Automatic charging": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recharge automatique"
+          }
+        }
+      }
+    },
+    "Automatic charging when you plug in": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recharge automatique au branchement"
+          }
+        }
+      }
+    },
+    "Available": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disponible"
+          }
+        }
+      }
+    },
+    "Available now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disponible maintenant"
+          }
+        }
+      }
+    },
+    "Badge": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badge"
+          }
+        }
+      }
+    },
+    "Badge %@, held by %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badge %1$@, au nom de %2$@"
+          }
+        }
+      }
+    },
+    "Badge %@. Contact your operator to enable it again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badge %@. Contactez votre exploitant pour le réactiver."
+          }
+        }
+      }
+    },
+    "Badge %@. Contact your operator to renew it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badge %@. Contactez votre exploitant pour le renouveler."
+          }
+        }
+      }
+    },
+    "Badge QR code": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QR code du badge"
+          }
+        }
+      }
+    },
+    "Badges": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Badges"
+          }
+        }
+      }
+    },
+    "Battery": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batterie"
+          }
+        }
+      }
+    },
+    "Battery %lld%%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batterie %lld %%"
+          }
+        }
+      }
+    },
+    "Battery (kWh)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batterie (kWh)"
+          }
+        }
+      }
+    },
+    "Before you continue, please accept the terms of use of this charging service.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avant de continuer, acceptez les conditions d’utilisation de ce service de recharge."
+          }
+        }
+      }
+    },
+    "Billing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facturation"
+          }
+        }
+      }
+    },
+    "By station": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par borne"
+          }
+        }
+      }
+    },
+    "Calculating the balance": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calcul du solde"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuler"
+          }
+        }
+      }
+    },
+    "Cancelled": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annulée"
+          }
+        }
+      }
+    },
+    "Card %@ can now start charging on this network.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La carte %@ peut maintenant démarrer des recharges sur ce réseau."
+          }
+        }
+      }
+    },
+    "Card number": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numéro de la carte"
+          }
+        }
+      }
+    },
+    "Card number %@. It may be unknown to this network or belong to someone else.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carte numéro %@. Elle est peut-être inconnue de ce réseau ou appartient à quelqu’un d’autre."
+          }
+        }
+      }
+    },
+    "Card payment is not available on this charging point right now.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le paiement par carte n’est pas disponible sur ce point de charge pour le moment."
+          }
+        }
+      }
+    },
+    "Card read.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carte lue."
+          }
+        }
+      }
+    },
+    "Change my password": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer mon mot de passe"
+          }
+        }
+      }
+    },
+    "Charge": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recharge"
+          }
+        }
+      }
+    },
+    "Charging": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En charge"
+          }
+        }
+      }
+    },
+    "Charging amount": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Montant de la recharge"
+          }
+        }
+      }
+    },
+    "Charging card": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carte de recharge"
+          }
+        }
+      }
+    },
+    "Charging point": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point de charge"
+          }
+        }
+      }
+    },
+    "Charging point link": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lien du point de charge"
+          }
+        }
+      }
+    },
+    "Charging power": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puissance de charge"
+          }
+        }
+      }
+    },
+    "Charging stops when the credit runs out. The balance is refunded automatically, and in full if charging does not start within five minutes.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La recharge s’arrête quand le crédit est épuisé. Le solde est remboursé automatiquement, et en totalité si la recharge ne démarre pas sous cinq minutes."
+          }
+        }
+      }
+    },
+    "Charging time": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durée de recharge"
+          }
+        }
+      }
+    },
+    "Check a card with NFC": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier une carte par NFC"
+          }
+        }
+      }
+    },
+    "Choose from library": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir dans la photothèque"
+          }
+        }
+      }
+    },
+    "Choose from the catalog": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir dans le catalogue"
+          }
+        }
+      }
+    },
+    "Close": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fermer"
+          }
+        }
+      }
+    },
+    "Connecting to the server…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion au serveur…"
+          }
+        }
+      }
+    },
+    "Connector": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecteur"
+          }
+        }
+      }
+    },
+    "Connectors": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecteurs"
+          }
+        }
+      }
+    },
+    "Continue as a demo guest": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer en invité de démonstration"
+          }
+        }
+      }
+    },
+    "Continue with the demo account": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer avec le compte de démonstration"
+          }
+        }
+      }
+    },
+    "Create": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer"
+          }
+        }
+      }
+    },
+    "Create an account": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer un compte"
+          }
+        }
+      }
+    },
+    "Credit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédit"
+          }
+        }
+      }
+    },
+    "Credit paid": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédit payé"
+          }
+        }
+      }
+    },
+    "Credits": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédits"
+          }
+        }
+      }
+    },
+    "Czech": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tchèque"
+          }
+        }
+      }
+    },
+    "DC power": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puissance DC"
+          }
+        }
+      }
+    },
+    "DC power (kW)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puissance DC (kW)"
+          }
+        }
+      }
+    },
+    "Debug only": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode debug uniquement"
+          }
+        }
+      }
+    },
+    "Default": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par défaut"
+          }
+        }
+      }
+    },
+    "Delete": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer"
+          }
+        }
+      }
+    },
+    "Delete my account": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer mon compte"
+          }
+        }
+      }
+    },
+    "Delete your account permanently?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer définitivement votre compte ?"
+          }
+        }
+      }
+    },
+    "Details": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détails"
+          }
+        }
+      }
+    },
+    "Directions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Itinéraire"
+          }
+        }
+      }
+    },
+    "Disabled": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Désactivé"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminé"
+          }
+        }
+      }
+    },
+    "Draft": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brouillon"
+          }
+        }
+      }
+    },
+    "Draft invoice": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facture en préparation"
+          }
+        }
+      }
+    },
+    "Driver": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conducteur"
+          }
+        }
+      }
+    },
+    "Duration": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durée"
+          }
+        }
+      }
+    },
+    "Edit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier"
+          }
+        }
+      }
+    },
+    "Edit vehicle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier le véhicule"
+          }
+        }
+      }
+    },
+    "Email": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adresse électronique"
+          }
+        }
+      }
+    },
+    "Emails": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Courriels"
+          }
+        }
+      }
+    },
+    "Enable with the session on %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer avec la session sur %@"
+          }
+        }
+      }
+    },
+    "End reading": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relevé de fin"
+          }
+        }
+      }
+    },
+    "Ended": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin"
+          }
+        }
+      }
+    },
+    "Energy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Énergie"
+          }
+        }
+      }
+    },
+    "English": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anglais"
+          }
+        }
+      }
+    },
+    "Estimated price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix estimé"
+          }
+        }
+      }
+    },
+    "Expires": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expire le"
+          }
+        }
+      }
+    },
+    "Expires %lld/%@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expire %1$lld/%2$@"
+          }
+        }
+      }
+    },
+    "Failed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec"
+          }
+        }
+      }
+    },
+    "Filter": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrer"
+          }
+        }
+      }
+    },
+    "Find a station": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouver une borne"
+          }
+        }
+      }
+    },
+    "Finished": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminée"
+          }
+        }
+      }
+    },
+    "Finishing": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin de charge"
+          }
+        }
+      }
+    },
+    "Follow live": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suivre en direct"
+          }
+        }
+      }
+    },
+    "Forgot password": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mot de passe oublié"
+          }
+        }
+      }
+    },
+    "Forgot password?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mot de passe oublié ?"
+          }
+        }
+      }
+    },
+    "Format": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format"
+          }
+        }
+      }
+    },
+    "French": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Français"
+          }
+        }
+      }
+    },
+    "Full name": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom complet"
+          }
+        }
+      }
+    },
+    "German": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allemand"
+          }
+        }
+      }
+    },
+    "Get directions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Itinéraire"
+          }
+        }
+      }
+    },
+    "History": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique"
+          }
+        }
+      }
+    },
+    "Hold the card near the top of the iPhone.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Approchez la carte du haut de l’iPhone."
+          }
+        }
+      }
+    },
+    "Hold your card near the top of the iPhone to see whether it is on your account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Approchez votre carte du haut de l’iPhone pour savoir si elle est sur votre compte."
+          }
+        }
+      }
+    },
+    "Hold your charging card near the top of the iPhone.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Approchez votre carte de recharge du haut de l’iPhone."
+          }
+        }
+      }
+    },
+    "I accept the terms of use and the privacy policy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "J’accepte les conditions d’utilisation et la politique de confidentialité"
+          }
+        }
+      }
+    },
+    "Idle time": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inactivité"
+          }
+        }
+      }
+    },
+    "If sign-up is available for this address, a verification link has been sent. Open it, then sign in.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si l’inscription est disponible pour cette adresse, un lien de vérification a été envoyé. Ouvrez-le, puis connectez-vous."
+          }
+        }
+      }
+    },
+    "If this account exists, a link to choose a new password has been sent. It expires after 30 minutes.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si ce compte existe, un lien pour choisir un nouveau mot de passe a été envoyé. Il expire après 30 minutes."
+          }
+        }
+      }
+    },
+    "If this address needs verifying, an email has been sent.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si cette adresse doit être vérifiée, un courriel a été envoyé."
+          }
+        }
+      }
+    },
+    "If you closed the payment page, this request expires on its own and you are not charged.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si vous avez fermé la page de paiement, cette demande expirera d’elle-même et vous ne serez pas débité."
+          }
+        }
+      }
+    },
+    "In progress": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En cours"
+          }
+        }
+      }
+    },
+    "In use": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Occupée"
+          }
+        }
+      }
+    },
+    "Inappropriate photo %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo inappropriée %@"
+          }
+        }
+      }
+    },
+    "Indicator": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indicateur"
+          }
+        }
+      }
+    },
+    "Invoiced": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facturée"
+          }
+        }
+      }
+    },
+    "Invoices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Factures"
+          }
+        }
+      }
+    },
+    "Italian": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Italien"
+          }
+        }
+      }
+    },
+    "Language": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Langue"
+          }
+        }
+      }
+    },
+    "Last used": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernière utilisation"
+          }
+        }
+      }
+    },
+    "Licence plate": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Immatriculation"
+          }
+        }
+      }
+    },
+    "Make": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fabricant"
+          }
+        }
+      }
+    },
+    "Make or model": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fabricant ou modèle"
+          }
+        }
+      }
+    },
+    "Map": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carte"
+          }
+        }
+      }
+    },
+    "Model": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle"
+          }
+        }
+      }
+    },
+    "Month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mois"
+          }
+        }
+      }
+    },
+    "My badges": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mes badges"
+          }
+        }
+      }
+    },
+    "My sites": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mes sites"
+          }
+        }
+      }
+    },
+    "My vehicles": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mes véhicules"
+          }
+        }
+      }
+    },
+    "NFC": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NFC"
+          }
+        }
+      }
+    },
+    "Name (optional)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom (facultatif)"
+          }
+        }
+      }
+    },
+    "Name, site or city": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom, site ou ville"
+          }
+        }
+      }
+    },
+    "Needs attention": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intervention nécessaire"
+          }
+        }
+      }
+    },
+    "New vehicle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau véhicule"
+          }
+        }
+      }
+    },
+    "No account needed: pay by card and start charging.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans compte : payez par carte et lancez la recharge."
+          }
+        }
+      }
+    },
+    "No badge is registered on your account yet. Ask your charging operator to assign one.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun badge n’est encore enregistré sur votre compte. Demandez-en un à votre exploitant."
+          }
+        }
+      }
+    },
+    "No charging in progress": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune recharge en cours"
+          }
+        }
+      }
+    },
+    "No invoices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune facture"
+          }
+        }
+      }
+    },
+    "No notifications yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune notification pour le moment."
+          }
+        }
+      }
+    },
+    "No private sites": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun site privé"
+          }
+        }
+      }
+    },
+    "No sessions yet": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune session"
+          }
+        }
+      }
+    },
+    "No stations found": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune borne trouvée"
+          }
+        }
+      }
+    },
+    "No vehicle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun véhicule"
+          }
+        }
+      }
+    },
+    "Not billed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non facturée"
+          }
+        }
+      }
+    },
+    "Not signed in": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non connecté"
+          }
+        }
+      }
+    },
+    "Notifications": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
+          }
+        }
+      }
+    },
+    "Notifications are turned off for this app in iOS Settings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les notifications sont désactivées pour cette application dans les réglages d’iOS."
+          }
+        }
+      }
+    },
+    "Notify me about": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Me prévenir pour"
+          }
+        }
+      }
+    },
+    "Number": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numéro"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "Offline": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hors ligne"
+          }
+        }
+      }
+    },
+    "On compatible stations, charging starts when you plug in, with no badge. Anyone using this vehicle can charge on your account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur les bornes compatibles, la recharge démarre au branchement, sans badge. Toute personne utilisant ce véhicule peut recharger sur votre compte."
+          }
+        }
+      }
+    },
+    "On your online account, for %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur votre compte en ligne, pour %@."
+          }
+        }
+      }
+    },
+    "On your online account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur votre compte en ligne."
+          }
+        }
+      }
+    },
+    "Open": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir"
+          }
+        }
+      }
+    },
+    "Open iOS Settings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir les réglages d’iOS"
+          }
+        }
+      }
+    },
+    "Open my session": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir ma session"
+          }
+        }
+      }
+    },
+    "Operator information": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Information de l’exploitant"
+          }
+        }
+      }
+    },
+    "Or enter its number": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ou saisissez son numéro"
+          }
+        }
+      }
+    },
+    "Order a card": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commander une carte"
+          }
+        }
+      }
+    },
+    "Out of order": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hors service"
+          }
+        }
+      }
+    },
+    "Paid": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Payée"
+          }
+        }
+      }
+    },
+    "Paid sessions on this device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessions payées sur cet appareil"
+          }
+        }
+      }
+    },
+    "Paid, being prepared": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Payée, en préparation"
+          }
+        }
+      }
+    },
+    "Parking after charging": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stationnement après la charge"
+          }
+        }
+      }
+    },
+    "Password": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mot de passe"
+          }
+        }
+      }
+    },
+    "Paused": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En pause"
+          }
+        }
+      }
+    },
+    "Pay %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Payer %@"
+          }
+        }
+      }
+    },
+    "Pay and charge": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Payer et recharger"
+          }
+        }
+      }
+    },
+    "Pay by card without an account": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Payer par carte sans compte"
+          }
+        }
+      }
+    },
+    "Payment disputed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paiement contesté"
+          }
+        }
+      }
+    },
+    "Payment failed": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paiement refusé"
+          }
+        }
+      }
+    },
+    "Payment is handled by Stripe. Your card details are not shared with this app.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le paiement est géré par Stripe. Vos données de carte ne sont pas communiquées à cette application."
+          }
+        }
+      }
+    },
+    "Payment methods": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moyens de paiement"
+          }
+        }
+      }
+    },
+    "Pending": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente"
+          }
+        }
+      }
+    },
+    "Phone": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Téléphone"
+          }
+        }
+      }
+    },
+    "Phone (optional)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Téléphone (facultatif)"
+          }
+        }
+      }
+    },
+    "Photos": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photos"
+          }
+        }
+      }
+    },
+    "Photos are visible to the other drivers of this network. Do not show people or number plates.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les photos sont visibles par les autres conducteurs de ce réseau. Ne montrez ni personne ni plaque d’immatriculation."
+          }
+        }
+      }
+    },
+    "Please add my card %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Merci d’ajouter ma carte %@"
+          }
+        }
+      }
+    },
+    "Plug in your vehicle before you pay.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branchez votre véhicule avant de payer."
+          }
+        }
+      }
+    },
+    "Plug in your vehicle before you start.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branchez votre véhicule avant de démarrer."
+          }
+        }
+      }
+    },
+    "Plug this vehicle into a compatible station and start a session once. You can then enable automatic charging here for 24 hours.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branchez ce véhicule sur une borne compatible et démarrez une session. Vous pourrez ensuite activer ici la recharge automatique pendant 24 heures."
+          }
+        }
+      }
+    },
+    "Plugged in": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branché"
+          }
+        }
+      }
+    },
+    "Point the camera at the code on the station.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visez le code sur la borne avec l’appareil photo."
+          }
+        }
+      }
+    },
+    "Portuguese": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portugais"
+          }
+        }
+      }
+    },
+    "Power": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puissance"
+          }
+        }
+      }
+    },
+    "Preferences": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préférences"
+          }
+        }
+      }
+    },
+    "Preparing your pass…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparation de votre carte…"
+          }
+        }
+      }
+    },
+    "Price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix"
+          }
+        }
+      }
+    },
+    "Printed number": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Numéro imprimé"
+          }
+        }
+      }
+    },
+    "Privacy policy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Politique de confidentialité"
+          }
+        }
+      }
+    },
+    "Profile": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil"
+          }
+        }
+      }
+    },
+    "Profile saved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil enregistré."
+          }
+        }
+      }
+    },
+    "Push notifications": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications push"
+          }
+        }
+      }
+    },
+    "Read the privacy policy": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lire la politique de confidentialité"
+          }
+        }
+      }
+    },
+    "Ready to activate": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prête à activer"
+          }
+        }
+      }
+    },
+    "Reference: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Référence : %@"
+          }
+        }
+      }
+    },
+    "Refund in progress": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remboursement en cours"
+          }
+        }
+      }
+    },
+    "Refunded": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remboursé"
+          }
+        }
+      }
+    },
+    "Remove": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer"
+          }
+        }
+      }
+    },
+    "Remove from this device": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer de cet appareil"
+          }
+        }
+      }
+    },
+    "Report a problem": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signaler un problème"
+          }
+        }
+      }
+    },
+    "Report this photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signaler cette photo"
+          }
+        }
+      }
+    },
+    "Reserved": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réservé"
+          }
+        }
+      }
+    },
+    "Result": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Résultat"
+          }
+        }
+      }
+    },
+    "Roaming partner": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partenaire d’itinérance"
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrer"
+          }
+        }
+      }
+    },
+    "Scan a QR code": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner un QR code"
+          }
+        }
+      }
+    },
+    "Scan my card": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanner ma carte"
+          }
+        }
+      }
+    },
+    "Scan your new card, or enter the number printed on it or given by your operator.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scannez votre nouvelle carte ou saisissez le numéro imprimé dessus ou donné par votre exploitant."
+          }
+        }
+      }
+    },
+    "See the stations around you on the map.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voyez les bornes autour de vous sur la carte."
+          }
+        }
+      }
+    },
+    "Send": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoyer"
+          }
+        }
+      }
+    },
+    "Send the verification email again": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renvoyer le courriel de vérification"
+          }
+        }
+      }
+    },
+    "Sending photo…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoi de la photo…"
+          }
+        }
+      }
+    },
+    "Server unavailable": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serveur indisponible"
+          }
+        }
+      }
+    },
+    "Session %lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session %lld"
+          }
+        }
+      }
+    },
+    "Session fee": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frais de session"
+          }
+        }
+      }
+    },
+    "Session finished": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session terminée"
+          }
+        }
+      }
+    },
+    "Sessions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessions"
+          }
+        }
+      }
+    },
+    "Set as default": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par défaut"
+          }
+        }
+      }
+    },
+    "Show list": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher la liste"
+          }
+        }
+      }
+    },
+    "Show map": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher la carte"
+          }
+        }
+      }
+    },
+    "Sign in": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se connecter"
+          }
+        }
+      }
+    },
+    "Sign in on your iPhone to follow your charging sessions.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez-vous sur votre iPhone pour suivre vos recharges."
+          }
+        }
+      }
+    },
+    "Sign in to see your badges, sessions and vehicles. You can still find stations and pay at a charging point without an account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez-vous pour retrouver vos badges, sessions et véhicules. Sans compte, vous pouvez toujours trouver une borne et payer sur un point de charge."
+          }
+        }
+      }
+    },
+    "Sign out": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se déconnecter"
+          }
+        }
+      }
+    },
+    "Sign out everywhere": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se déconnecter partout"
+          }
+        }
+      }
+    },
+    "Sign out from all devices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se déconnecter de tous les appareils"
+          }
+        }
+      }
+    },
+    "Sign out from all your devices?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se déconnecter de tous vos appareils ?"
+          }
+        }
+      }
+    },
+    "Signed meter data": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relevés signés"
+          }
+        }
+      }
+    },
+    "Simulate an unknown card": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simuler une carte inconnue"
+          }
+        }
+      }
+    },
+    "Simulate my ordered card": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simuler ma carte commandée"
+          }
+        }
+      }
+    },
+    "Simulate my registered card": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simuler ma carte enregistrée"
+          }
+        }
+      }
+    },
+    "Simulate scanning the demo QR code": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simuler le scan du QR code de démonstration"
+          }
+        }
+      }
+    },
+    "Something went wrong": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une erreur est survenue"
+          }
+        }
+      }
+    },
+    "Spanish": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Espagnol"
+          }
+        }
+      }
+    },
+    "Specifications": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caractéristiques"
+          }
+        }
+      }
+    },
+    "Spending": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépenses"
+          }
+        }
+      }
+    },
+    "Start": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarrer"
+          }
+        }
+      }
+    },
+    "Start reading": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relevé de début"
+          }
+        }
+      }
+    },
+    "Start with my badge": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarrer avec mon badge"
+          }
+        }
+      }
+    },
+    "Started": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début"
+          }
+        }
+      }
+    },
+    "Starting": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarrage"
+          }
+        }
+      }
+    },
+    "Station": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borne"
+          }
+        }
+      }
+    },
+    "Station photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo de la borne"
+          }
+        }
+      }
+    },
+    "Stations": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bornes"
+          }
+        }
+      }
+    },
+    "Statistics": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Statistiques"
+          }
+        }
+      }
+    },
+    "Status": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "État"
+          }
+        }
+      }
+    },
+    "Stop charging": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter la recharge"
+          }
+        }
+      }
+    },
+    "Stop this charging session?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêter cette recharge ?"
+          }
+        }
+      }
+    },
+    "Stopping": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt en cours"
+          }
+        }
+      }
+    },
+    "Stopping…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt…"
+          }
+        }
+      }
+    },
+    "Subject": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sujet"
+          }
+        }
+      }
+    },
+    "Support": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Assistance"
+          }
+        }
+      }
+    },
+    "Take a photo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prendre une photo"
+          }
+        }
+      }
+    },
+    "Terms": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conditions"
+          }
+        }
+      }
+    },
+    "Terms of use": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conditions d’utilisation"
+          }
+        }
+      }
+    },
+    "Thank you. The operator has been told about this problem.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Merci. L’exploitant a été prévenu de ce problème."
+          }
+        }
+      }
+    },
+    "The camera is not available on this device. Paste the charging point link instead.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’appareil photo n’est pas disponible sur cet appareil. Collez plutôt le lien du point de charge."
+          }
+        }
+      }
+    },
+    "The demo uses simulated data and is not included in release builds.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La démonstration utilise des données simulées et n’est pas incluse dans les versions publiées."
+          }
+        }
+      }
+    },
+    "The pass is sent over NFC only to readers compatible with Apple Wallet. Other stations still need your physical card or the app.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La carte n’est transmise par NFC qu’aux lecteurs compatibles avec Apple Cartes. Les autres bornes demandent toujours votre carte physique ou l’application."
+          }
+        }
+      }
+    },
+    "The refund has been sent to Stripe. How quickly it appears on your account depends on your bank.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le remboursement a été transmis à Stripe. Son apparition sur votre compte dépend de votre banque."
+          }
+        }
+      }
+    },
+    "The server cannot be reached. Check your connection and try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur est injoignable. Vérifiez votre connexion et réessayez."
+          }
+        }
+      }
+    },
+    "The server refused this request.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur a refusé cette demande."
+          }
+        }
+      }
+    },
+    "The server returned an unexpected response.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur a renvoyé une réponse inattendue."
+          }
+        }
+      }
+    },
+    "The session is billed to your account according to your operator's terms.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La session est facturée sur votre compte selon les conditions de votre exploitant."
+          }
+        }
+      }
+    },
+    "The station has not confirmed the start. Check that your vehicle is plugged in and that the station accepted your badge, then try again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La borne n’a pas confirmé le démarrage. Vérifiez que votre véhicule est branché et que la borne a accepté votre badge, puis réessayez."
+          }
+        }
+      }
+    },
+    "The stop request has been sent. If the station does not respond, stop charging from your vehicle or at the station.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La demande d’arrêt a été transmise. Si la borne ne répond pas, arrêtez la recharge depuis le véhicule ou sur la borne."
+          }
+        }
+      }
+    },
+    "These signed readings let you check the metered energy with a transparency tool.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ces relevés signés permettent de vérifier l’énergie mesurée avec un outil de transparence."
+          }
+        }
+      }
+    },
+    "This QR code does not belong to this charging network. For your safety, it was not opened.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce QR code n’appartient pas à ce réseau de recharge. Par sécurité, il n’a pas été ouvert."
+          }
+        }
+      }
+    },
+    "This QR code is not a charging point link.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce QR code n’est pas un lien de point de charge."
+          }
+        }
+      }
+    },
+    "This card is not registered on your account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette carte n’est pas enregistrée sur votre compte."
+          }
+        }
+      }
+    },
+    "This card is on your account but disabled.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette carte est sur votre compte mais désactivée."
+          }
+        }
+      }
+    },
+    "This card is on your account but has expired.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette carte est sur votre compte mais a expiré."
+          }
+        }
+      }
+    },
+    "This card is registered on your account.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette carte est bien enregistrée sur votre compte."
+          }
+        }
+      }
+    },
+    "This copy of the app has not been configured for a deployed server yet. Edit AppConfiguration.plist, replace every value below, then rebuild.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette copie de l’application n’est pas encore configurée pour un serveur déployé. Modifiez AppConfiguration.plist, remplacez chaque valeur ci-dessous, puis recompilez."
+          }
+        }
+      }
+    },
+    "This device cannot read NFC cards.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil ne peut pas lire les cartes NFC."
+          }
+        }
+      }
+    },
+    "This device cannot read NFC cards. Use an iPhone 7 or later.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cet appareil ne peut pas lire les cartes NFC. Utilisez un iPhone 7 ou plus récent."
+          }
+        }
+      }
+    },
+    "This image could not be prepared.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette image n’a pas pu être préparée."
+          }
+        }
+      }
+    },
+    "This image could not be read.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette image n’a pas pu être lue."
+          }
+        }
+      }
+    },
+    "This link does not point to a charging point.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce lien ne mène pas à un point de charge."
+          }
+        }
+      }
+    },
+    "This pass shows your badge as a QR code. Contact your operator to find out which stations accept it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette carte affiche votre badge sous forme de QR code. Contactez votre exploitant pour savoir quelles bornes l’acceptent."
+          }
+        }
+      }
+    },
+    "This server does not send push notifications yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce serveur n’envoie pas encore de notifications push."
+          }
+        }
+      }
+    },
+    "This server is not compatible with this version of the app.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce serveur n’est pas compatible avec cette version de l’application."
+          }
+        }
+      }
+    },
+    "This station has not declared any connector yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette borne n’a pas encore déclaré de connecteur."
+          }
+        }
+      }
+    },
+    "This type of card is not supported.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce type de carte n’est pas pris en charge."
+          }
+        }
+      }
+    },
+    "Time": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heure"
+          }
+        }
+      }
+    },
+    "To fix": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À corriger"
+          }
+        }
+      }
+    },
+    "To pay": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À payer"
+          }
+        }
+      }
+    },
+    "To start a charge, sign in or scan the QR code on the station.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour démarrer une recharge, connectez-vous ou scannez le QR code de la borne."
+          }
+        }
+      }
+    },
+    "Try again": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réessayer"
+          }
+        }
+      }
+    },
+    "Try removing a filter or searching for another place.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirez un filtre ou cherchez un autre lieu."
+          }
+        }
+      }
+    },
+    "Unavailable": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponible"
+          }
+        }
+      }
+    },
+    "Unknown": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inconnu"
+          }
+        }
+      }
+    },
+    "Unpaid": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impayée"
+          }
+        }
+      }
+    },
+    "Use as my default vehicle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser comme véhicule par défaut"
+          }
+        }
+      }
+    },
+    "Use between 16 and 128 characters. A sentence works well.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez entre 16 et 128 caractères. Une phrase convient très bien."
+          }
+        }
+      }
+    },
+    "Use the number printed on the card or given by your operator. Only a card you ordered on this account can be activated.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez le numéro imprimé sur la carte ou donné par votre exploitant. Seule une carte commandée sur ce compte peut être activée."
+          }
+        }
+      }
+    },
+    "VIN": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VIN"
+          }
+        }
+      }
+    },
+    "VIN (17 characters)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VIN (17 caractères)"
+          }
+        }
+      }
+    },
+    "Value": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur"
+          }
+        }
+      }
+    },
+    "Vehicle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Véhicule"
+          }
+        }
+      }
+    },
+    "Vehicle catalog": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Catalogue de véhicules"
+          }
+        }
+      }
+    },
+    "Version": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
+    "Version %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
+          }
+        }
+      }
+    },
+    "View": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vue"
+          }
+        }
+      }
+    },
+    "Waiting for payment": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente de paiement"
+          }
+        }
+      }
+    },
+    "Waiting for the station to confirm…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente de la confirmation de la borne…"
+          }
+        }
+      }
+    },
+    "What happened?": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Que s’est-il passé ?"
+          }
+        }
+      }
+    },
+    "Workspace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Espace client"
+          }
+        }
+      }
+    },
+    "Year": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Année"
+          }
+        }
+      }
+    },
+    "You can use every station open to all drivers on this network.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous pouvez utiliser toutes les bornes ouvertes à tous les conducteurs de ce réseau."
+          }
+        }
+      }
+    },
+    "You have no active badge. Ask your charging operator to assign one to your account, or scan the QR code on the station to pay by card.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous n’avez aucun badge actif. Demandez-en un à votre exploitant, ou scannez le QR code de la borne pour payer par carte."
+          }
+        }
+      }
+    },
+    "You pay a credit in advance. Whatever you do not use is refunded automatically.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous payez un crédit à l’avance. Ce que vous n’utilisez pas est remboursé automatiquement."
+          }
+        }
+      }
+    },
+    "Your card is active.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre carte est active."
+          }
+        }
+      }
+    },
+    "Your card is entered on Stripe's secure page and is never shared with this app.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre carte est saisie sur la page sécurisée de Stripe et n’est jamais communiquée à cette application."
+          }
+        }
+      }
+    },
+    "Your card is ready. Activate it when you receive it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre carte est prête. Activez-la dès réception."
+          }
+        }
+      }
+    },
+    "Your charging sessions will appear here.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos sessions de recharge apparaîtront ici."
+          }
+        }
+      }
+    },
+    "Your invoices will appear here.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos factures apparaîtront ici."
+          }
+        }
+      }
+    },
+    "Your profile, vehicles, photos and device registrations are removed and your badges are disabled. Sessions and invoices kept for legal reasons no longer identify you.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre profil, vos véhicules, vos photos et vos appareils sont supprimés et vos badges sont désactivés. Les sessions et factures conservées pour raison légale ne vous identifient plus."
+          }
+        }
+      }
+    },
+    "Your session": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre session"
+          }
+        }
+      }
+    },
+    "Your session appears here once it starts.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre session apparaîtra ici dès son démarrage."
+          }
+        }
+      }
+    },
+    "Your session has expired. Sign in again.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre session a expiré. Reconnectez-vous."
+          }
+        }
+      }
+    },
+    "kW": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kW"
+          }
+        }
+      }
+    }
   },
-  "version" : "1.1"
+  "version": "1.1"
 }

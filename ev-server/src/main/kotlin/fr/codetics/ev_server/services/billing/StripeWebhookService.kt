@@ -13,6 +13,7 @@ import fr.codetics.ev_server.repositories.ChargingPaymentRepository
 import fr.codetics.ev_server.repositories.ChargingTokenRepository
 import fr.codetics.ev_server.repositories.StationRepository
 import fr.codetics.ev_server.repositories.StripeEventRepository
+import fr.codetics.ev_server.services.tokens.CardOrderService
 import fr.codetics.ev_server.stripe.PaymentGateway
 import java.time.Clock
 import java.time.Instant
@@ -33,10 +34,12 @@ class StripeWebhookService(
     private val db: Database,
     private val clock: Clock,
     private val userBilling: UserBillingService,
+    private val cardOrders: CardOrderService,
 ) {
     fun receive(payload: String, signature: String) {
         val event = gateway.verifyEvent(payload, signature)
         if (events.existsById(event.id)) return
+        if (cardOrders.handle(event)) return
         if (userBilling.handle(event)) {
             db.atomic { if (!events.existsById(event.id)) events.save(StripeEventEntity(event.id, event.accountId, event.type)) }
             return

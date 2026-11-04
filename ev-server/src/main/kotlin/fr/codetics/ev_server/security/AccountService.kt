@@ -20,6 +20,7 @@ import fr.codetics.ev_server.repositories.AccessTokenRepository
 import fr.codetics.ev_server.repositories.AuthChallengeRepository
 import fr.codetics.ev_server.repositories.MailRepository
 import fr.codetics.ev_server.repositories.OAuthIdentityRepository
+import fr.codetics.ev_server.repositories.PushDeviceRepository
 import fr.codetics.ev_server.repositories.TenantRepository
 import fr.codetics.ev_server.repositories.UserRepository
 import fr.codetics.ev_server.services.people.UserRegistered
@@ -49,6 +50,7 @@ class AccountService(
     private val properties: AppProperties,
     private val clock: Clock,
     private val events: ApplicationEventPublisher,
+    private val devices: PushDeviceRepository,
 ) {
     private val dummyPassword = passwords.encode(randomToken())
 
@@ -125,10 +127,14 @@ class AccountService(
         return principal(user, organization)
     }
 
-    fun issue(user: AppPrincipal): String {
+    fun issue(user: AppPrincipal): String =
+        issue(user, Instant.now(clock).plus(Duration.ofHours(properties.tokenHours.coerceIn(1, 24))))
+
+    fun appSessionExpiry(): Instant =
+        Instant.now(clock).plus(Duration.ofDays(properties.appSessionDays.coerceIn(1, 90)))
+
+    fun issue(user: AppPrincipal, expiresAt: Instant): String {
         val raw = randomToken()
-        val lifetime = Duration.ofHours(properties.tokenHours.coerceIn(1, 24))
-        val expiresAt = Instant.now(clock).plus(lifetime)
 
         tokens.save(
             AccessTokenEntity(tokenHash = sha256(raw), userId = user.id, expiresAt = expiresAt)
@@ -150,6 +156,7 @@ class AccountService(
     fun revokeAll(user: UUID) {
         db.atomic {
             tokens.deleteAllByUserId(user)
+            devices.deleteAllByUserId(user)
         }
     }
 
@@ -261,6 +268,7 @@ class AccountService(
                 user.passwordHash = passwords.encode(password)
                 user.emailVerified = true
                 tokens.deleteAllByUserId(user.id)
+                devices.deleteAllByUserId(user.id)
             } else {
                 user.emailVerified = true
             }

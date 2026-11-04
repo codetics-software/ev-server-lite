@@ -10,6 +10,7 @@ data class AppProperties(
     val workspaceSignupEnabled: Boolean = false,
     val publicTenant: String = "",
     val tokenHours: Long = 8,
+    val appSessionDays: Long = 30,
     val mailEnabled: Boolean = false,
     val mailFrom: String = "noreply@localhost",
     val encryptionKey: String = "",
@@ -21,7 +22,39 @@ data class AppProperties(
     val ocpi: Ocpi = Ocpi(),
     val ocpp: Ocpp = Ocpp(),
     val bootstrap: Bootstrap = Bootstrap(),
+    val push: Push = Push(),
+    val wallet: Wallet = Wallet(),
+    val googleWallet: GoogleWallet = GoogleWallet(),
 ) {
+    data class GoogleWallet(
+        val issuerId: String = "",
+        val serviceAccount: String = "",
+        val classSuffix: String = "ev_charging_badge",
+        val organizationName: String = "",
+        val smartTapRedemptionIssuer: String = "",
+    )
+
+    data class Push(val apns: Apns = Apns(), val fcm: Fcm = Fcm()) {
+        data class Fcm(val serviceAccount: String = "", val projectId: String = "")
+
+        data class Apns(
+            val key: String = "",
+            val keyId: String = "",
+            val teamId: String = "",
+            val topic: String = "",
+        )
+    }
+
+    data class Wallet(
+        val passTypeId: String = "",
+        val teamId: String = "",
+        val organizationName: String = "",
+        val certificate: String = "",
+        val certificatePassword: String = "",
+        val wwdrCertificate: String = "",
+        val nfcPublicKey: String = "",
+    )
+
     data class Ocpi(
         val publicUrl: String = "http://localhost:8080",
         val countryCode: String = "FR",

@@ -29,6 +29,8 @@ class StripePaymentGateway(
 
     override fun createCheckout(details: CheckoutDetails) = checkout.create(details)
 
+    override fun createCardCheckout(details: CheckoutDetails) = checkout.createCard(details)
+
     override fun refund(
         accountId: String,
         paymentIntentId: String,

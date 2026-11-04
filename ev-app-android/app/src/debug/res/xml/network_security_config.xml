@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EV Supervision Lite — built by Kevin Vavelin, Codetics — https://codetics.fr — Copyright (c) 2026 — SPDX-License-Identifier: LicenseRef-Codetics-Attribution-1.0 -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

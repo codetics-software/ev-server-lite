@@ -17,6 +17,8 @@ interface PaymentGateway {
 
     fun createCheckout(details: CheckoutDetails): CreatedCheckout
 
+    fun createCardCheckout(details: CheckoutDetails): CreatedCheckout
+
     fun refund(
         accountId: String,
         paymentIntentId: String,

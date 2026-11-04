@@ -21,6 +21,8 @@ enum class NotificationType(val audience: NotificationAudience, val label: Strin
     SESSION_NOT_STARTED_AFTER_AUTHORIZE(NotificationAudience.DRIVER, "Badge présenté sans session"),
     INVOICE_AVAILABLE(NotificationAudience.DRIVER, "Facture disponible"),
     BILLING_FAILED(NotificationAudience.DRIVER, "Échec de paiement"),
+    CARD_READY(NotificationAudience.DRIVER, "Carte de recharge prête"),
+    CARD_ORDER_PAID(NotificationAudience.ADMIN, "Commande de carte de recharge"),
     STATION_STATUS_ERROR(NotificationAudience.ADMIN, "Borne en erreur"),
     STATION_OFFLINE(NotificationAudience.ADMIN, "Borne hors ligne"),
     STATION_REGISTERED(NotificationAudience.ADMIN, "Nouvelle borne enregistrée"),
@@ -34,9 +36,10 @@ enum class NotificationType(val audience: NotificationAudience, val label: Strin
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class NotificationPreferences(
     val email: Boolean = true,
+    val push: Boolean = true,
     val types: Map<String, Boolean> = emptyMap(),
 ) {
-    fun accepts(type: NotificationType) = email && types[type.name] != false
+    fun accepts(type: NotificationType) = types[type.name] != false
 
     fun normalized() =
         copy(types = NotificationType.entries.associate { it.name to (types[it.name] ?: true) })
@@ -44,10 +47,11 @@ data class NotificationPreferences(
 
 data class NotificationPreferencesInput(
     val email: Boolean = true,
+    val push: Boolean = true,
     val types: Map<String, Boolean> = emptyMap(),
 ) {
     fun toPreferences() =
-        NotificationPreferences(email, types.filterKeys { key -> NotificationType.entries.any { it.name == key } })
+        NotificationPreferences(email, push, types.filterKeys { key -> NotificationType.entries.any { it.name == key } })
 }
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)

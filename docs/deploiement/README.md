@@ -63,7 +63,7 @@ Le pool compte 12 connexions par défaut ; ajustez avec `SPRING_DATASOURCE_HIKAR
 
 ## Secrets
 
-Conservez dans le gestionnaire de secrets du fournisseur, et injectez comme variables d’environnement : `DATABASE_PASSWORD`, `BOOTSTRAP_PASSWORD` (puis supprimez-le), `SMTP_PASSWORD`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_ENCRYPTION_KEY`, `OCPP_SIGNING_CA_KEY`, `EV_DATABASE_API_KEY`.
+Conservez dans le gestionnaire de secrets du fournisseur, et injectez comme variables d’environnement : `DATABASE_PASSWORD`, `BOOTSTRAP_PASSWORD` (puis supprimez-le), `SMTP_PASSWORD`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_ENCRYPTION_KEY`, `OCPP_SIGNING_CA_KEY`, `EV_DATABASE_API_KEY`, `APNS_KEY`, `WALLET_CERTIFICATE`, `WALLET_CERTIFICATE_PASSWORD`, `FCM_SERVICE_ACCOUNT`, `GOOGLE_WALLET_SERVICE_ACCOUNT`.
 
 `APP_ENCRYPTION_KEY` chiffre des secrets en base : sa perte rend ces données illisibles. Sauvegardez-la séparément de la base. Les valeurs PEM (`OCPP_CLIENT_CA`, `OCPP_SIGNING_CA_*`) acceptent un texte multiligne, une seule ligne avec `\n`, ou le chemin d’un fichier monté.
 
@@ -273,6 +273,22 @@ Avant l’application, remplacez `REGISTRE` et les étiquettes dans la section `
 - `OCPP_TRUSTED_PROXIES`, `OCPP_CLIENT_CERT_PROXIES` et `APP_TRUSTED_PROXIES` visent la plage des pods, les adresses des pods n’étant pas fixes ; la NetworkPolicy fournie n’autorise vers le serveur que Caddy et le tableau de bord. Vérifiez que le plugin réseau du cluster applique les NetworkPolicy.
 - Caddy conserve ses certificats dans un volume `ReadWriteOnce` : une seule réplique.
 - Le projet ingress-nginx n’est plus maintenu depuis mars 2026 ([annonce](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)) : ne l’utilisez pas pour une nouvelle installation.
+
+## Application mobile iOS
+
+L’application dialogue directement avec le serveur Java : le mandataire doit transmettre `/api/v1/*` au serveur (déjà fait dans `deploy/caddy`, `deploy/kubernetes` et `deploy/nginx`) et son adresse doit figurer dans `APP_TRUSTED_PROXIES`, sinon tous les téléphones partagent la même limite de débit. Le guide de configuration et de publication est dans [`ev-app-ios/README.md`](../../ev-app-ios/README.md).
+
+Pour les liens universels, définissez `APPLE_APP_IDS` sur le tableau de bord (`EQUIPE.identifiant.application`, séparés par des virgules).
+
+## Application mobile Android
+
+Les règles du mandataire et de `APP_TRUSTED_PROXIES` sont les mêmes que pour iOS. Le guide de configuration et de publication est dans [`ev-app-android/README.md`](../../ev-app-android/README.md).
+
+- **Notifications (FCM)** : dans la console Firebase, ouvrez **Paramètres du projet > Comptes de service** et générez une clé. Renseignez `FCM_SERVICE_ACCOUNT` (JSON, Base64 ou chemin de fichier monté). `FCM_PROJECT_ID` n’est utile que pour remplacer le projet de cette clé. Le serveur sort `https://fcm.googleapis.com` et `https://oauth2.googleapis.com`.
+- **Google Wallet** : dans la Pay & Wallet Console, relevez l’identifiant d’émetteur (`GOOGLE_WALLET_ISSUER_ID`) et autorisez un compte de service (`GOOGLE_WALLET_SERVICE_ACCOUNT`). Le NFC demande l’accès Smart Tap accordé par Google et `GOOGLE_WALLET_SMART_TAP_REDEMPTION_ISSUER`. Vide : le passe présente seulement un QR code.
+- **Liens d’application** : définissez `ANDROID_APP_LINKS` sur le tableau de bord (`paquet:EMPREINTE_SHA256`, séparés par des virgules). Le fichier est servi à `/.well-known/assetlinks.json`. Avec Play App Signing, utilisez l’empreinte indiquée par la console Play.
+
+La migration `V10__push_device_android.sql` agrandit la colonne des jetons d’appareil. Elle s’applique au démarrage.
 
 ## Vérifications après mise en service
 

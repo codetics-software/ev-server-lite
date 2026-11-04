@@ -38,7 +38,7 @@ services:
       OCPP_TRUSTED_PROXIES: 172.30.0.10/32
       OCPP_CLIENT_CERT_PROXIES: 172.30.0.10/32
       OCPP_CLIENT_CERT_HEADER: X-Client-Cert
-      APP_TRUSTED_PROXIES: 172.30.0.30/32
+      APP_TRUSTED_PROXIES: 172.30.0.30/32,172.30.0.10/32
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError}
     depends_on:
       postgres:

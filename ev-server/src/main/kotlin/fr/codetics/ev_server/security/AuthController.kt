@@ -10,6 +10,7 @@ import fr.codetics.ev_server.models.people.ChallengeKind
 import fr.codetics.ev_server.repositories.UserRepository
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import java.time.Instant
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.web.csrf.CsrfToken
 import org.springframework.web.bind.annotation.GetMapping
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import tools.jackson.databind.PropertyNamingStrategies
+import tools.jackson.databind.annotation.JsonNaming
 
 data class LoginRequest(val tenant: String, val email: String, val password: String)
 
@@ -26,6 +29,9 @@ data class SignupRequest(val email: String, val name: String, val password: Stri
 data class ChallengeRequest(val tenant: String, val email: String)
 
 data class CompleteRequest(val token: String, val password: String? = null)
+
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+data class AppSessionResponse(val token: String, val expiresAt: Instant, val user: AppPrincipal)
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -65,6 +71,13 @@ class AuthController(
         val cookie = sessionCookie(accounts.issue(user), properties.cookieSecure)
         response.addHeader("Set-Cookie", cookie.toString())
         return user
+    }
+
+    @PostMapping("/app/signin")
+    fun appLogin(@RequestBody body: LoginRequest, request: HttpServletRequest): AppSessionResponse {
+        val user = accounts.login(body.tenant, body.email, body.password, addresses.of(request))
+        val expiresAt = accounts.appSessionExpiry()
+        return AppSessionResponse(accounts.issue(user, expiresAt), expiresAt, user)
     }
 
     @PostMapping("/signon")

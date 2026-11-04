@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EV Supervision Lite — built by Kevin Vavelin, Codetics — https://codetics.fr — Copyright (c) 2026 — SPDX-License-Identifier: LicenseRef-Codetics-Attribution-1.0 -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="fr" />
+</locale-config>

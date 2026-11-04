@@ -58,6 +58,7 @@ class NotificationService(
     private val tenants: TenantRepository,
     private val transactions: TransactionRepository,
     private val properties: AppProperties,
+    private val push: PushService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -79,15 +80,20 @@ class NotificationService(
         body: String,
         dedupeKey: String? = null,
         window: Duration = Duration.ofHours(24),
+        transactionId: Int? = null,
     ): Boolean {
         if (!user.enabled || user.deletedAt != null || user.email.isBlank()) return false
-        if (!preferences(user).accepts(type)) return false
+        val preferences = preferences(user)
+        if (!preferences.accepts(type)) return false
+        val pushed =
+            preferences.push && type.audience == NotificationAudience.DRIVER && push.deliverable(user.tenantId, user.id)
+        if (!preferences.email && !pushed) return false
         val key = dedupeKey?.let { "$it:${user.id}" }
         if (key != null && notifications.existsByTenantIdAndDedupeKeyAndCreatedAtAfter(user.tenantId, key, Instant.now().minus(window))) {
             return false
         }
         val message =
-            if (properties.mailEnabled) {
+            if (preferences.email && properties.mailEnabled) {
                 mail.save(
                     MailEntity(
                         recipient = user.email,
@@ -105,10 +111,12 @@ class NotificationService(
                 userId = user.id,
                 recipient = user.email,
                 subject = subject,
+                channel = if (preferences.email) "EMAIL" else "PUSH",
                 mailId = message?.id,
                 dedupeKey = key,
             )
         )
+        if (pushed) push.enqueue(user.tenantId, user.id, type.name, subject, body, transactionId)
         return true
     }
 
@@ -202,6 +210,7 @@ class NotificationService(
                 NotificationType.SESSION_STARTED,
                 "Votre session de recharge a commencé",
                 "Votre session a démarré le ${dates.format(transaction.startedAt)} sur la borne ${event.station.name}, connecteur ${transaction.connectorId}.",
+                transactionId = transaction.id,
             )
         }
     }
@@ -221,6 +230,7 @@ class NotificationService(
                 NotificationType.END_OF_CHARGE,
                 "La charge de votre véhicule est terminée",
                 "Votre véhicule ne consomme plus d’énergie sur la borne ${event.station.name}. Libérez la place pour les autres conducteurs.\n${summary(transaction)}",
+                transactionId = transaction.id,
             )
         }
     }
@@ -237,6 +247,7 @@ class NotificationService(
                 "Votre session sur la borne ${event.station.name} s’est terminée le ${dates.format(requireNotNull(transaction.stoppedAt))}.\n${summary(transaction)}",
                 dedupeKey = "end-of-session:${transaction.id}",
                 window = Duration.ofDays(365),
+                transactionId = transaction.id,
             )
         }
     }

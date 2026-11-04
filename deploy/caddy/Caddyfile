@@ -17,6 +17,13 @@
 		}
 	}
 
+	@app path /api/v1/*
+	handle @app {
+		reverse_proxy server:8080 {
+			header_up -X-Client-Cert
+		}
+	}
+
 	handle {
 		reverse_proxy dashboard:3000
 	}

@@ -20,6 +20,10 @@ class WorkspacePaymentSettings(
     var userBillingEnabled: Boolean = false,
     var userBillingMode: String = "PER_SESSION",
     var taxRateId: String? = null,
+    var cardSaleEnabled: Boolean = false,
+    var cardPriceMinor: Long? = null,
+    var cardDescription: String? = null,
+    var cardShipping: Boolean = true,
     var updatedAt: Instant = Instant.now(),
     @Version var revision: Long = 0,
 )

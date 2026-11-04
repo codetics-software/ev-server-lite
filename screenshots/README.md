@@ -23,3 +23,12 @@ Ces captures proviennent de l’application réelle, avec des données locales d
 
 Le paiement utilise un adaptateur Stripe réservé aux tests, avec une confirmation simulée. La capture du suivi indique une demande de démarrage.
 
+
+## Application iOS
+
+Le dossier [ios](ios/) contient les captures de l’application iPhone en français, prises par `EV AppUITests` sur le simulateur avec le compte de démonstration (Debug uniquement) et des données simulées : caméra, NFC et paiement Stripe y sont simulés.
+
+
+## Application Android
+
+Le dossier [android](android/) contient les captures de l’application Android en français, prises par `ev-app-android/scripts/capture_demo_screenshots.py` sur l’émulateur avec le compte de démonstration (Debug uniquement) et des données simulées : NFC et paiement Stripe y sont simulés, et la carte affichée est MapLibre, sans clé Google Maps.

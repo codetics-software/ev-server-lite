@@ -36,6 +36,8 @@ interface UserBillingGateway {
 
     fun setupIntent(accountId: String, customerId: String): String
 
+    fun setupCheckout(accountId: String, customerId: String, successUrl: String, cancelUrl: String): String
+
     fun paymentMethods(accountId: String, customerId: String): List<PaymentMethodInfo>
 
     fun setDefaultPaymentMethod(accountId: String, customerId: String, paymentMethodId: String)

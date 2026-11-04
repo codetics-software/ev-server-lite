@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- EV Supervision Lite — built by Kevin Vavelin, Codetics — https://codetics.fr — Copyright (c) 2026 — SPDX-License-Identifier: LicenseRef-Codetics-Attribution-1.0 -->
 <resources>
-
-    <style name="Theme.EVApp" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.EVApp" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+    <style name="Theme.EVApp.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@android:color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.EVApp</item>
+    </style>
 </resources>

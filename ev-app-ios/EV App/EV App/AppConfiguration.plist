@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- EV Supervision Lite — built by Kevin Vavelin, Codetics — https://codetics.fr — LicenseRef-Codetics-Attribution-1.0 -->
+<plist version="1.0">
+<dict>
+	<key>API_URL</key>
+	<string>__API_URL__</string>
+	<key>PORTAL_URL</key>
+	<string>__PORTAL_URL__</string>
+	<key>WORKSPACE_SLUG</key>
+	<string>__WORKSPACE_SLUG__</string>
+	<key>BRAND_NAME</key>
+	<string>__BRAND_NAME__</string>
+	<key>SUPPORT_EMAIL</key>
+	<string>__SUPPORT_EMAIL__</string>
+	<key>PRIVACY_POLICY_URL</key>
+	<string>__PRIVACY_POLICY_URL__</string>
+</dict>
+</plist>

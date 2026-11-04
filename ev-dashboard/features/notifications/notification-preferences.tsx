@@ -18,7 +18,7 @@ import { api } from "@/lib/api";
 import { notificationLabels } from "@/lib/labels";
 import { useState } from "react";
 
-type Preferences = { email: boolean; types: Record<string, boolean> };
+type Preferences = { email: boolean; push?: boolean; types: Record<string, boolean> };
 
 const driverTypes = [
   "SESSION_STARTED",
@@ -28,6 +28,7 @@ const driverTypes = [
   "PREPARING_SESSION_NOT_STARTED",
   "INVOICE_AVAILABLE",
   "BILLING_FAILED",
+  "CARD_READY",
   "ACCOUNT_STATUS_CHANGED",
   "ACCOUNT_INACTIVITY",
 ];
@@ -66,7 +67,7 @@ export function NotificationPreferences({ path, staff }: { path: string; staff: 
               <Switch
                 id={`notification-${key}`}
                 checked={value.types[key] !== false}
-                disabled={!value.email}
+                disabled={!value.email && value.push === false}
                 onCheckedChange={(checked) => toggle(key, checked === true)}
               />
               <FieldLabel htmlFor={`notification-${key}`}>

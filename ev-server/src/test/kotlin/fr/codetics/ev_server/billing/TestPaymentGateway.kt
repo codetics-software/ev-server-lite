@@ -34,6 +34,8 @@ class TestPaymentGateway(private val db: Database) : PaymentGateway {
         )
     }
 
+    override fun createCardCheckout(details: CheckoutDetails) = createCheckout(details)
+
     override fun refund(
         accountId: String,
         paymentIntentId: String,

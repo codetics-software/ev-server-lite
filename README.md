@@ -4,6 +4,8 @@ Une supervision de recharge volontairement légère : un serveur **Kotlin / Spri
 
 Le produit couvre les bornes et connecteurs, les commandes OCPP 1.6, les sessions, les utilisateurs et badges RFID, les sites, les tarifs et le paiement public par QR code. L’enregistrement d’un véhicule reste facultatif. Pour des besoins de supervision plus avancés, contactez Codetics.
 
+Applications conducteurs : [iOS](ev-app-ios/README.md) et [Android](ev-app-android/README.md). Règles de licence pour les agents et outils d’IA : [AGENTS.md](AGENTS.md).
+
 ## Organisation
 
 ```text
@@ -94,6 +96,7 @@ Chaque espace active ses modules dans **Espace client** : organisation, tarifs, 
 - **Sessions** : prix calculé à la fin de chaque session, courbe de consommation, inactivité, état de charge, arrêt à distance ou local, export CSV et détection des anomalies.
 - **Tarifs** : portée (espace, site, zone, borne, connecteur), validité, jours, plages horaires, seuils d’énergie et de durée, prix d’énergie, de temps, de stationnement et forfait.
 - **Facturation des conducteurs** : moyens de paiement et factures Stripe sur le compte connecté de l’espace, par session ou mensuelle.
+- **Cartes de recharge** : vente de cartes RFID aux conducteurs sur le compte Stripe de l’espace, préparation des commandes par l’exploitant et activation dans l’application mobile.
 - **Recharge intelligente** : partage de la puissance d’une zone entre les sessions, avec minimum de 6 A, consommation des équipements et profils OCPP `TxProfile`.
 - **Équipements** : relevés Schneider, GreenCom, IoThink, Lacroix, WIT ou envoi direct par jeton.
 - **Itinérance OCPI 2.1.1** : publication des sites, tarifs, sessions et relevés, commandes à distance, autorisation des badges partenaires, envois et récupérations manuels.

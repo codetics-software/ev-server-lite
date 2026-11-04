@@ -69,6 +69,7 @@ app:
   signup-enabled: ${SIGNUP_ENABLED:false}
   public-tenant: ${PUBLIC_TENANT:}
   token-hours: ${SESSION_HOURS:8}
+  app-session-days: ${APP_SESSION_DAYS:30}
   mail-enabled: ${MAIL_ENABLED:false}
   mail-from: ${MAIL_FROM:noreply@localhost}
   encryption-key: ${APP_ENCRYPTION_KEY:}
@@ -96,3 +97,26 @@ app:
     email: ${BOOTSTRAP_EMAIL:}
     password: ${BOOTSTRAP_PASSWORD:}
     tenant: ${BOOTSTRAP_TENANT:codetics}
+  push:
+    apns:
+      key: ${APNS_KEY:}
+      key-id: ${APNS_KEY_ID:}
+      team-id: ${APNS_TEAM_ID:}
+      topic: ${APNS_TOPIC:}
+    fcm:
+      service-account: ${FCM_SERVICE_ACCOUNT:}
+      project-id: ${FCM_PROJECT_ID:}
+  wallet:
+    pass-type-id: ${WALLET_PASS_TYPE_ID:}
+    team-id: ${WALLET_TEAM_ID:}
+    organization-name: ${WALLET_ORGANIZATION_NAME:}
+    certificate: ${WALLET_CERTIFICATE:}
+    certificate-password: ${WALLET_CERTIFICATE_PASSWORD:}
+    wwdr-certificate: ${WALLET_WWDR_CERTIFICATE:}
+    nfc-public-key: ${WALLET_NFC_PUBLIC_KEY:}
+  google-wallet:
+    issuer-id: ${GOOGLE_WALLET_ISSUER_ID:}
+    service-account: ${GOOGLE_WALLET_SERVICE_ACCOUNT:}
+    class-suffix: ${GOOGLE_WALLET_CLASS_SUFFIX:ev_charging_badge}
+    organization-name: ${GOOGLE_WALLET_ORGANIZATION_NAME:}
+    smart-tap-redemption-issuer: ${GOOGLE_WALLET_SMART_TAP_REDEMPTION_ISSUER:}

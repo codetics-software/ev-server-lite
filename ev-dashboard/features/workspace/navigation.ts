@@ -12,6 +12,7 @@ import {
   IconFileInvoice,
   IconFileSettings,
   IconHistory,
+  IconId,
   IconListDetails,
   IconMapPin,
   IconQrcode,
@@ -131,6 +132,14 @@ export const sections: readonly Section[] = [
     roles: ADMIN,
   },
   { id: "tokens", label: "Badges", group: "Utilisateurs", icon: IconTag, roles: STAFF },
+  {
+    id: "card-orders",
+    label: "Cartes de recharge",
+    driverLabel: "Ma carte de recharge",
+    group: "Utilisateurs",
+    icon: IconId,
+    roles: EVERYONE,
+  },
   {
     id: "cars",
     label: "Véhicules",

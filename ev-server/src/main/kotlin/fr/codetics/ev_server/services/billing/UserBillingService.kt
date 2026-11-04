@@ -1,6 +1,7 @@
 package fr.codetics.ev_server.services.billing
 
 import fr.codetics.ev_server.core.AppPrincipal
+import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
@@ -114,6 +115,7 @@ class UserBillingService(
     private val connect: PaymentGateway,
     private val notifications: NotificationService,
     private val clock: Clock,
+    private val properties: AppProperties,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val zone = ZoneId.of("Europe/Paris")
@@ -198,6 +200,12 @@ class UserBillingService(
         ensure(gateway.publishableKey.isNotBlank()) { "Configurez STRIPE_PUBLISHABLE_KEY pour enregistrer un moyen de paiement." }
         val (accountId, customer) = customer(user.tenantId, user.id)
         return SetupResponse(gateway.setupIntent(accountId, customer), accountId, gateway.publishableKey)
+    }
+
+    fun setupCheckout(user: AppPrincipal): String {
+        val (accountId, customer) = customer(user.tenantId, user.id)
+        val account = "${properties.publicUrl.trimEnd('/')}/account"
+        return gateway.setupCheckout(accountId, customer, account, account)
     }
 
     fun setDefault(user: AppPrincipal, paymentMethod: String): MutationResponse {

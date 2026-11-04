@@ -38,6 +38,8 @@ export const notificationLabels: Record<string, string> = {
   SESSION_NOT_STARTED_AFTER_AUTHORIZE: "Session non démarrée après autorisation",
   BILLING_FAILED: "Échec de facturation",
   INVOICE_AVAILABLE: "Facture disponible",
+  CARD_READY: "Carte de recharge prête",
+  CARD_ORDER_PAID: "Commande de carte de recharge",
   END_USER_ERROR_REPORT: "Signalement d’un utilisateur",
   STATION_SECURITY_EVENT: "Événement de sécurité d’une borne",
   STATION_CERTIFICATE_EXPIRING: "Certificat de borne à renouveler",

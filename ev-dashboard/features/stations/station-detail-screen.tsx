@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StationPhotos } from "./station-photos";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -218,6 +219,7 @@ export function StationDetailScreen({ id }: { id: string }) {
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
             <TabsTrigger value="events">Événements</TabsTrigger>
             <TabsTrigger value="commands">Commandes</TabsTrigger>
+            <TabsTrigger value="photos">Photos</TabsTrigger>
             {admin && <TabsTrigger value="advanced">Avancé</TabsTrigger>}
           </TabsList>
         </div>
@@ -277,6 +279,9 @@ export function StationDetailScreen({ id }: { id: string }) {
         </TabsContent>
         <TabsContent value="commands" className="pt-4">
           <StationCommandsLog stationId={station.id} revision={commands} />
+        </TabsContent>
+        <TabsContent value="photos" className="pt-4">
+          <StationPhotos stationId={station.id} canDelete={operate} />
         </TabsContent>
         {admin && (
           <TabsContent value="advanced" className="max-w-2xl pt-4">

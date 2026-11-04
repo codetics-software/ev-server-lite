@@ -86,6 +86,7 @@ class SecurityConfiguration {
                     "/api/v1/public/sessions/*/stop",
                     "/api/v1/public/assets/*/consumptions",
                     "/api/v1/auth/signin",
+                    "/api/v1/auth/app/signin",
                     "/api/v1/auth/signon",
                     "/api/v1/auth/password/reset/request",
                     "/api/v1/auth/password/reset",

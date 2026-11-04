@@ -127,6 +127,14 @@ class MongoSchema(private val mongo: MongoTemplate) : InitializingBean {
             "ocpi_jobs" to index("tenantId" to ASC, "partnerId" to ASC, "startedAt" to DESC),
             "ocpi_outbox" to index("sentAt" to ASC, "attempts" to ASC, "nextAttemptAt" to ASC),
             "smart_charging_plans" to index("tenantId" to ASC),
+            "push_devices" to index("tenantId" to ASC, "userId" to ASC),
+            "card_orders" to index("tenantId" to ASC, "requestId" to ASC).unique(),
+            "card_orders" to index("tenantId" to ASC, "userId" to ASC, "createdAt" to DESC),
+            "card_orders" to index("tenantId" to ASC, "state" to ASC, "createdAt" to DESC),
+            "push_outbox" to index("sentAt" to ASC, "attempts" to ASC, "createdAt" to ASC),
+            "push_outbox" to index("userId" to ASC),
+            "station_photos" to index("tenantId" to ASC, "stationId" to ASC, "createdAt" to DESC),
+            "station_photos" to index("tenantId" to ASC, "userId" to ASC),
         )
     }
 }
