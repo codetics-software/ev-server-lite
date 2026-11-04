@@ -7,7 +7,9 @@
     "music": "node scripts/compose-music.mjs",
     "studio": "remotion studio",
     "render": "node scripts/compose-music.mjs && remotion render Promo ../codetics-supervision-lite-youtube-16x9.mp4 --codec=h264 --crf=16 --audio-bitrate=320k",
-    "still": "remotion still Promo"
+    "still": "remotion still Promo",
+    "music:30s": "node scripts/compose-music-30s.mjs",
+    "render:30s": "node scripts/compose-music-30s.mjs && remotion render Lite30-4x5 ../codetics-supervision-lite-30s-4x5.mp4 --codec=h264 --crf=16 --audio-bitrate=320k && remotion render Lite30-9x16 ../codetics-supervision-lite-30s-9x16.mp4 --codec=h264 --crf=16 --audio-bitrate=320k"
   },
   "dependencies": {
     "@remotion/cli": "4.0.538",
