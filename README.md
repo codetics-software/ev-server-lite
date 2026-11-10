@@ -1,10 +1,26 @@
 # Codetics Supervision Lite
 
+> **Licence à accepter avant toute copie.** Lisez la [licence d’attribution Codetics](LICENSE) avant de télécharger, cloner ou forker ce dépôt. Télécharger, cloner ou forker ce dépôt, en tout ou en partie, vaut acceptation de cette licence. Si vous n’en acceptez pas les conditions, ne le téléchargez pas, ne le clonez pas et ne le forkez pas.
+
 Une supervision de recharge volontairement légère : un serveur **Kotlin / Spring Boot**, un tableau de bord **Next.js**, une base **PostgreSQL** ou **MongoDB**. Développée par Kevin Vavelin, [Codetics](https://codetics.fr).
 
 Le produit couvre les bornes et connecteurs, les commandes OCPP 1.6, les sessions, les utilisateurs et badges RFID, les sites, les tarifs et le paiement public par QR code. L’enregistrement d’un véhicule reste facultatif. Pour des besoins de supervision plus avancés, contactez Codetics.
 
 Applications conducteurs : [iOS](ev-app-ios/README.md) et [Android](ev-app-android/README.md). Règles de licence pour les agents et outils d’IA : [AGENTS.md](AGENTS.md).
+
+## Proposer la recharge à vos clients, sous votre marque
+
+Un opérateur, un installateur, un intégrateur, un énergéticien, une collectivité ou un gestionnaire de flotte peut déployer ce serveur sur sa propre infrastructure, puis l’offrir à ses clients comme son propre service :
+
+- **Un espace par client.** Chaque espace a ses bornes, ses utilisateurs, ses badges RFID, ses tarifs, ses véhicules et son compte Stripe ; les encaissements arrivent directement sur ce compte. Le serveur isole les espaces et déduit l’espace autorisé de la session. L’administrateur de l’espace téléverse son logo, affiché dans le tableau de bord et sur le portail de paiement par QR code.
+- **Des applications à votre marque.** Les applications natives [iOS](ev-app-ios/README.md) et [Android](ev-app-android/README.md), avec CarPlay et Android Auto, se configurent avec `BRAND_NAME`, `API_URL`, `PORTAL_URL`, `WORKSPACE_SLUG`, `SUPPORT_EMAIL` et `PRIVACY_POLICY_URL`, puis se publient sur vos propres comptes développeur. Chaque compilation vise un espace : publiez une application pour votre réseau, ou une par client. CarPlay demande une autorisation d’Apple, Android Auto un examen de Google.
+- **Votre service, vos conditions.** Le logiciel ne prélève aucune commission sur les recharges. Vous facturez à vos clients la mise en service, l’abonnement ou la maintenance comme vous l’entendez.
+
+La [licence d’attribution Codetics](LICENSE) autorise l’usage commercial, la modification et la revente. Votre nom, votre logo, votre domaine et vos applications passent au premier plan ; la mention « EV Supervision Lite — built by Kevin Vavelin, Codetics » et https://codetics.fr restent visibles dans l’écran **À propos** des applications, et le crédit Codetics en pied de page du tableau de bord et du portail. Le [guide de personnalisation en marque blanche](docs/marque-blanche.md) indique ce qui se change et ce qui doit rester.
+
+### Déploiement par Codetics
+
+Si vous préférez ne pas l’installer vous-même, Codetics déploie le serveur, le tableau de bord, la base de données, HTTPS, la connexion des bornes et Stripe, puis compile et soumet les applications à votre nom sur l’App Store et Google Play, à prix fixe. Le déploiement se fait chez l’hébergeur de votre choix : AWS, Google Cloud, Microsoft Azure, OVHcloud, Scaleway, Oracle Cloud, Hostinger, Cloudflare, Vercel ou votre propre serveur. Le tableau de bord Next.js peut être hébergé sur une plateforme comme Vercel ; le serveur Java demande une machine virtuelle ou un conteneur capable de garder ouvertes les connexions WebSocket des bornes. Détails : [codetics.fr](https://codetics.fr/fr/supervision-recharge-lite). Demande : [codetics.fr/fr/contact](https://codetics.fr/fr/contact?project=mobility).
 
 ## Organisation
 
@@ -162,4 +178,4 @@ Consultez [l’architecture](docs/architecture.md), [l’authentification](docs/
 
 ## Licence
 
-Le code original est distribué sous la [licence d’attribution Codetics](LICENSE). Conservez le crédit visible à Kevin Vavelin, Codetics, ainsi que `NOTICE` et les licences des dépendances. Les textes juridiques tiers conservent leur version d’origine.
+Le code original est distribué sous la [licence d’attribution Codetics](LICENSE). Télécharger, cloner ou forker ce dépôt vaut acceptation de cette licence (section 7). Conservez le crédit visible à Kevin Vavelin, Codetics, ainsi que `NOTICE` et les licences des dépendances. Les textes juridiques tiers conservent leur version d’origine.

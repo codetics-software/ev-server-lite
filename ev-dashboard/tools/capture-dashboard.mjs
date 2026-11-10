@@ -34,7 +34,7 @@ async function request(page, resource, method = "GET", data) {
   return response.json();
 }
 
-async function capture(page, name) {
+async function capture(page, name, fullPage = true) {
   await page.evaluate(async () => {
     await document.fonts.ready;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -59,7 +59,7 @@ async function capture(page, name) {
     await page.locator("body").evaluate((element) => getComputedStyle(element).fontFamily),
     /Source Sans 3/,
   );
-  await page.screenshot({ path: path.join(output, `${name}.png`), fullPage: true });
+  await page.screenshot({ path: path.join(output, `${name}.png`), fullPage });
   captures.push(name);
   console.log(`Capture : ${name}`);
 }
@@ -190,7 +190,7 @@ try {
         .getByRole("button", { name: "Afficher ou masquer la navigation", exact: true })
         .click();
       await page.getByRole("dialog").waitFor();
-      await capture(page, "12-navigation-mobile");
+      await capture(page, "12-navigation-mobile", false);
       await page.keyboard.press("Escape");
       await page.goto(evses[0].portalUrl);
       await page.getByRole("button", { name: "Payer et démarrer", exact: true }).waitFor();

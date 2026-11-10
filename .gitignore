@@ -14,3 +14,5 @@
 .claude/
 *.mp4
 **/*.mp4
+promotion/
+promotion/**/*
