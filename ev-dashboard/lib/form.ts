@@ -1,3 +1,5 @@
+import { t } from "./i18n";
+
 export type FieldIssue = { message: string };
 export type Rule<T> = (value: T) => string | undefined;
 
@@ -8,7 +10,7 @@ export function rules<T>(...checks: Rule<T>[]) {
     for (const check of checks) {
       const message = check(value);
       if (message) {
-        return { message };
+        return { message: t(message) };
       }
     }
     return undefined;
@@ -21,7 +23,9 @@ export function required(message = "Ce champ est obligatoire."): Rule<string> {
 
 export function maxLength(max: number, message?: string): Rule<string> {
   return (value) =>
-    value.length <= max ? undefined : (message ?? `Saisissez au plus ${max} caractères.`);
+    value.length <= max
+      ? undefined
+      : (message ?? t("Saisissez au plus {max} caractères.", { max }));
 }
 
 export function lengthBetween(min: number, max: number, message: string): Rule<string> {

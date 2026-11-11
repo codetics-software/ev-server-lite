@@ -37,8 +37,8 @@ object Csv {
 
     fun read(content: String, maximumRows: Int = 10000): List<Map<String, String>> {
         val rows = parse(content.removePrefix("﻿"))
-        ensure(rows.isNotEmpty()) { "Le fichier CSV est vide." }
-        ensure(rows.size - 1 <= maximumRows) { "Le fichier contient plus de $maximumRows lignes." }
+        ensure(rows.isNotEmpty()) { msg("csv.empty") }
+        ensure(rows.size - 1 <= maximumRows) { msg("csv.too_many_rows", maximumRows) }
         val separatorHeader = rows.first().map { it.trim().lowercase() }
         return rows.drop(1).filter { row -> row.any(String::isNotBlank) }.map { row ->
             separatorHeader.mapIndexed { index, key -> key to row.getOrElse(index) { "" }.trim() }.toMap()

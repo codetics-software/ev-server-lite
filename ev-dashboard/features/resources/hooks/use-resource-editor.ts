@@ -9,6 +9,7 @@ import { endpoint } from "../config/endpoint";
 import { fields } from "../config/form-fields";
 import { asRow, initialValue } from "../resource-format";
 import type { FormField } from "../types";
+import { t } from "@/lib/i18n";
 
 export type ResourceValue = string | boolean;
 
@@ -28,7 +29,7 @@ function textRules(field: FormField): Rule<string>[] {
     (value) => (field.required && !value.trim() ? "Ce champ est obligatoire." : undefined),
     (value) =>
       value.length > (field.maxLength ?? 320)
-        ? `Saisissez au plus ${field.maxLength ?? 320} caractères.`
+        ? t("Saisissez au plus {max} caractères.", { max: field.maxLength ?? 320 })
         : undefined,
   ];
 
@@ -40,7 +41,9 @@ function textRules(field: FormField): Rule<string>[] {
   }
   if (field.type === "datetime-local") {
     checks.push((value) =>
-      value && Number.isNaN(new Date(value).valueOf()) ? "Saisissez une date valide." : undefined,
+      value && Number.isNaN(new Date(value).valueOf())
+        ? t("Saisissez une date valide.")
+        : undefined,
     );
   }
   if (field.pattern) {
@@ -134,7 +137,7 @@ export function useResourceForm({
           onClose();
         }
       } catch (failure) {
-        setError(failure instanceof Error ? failure.message : "Impossible d’enregistrer.");
+        setError(failure instanceof Error ? failure.message : t("Impossible d’enregistrer."));
       }
     },
   });

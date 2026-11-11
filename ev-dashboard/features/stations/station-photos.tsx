@@ -12,6 +12,7 @@ import { useApi, useRevision } from "@/hooks/use-api";
 import { api } from "@/lib/api";
 import { date } from "@/lib/format";
 import { IconPhoto, IconTrash } from "@tabler/icons-react";
+import { t } from "@/lib/i18n";
 
 type StationPhoto = {
   id: string;
@@ -39,7 +40,7 @@ export function StationPhotos({ stationId, canDelete }: { stationId: string; can
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <IconPhoto className="size-4" />
-        Aucune photo envoyée par les conducteurs pour cette borne.
+        {t("Aucune photo envoyée par les conducteurs pour cette borne.")}
       </div>
     );
   }
@@ -49,7 +50,7 @@ export function StationPhotos({ stationId, canDelete }: { stationId: string; can
         <figure key={photo.id} className="flex flex-col gap-2 rounded-xl border bg-background p-3">
           <img
             src={`/api/backend${photo.path}`}
-            alt={`Photo de la borne, envoyée le ${date(photo.created_at)}`}
+            alt={t("Photo de la borne, envoyée le {date}", { date: date(photo.created_at) })}
             className="aspect-video w-full rounded-md object-cover"
             loading="lazy"
           />
@@ -67,12 +68,12 @@ export function StationPhotos({ stationId, canDelete }: { stationId: string; can
                       api(`account/stations/${encodeURIComponent(stationId)}/photos/${photo.id}`, {
                         method: "DELETE",
                       }),
-                    { success: "Photo supprimée.", onDone: refresh },
+                    { success: t("Photo supprimée."), onDone: refresh },
                   )
                 }
               >
                 <IconTrash data-icon="inline-start" />
-                Supprimer
+                {t("Supprimer")}
               </Button>
             )}
           </figcaption>

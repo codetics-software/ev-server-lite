@@ -10,6 +10,7 @@ import { useState } from "react";
 import type { OperatorPayment } from "./payment-types";
 import { PaymentsTable } from "./payments-table";
 import { StripeSettings } from "./stripe-settings";
+import { t } from "@/lib/i18n";
 
 export function PaymentsScreen() {
   const user = useWorkspace();
@@ -20,15 +21,15 @@ export function PaymentsScreen() {
     <>
       <div className="page-heading">
         <div>
-          <h1>Paiements</h1>
-          <p>Crédits de recharge, montants facturés et remboursements.</p>
+          <h1>{t("Paiements")}</h1>
+          <p>{t("Crédits de recharge, montants facturés et remboursements.")}</p>
         </div>
         <Button
           variant="outline"
           disabled={loading}
           onClick={() => setRevision((value) => value + 1)}
         >
-          Actualiser
+          {t("Actualiser")}
         </Button>
       </div>
       {user.role === "ADMIN" && <StripeSettings />}
@@ -44,29 +45,29 @@ export function PaymentsScreen() {
       ) : (
         <Empty className="border">
           <EmptyHeader>
-            <EmptyTitle>Aucun paiement</EmptyTitle>
+            <EmptyTitle>{t("Aucun paiement")}</EmptyTitle>
             <EmptyDescription>
-              Les crédits payés depuis les portails publics apparaîtront ici.
+              {t("Les crédits payés depuis les portails publics apparaîtront ici.")}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}
       <div className="flex items-center justify-between gap-3 text-sm">
-        <span>Page {page + 1}</span>
+        <span>{t("Page {page}", { page: page + 1 })}</span>
         <div className="flex gap-2">
           <Button
             variant="outline"
             disabled={!page || loading}
             onClick={() => setPage((value) => value - 1)}
           >
-            Précédent
+            {t("Précédent")}
           </Button>
           <Button
             variant="outline"
             disabled={data?.length !== 50 || loading}
             onClick={() => setPage((value) => value + 1)}
           >
-            Suivant
+            {t("Suivant")}
           </Button>
         </div>
       </div>

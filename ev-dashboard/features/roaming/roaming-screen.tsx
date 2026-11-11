@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PartnerCreateForm } from "./partner-forms";
 import { partnerStatus, type Partner } from "./roaming-types";
+import { t } from "@/lib/i18n";
 
 export function RoamingScreen() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export function RoamingScreen() {
   const columns: Column<Partner>[] = [
     {
       id: "name",
-      header: "Partenaire",
+      header: t("Partenaire"),
       sort: (partner) => partner.name,
       cell: (partner) => (
         <span className="flex flex-col">
@@ -40,7 +41,7 @@ export function RoamingScreen() {
     },
     {
       id: "status",
-      header: "État",
+      header: t("État"),
       sort: (partner) => partnerStatus(partner),
       cell: (partner) => (
         <span className="flex flex-col gap-1">
@@ -53,19 +54,19 @@ export function RoamingScreen() {
     },
     {
       id: "ping",
-      header: "Dernier ping",
+      header: t("Dernier ping"),
       sort: (partner) => partner.last_ping_at ?? "",
       cell: (partner) => (partner.last_ping_at ? relative(partner.last_ping_at) : "—"),
     },
     {
       id: "push",
-      header: "Dernier envoi",
+      header: t("Dernier envoi"),
       sort: (partner) => partner.last_push_at ?? "",
       cell: (partner) => (partner.last_push_at ? relative(partner.last_push_at) : "—"),
     },
     {
       id: "pull",
-      header: "Dernière récupération",
+      header: t("Dernière récupération"),
       sort: (partner) => partner.last_pull_at ?? "",
       cell: (partner) => (partner.last_pull_at ? relative(partner.last_pull_at) : "—"),
     },
@@ -73,12 +74,14 @@ export function RoamingScreen() {
   return (
     <>
       <PageHeader
-        title="Partenaires OCPI"
-        description="Itinérance OCPI 2.1.1 : publication de vos sites publics et acceptation des badges partenaires."
+        title={t("Partenaires OCPI")}
+        description={t(
+          "Itinérance OCPI 2.1.1 : publication de vos sites publics et acceptation des badges partenaires.",
+        )}
         actions={
           <Button onClick={() => setCreating(true)}>
             <IconPlus data-icon="inline-start" />
-            Ajouter un partenaire
+            {t("Ajouter un partenaire")}
           </Button>
         }
       />
@@ -91,13 +94,15 @@ export function RoamingScreen() {
         empty={
           <EmptyState
             icon={<IconWorld />}
-            title="Aucun partenaire"
-            description="Ajoutez un opérateur de mobilité ou un exploitant pour échanger avec lui en OCPI."
+            title={t("Aucun partenaire")}
+            description={t(
+              "Ajoutez un opérateur de mobilité ou un exploitant pour échanger avec lui en OCPI.",
+            )}
           />
         }
       >
         <DataTable
-          label="Partenaires"
+          label={t("Partenaires")}
           rows={items}
           columns={columns}
           rowKey={(partner) => partner.id}
@@ -112,13 +117,13 @@ export function RoamingScreen() {
             setCreated(null);
           }
         }}
-        title={created ? "Partenaire créé" : "Ajouter un partenaire"}
+        title={created ? t("Partenaire créé") : t("Ajouter un partenaire")}
         wide
       >
         {created ? (
           <div className="flex flex-col gap-4">
             <SecretReveal
-              title="Jeton initial à transmettre"
+              title={t("Jeton initial à transmettre")}
               message={created.message}
               secret={created.token}
             />
@@ -126,7 +131,7 @@ export function RoamingScreen() {
               className="w-fit self-end"
               onClick={() => router.push(`/roaming/${created.id}`)}
             >
-              Ouvrir le partenaire
+              {t("Ouvrir le partenaire")}
             </Button>
           </div>
         ) : (

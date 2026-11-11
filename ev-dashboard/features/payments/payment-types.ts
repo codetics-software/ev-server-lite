@@ -1,3 +1,4 @@
+import { getIntlLocale, translated } from "@/lib/i18n";
 export type PaymentState =
   | "PENDING_PAYMENT"
   | "PAID"
@@ -36,7 +37,7 @@ export type PaymentSettings = {
   currency: string;
 };
 
-export const paymentLabels: Record<PaymentState, string> = {
+export const paymentLabels: Record<PaymentState, string> = translated({
   PENDING_PAYMENT: "En attente de paiement",
   PAID: "Crédit payé",
   START_REQUESTED: "Démarrage demandé",
@@ -48,10 +49,10 @@ export const paymentLabels: Record<PaymentState, string> = {
   CANCELLED: "Annulée",
   FAILED: "Intervention nécessaire",
   DISPUTED: "Paiement contesté",
-};
+});
 
 export function money(minor: number | null, currency = "EUR") {
   return minor === null
     ? "—"
-    : new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(minor / 100);
+    : new Intl.NumberFormat(getIntlLocale(), { style: "currency", currency }).format(minor / 100);
 }

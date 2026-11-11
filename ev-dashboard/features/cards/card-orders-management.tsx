@@ -40,6 +40,7 @@ import { matches, maxLength, numeric, required, rules } from "@/lib/form";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { cardStateLabels, cardStateTones, type CardOffer, type CardOrder } from "./card-types";
+import { t } from "@/lib/i18n";
 
 function SaleForm({ offer, onSaved }: { offer: CardOffer; onSaved: () => void }) {
   const [error, setError] = useState("");
@@ -63,10 +64,10 @@ function SaleForm({ offer, onSaved }: { offer: CardOffer; onSaved: () => void })
             shipping: value.shipping,
           }),
         });
-        notify("Vente de cartes enregistrée.");
+        notify(t("Vente de cartes enregistrée."));
         onSaved();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer la vente de cartes."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer la vente de cartes.")));
       }
     },
   });
@@ -83,23 +84,27 @@ function SaleForm({ offer, onSaved }: { offer: CardOffer; onSaved: () => void })
           {(field) => (
             <FormSwitch
               field={field}
-              label="Vendre des cartes aux conducteurs"
-              description="Le paiement est encaissé sur le compte Stripe de l’espace."
+              label={t("Vendre des cartes aux conducteurs")}
+              description={t("Le paiement est encaissé sur le compte Stripe de l’espace.")}
             />
           )}
         </form.Field>
         <form.Field name="price" validators={{ onDynamic: rules(required(), numeric()) }}>
-          {(field) => <FormText field={field} label="Prix de la carte (€)" inputMode="decimal" />}
+          {(field) => (
+            <FormText field={field} label={t("Prix de la carte (€)")} inputMode="decimal" />
+          )}
         </form.Field>
         <form.Field name="description" validators={{ onDynamic: rules(maxLength(500)) }}>
-          {(field) => <FormText field={field} label="Description (facultatif)" />}
+          {(field) => <FormText field={field} label={t("Description (facultatif)")} />}
         </form.Field>
         <form.Field name="shipping">
           {(field) => (
             <FormSwitch
               field={field}
-              label="Envoyer la carte par courrier"
-              description="Demande une adresse de livraison. Sinon, vous remettez la carte en main propre."
+              label={t("Envoyer la carte par courrier")}
+              description={t(
+                "Demande une adresse de livraison. Sinon, vous remettez la carte en main propre.",
+              )}
             />
           )}
         </form.Field>
@@ -134,10 +139,10 @@ function AssignDialog({
             visualId: value.visualId.trim() || undefined,
           }),
         });
-        notify("Carte associée. Le conducteur est prévenu.");
+        notify(t("Carte associée. Le conducteur est prévenu."));
         onDone();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’associer cette carte."));
+        setError(errorMessage(failure, t("Impossible d’associer cette carte.")));
       }
     },
   });
@@ -145,10 +150,16 @@ function AssignDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Associer une carte</DialogTitle>
+          <DialogTitle>{t("Associer une carte")}</DialogTitle>
           <DialogDescription>
-            La carte reste inactive aux bornes jusqu’à son activation par{" "}
-            {order.user_name ?? "le conducteur"} dans l’application.
+            {order.user_name
+              ? t(
+                  "La carte reste inactive aux bornes jusqu’à son activation par {name} dans l’application.",
+                  { name: order.user_name },
+                )
+              : t(
+                  "La carte reste inactive aux bornes jusqu’à son activation par le conducteur dans l’application.",
+                )}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -166,7 +177,7 @@ function AssignDialog({
                   required(),
                   matches(
                     /^[A-Za-z0-9_-]{1,20}$/,
-                    "20 caractères au plus : lettres, chiffres, - et _.",
+                    t("20 caractères au plus : lettres, chiffres, - et _."),
                   ),
                 ),
               }}
@@ -174,8 +185,8 @@ function AssignDialog({
               {(field) => (
                 <FormText
                   field={field}
-                  label="Identifiant RFID de la carte"
-                  description="Celui transmis à la borne (idTag OCPP)."
+                  label={t("Identifiant RFID de la carte")}
+                  description={t("Celui transmis à la borne (idTag OCPP).")}
                   required
                 />
               )}
@@ -184,14 +195,14 @@ function AssignDialog({
               {(field) => (
                 <FormText
                   field={field}
-                  label="Numéro imprimé sur la carte"
-                  description="Le conducteur peut le saisir au lieu de scanner la carte."
+                  label={t("Numéro imprimé sur la carte")}
+                  description={t("Le conducteur peut le saisir au lieu de scanner la carte.")}
                 />
               )}
             </form.Field>
             <form.Subscribe selector={(state) => state.isSubmitting}>
               {(submitting) => (
-                <FormFooter error={error} submitting={submitting} label="Associer la carte" />
+                <FormFooter error={error} submitting={submitting} label={t("Associer la carte")} />
               )}
             </form.Subscribe>
           </FieldGroup>
@@ -220,7 +231,7 @@ export function CardOrdersManagement() {
   const columns: Column<CardOrder>[] = [
     {
       id: "driver",
-      header: "Conducteur",
+      header: t("Conducteur"),
       cell: (order) => (
         <div className="flex flex-col">
           <span>{order.user_name ?? "—"}</span>
@@ -230,7 +241,7 @@ export function CardOrdersManagement() {
     },
     {
       id: "delivery",
-      header: "Livraison",
+      header: t("Livraison"),
       cell: (order) =>
         order.address ? (
           <div className="flex flex-col text-xs">
@@ -241,33 +252,37 @@ export function CardOrdersManagement() {
             </span>
           </div>
         ) : (
-          "En main propre"
+          t("En main propre")
         ),
     },
     {
       id: "date",
-      header: "Date",
+      header: t("Date"),
       cell: (order) => date(order.created_at),
       sort: (order) => order.created_at,
     },
-    { id: "amount", header: "Montant", cell: (order) => money(order.amount_minor, order.currency) },
+    {
+      id: "amount",
+      header: t("Montant"),
+      cell: (order) => money(order.amount_minor, order.currency),
+    },
     {
       id: "state",
-      header: "État",
+      header: t("État"),
       cell: (order) => (
         <ToneBadge tone={cardStateTones[order.state]}>
-          {order.refunded ? "Annulée et remboursée" : cardStateLabels[order.state]}
+          {order.refunded ? t("Annulée et remboursée") : cardStateLabels[order.state]}
         </ToneBadge>
       ),
     },
     {
       id: "card",
-      header: "Carte",
+      header: t("Carte"),
       cell: (order) => order.visual_id ?? order.token_uid ?? "—",
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("Actions"),
       srOnlyHeader: true,
       align: "right",
       cell: (order) =>
@@ -275,11 +290,11 @@ export function CardOrdersManagement() {
           <div className="flex justify-end gap-2">
             {order.state !== "PENDING_PAYMENT" && (
               <Button size="sm" onClick={() => setAssigning(order)}>
-                {order.state === "PAID" ? "Associer une carte" : "Changer de carte"}
+                {order.state === "PAID" ? t("Associer une carte") : t("Changer de carte")}
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={() => setCancelling(order)}>
-              Annuler
+              {t("Annuler")}
             </Button>
           </div>
         ) : null,
@@ -290,10 +305,11 @@ export function CardOrdersManagement() {
       {admin && offer.data && (
         <Card className="max-w-3xl">
           <CardHeader>
-            <CardTitle>Vente de cartes</CardTitle>
+            <CardTitle>{t("Vente de cartes")}</CardTitle>
             <CardDescription>
-              Les conducteurs commandent depuis leur espace, puis activent la carte reçue dans
-              l’application mobile.
+              {t(
+                "Les conducteurs commandent depuis leur espace, puis activent la carte reçue dans l’application mobile.",
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -303,15 +319,15 @@ export function CardOrdersManagement() {
       )}
       {orders.data.items.length ? (
         <DataTable
-          label="Commandes de cartes"
+          label={t("Commandes de cartes")}
           rows={orders.data.items}
           columns={columns}
           rowKey={(order) => order.id}
         />
       ) : (
         <EmptyState
-          title="Aucune commande"
-          description="Les commandes des conducteurs apparaîtront ici."
+          title={t("Aucune commande")}
+          description={t("Les commandes des conducteurs apparaîtront ici.")}
         />
       )}
       {assigning && (
@@ -327,14 +343,15 @@ export function CardOrdersManagement() {
       <AlertDialog open={cancelling !== null} onOpenChange={(open) => !open && setCancelling(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Annuler cette commande ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Annuler cette commande ?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Si elle a été payée, le conducteur est intégralement remboursé. La carte associée
-              reste inactive.
+              {t(
+                "Si elle a été payée, le conducteur est intégralement remboursé. La carte associée reste inactive.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Conserver</AlertDialogCancel>
+            <AlertDialogCancel>{t("Conserver")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={action.busy}
               onClick={() => {
@@ -344,12 +361,12 @@ export function CardOrdersManagement() {
                   void action.run(
                     order.id,
                     () => api(`card-orders/${order.id}/cancel`, { method: "POST", body: "{}" }),
-                    { success: "Commande annulée.", onDone: refresh },
+                    { success: t("Commande annulée."), onDone: refresh },
                   );
                 }
               }}
             >
-              Annuler la commande
+              {t("Annuler la commande")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

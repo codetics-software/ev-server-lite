@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { Invoice } from "./billing-types";
 import { InvoiceDownload } from "./invoice-download";
+import { t } from "@/lib/i18n";
 
 const statuses = ["DRAFT", "OPEN", "PAID", "UNCOLLECTIBLE", "VOID"];
 
@@ -29,13 +30,13 @@ export function InvoicesList({ userId }: { userId?: string }) {
   const columns: Column<Invoice>[] = [
     {
       id: "number",
-      header: "Facture",
+      header: t("Facture"),
       sort: (invoice) => invoice.number ?? invoice.id,
-      cell: (invoice) => <span className="font-medium">{invoice.number ?? "Brouillon"}</span>,
+      cell: (invoice) => <span className="font-medium">{invoice.number ?? t("Brouillon")}</span>,
     },
     {
       id: "date",
-      header: "Date",
+      header: t("Date"),
       sort: (invoice) => invoice.created_at,
       cell: (invoice) => date(invoice.created_at),
     },
@@ -43,7 +44,7 @@ export function InvoicesList({ userId }: { userId?: string }) {
       ? [
           {
             id: "user",
-            header: "Utilisateur",
+            header: t("Utilisateur"),
             sort: (invoice: Invoice) => invoice.user_name ?? "",
             cell: (invoice: Invoice) =>
               isAdmin(user) ? (
@@ -61,7 +62,7 @@ export function InvoicesList({ userId }: { userId?: string }) {
       : []),
     {
       id: "status",
-      header: "État",
+      header: t("État"),
       sort: (invoice) => invoice.status,
       cell: (invoice) => (
         <span className="flex flex-col gap-1">
@@ -74,20 +75,20 @@ export function InvoicesList({ userId }: { userId?: string }) {
     },
     {
       id: "sessions",
-      header: "Sessions",
+      header: t("Sessions"),
       align: "right",
       cell: (invoice) => invoice.session_ids?.length ?? 0,
     },
     {
       id: "amount",
-      header: "Montant",
+      header: t("Montant"),
       align: "right",
       sort: (invoice) => invoice.amount_minor,
       cell: (invoice) => moneyMinor(invoice.amount_minor, invoice.currency),
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("Actions"),
       srOnlyHeader: true,
       align: "right",
       cell: (invoice) => (
@@ -100,7 +101,7 @@ export function InvoicesList({ userId }: { userId?: string }) {
               target="_blank"
               rel="noreferrer"
             >
-              Payer
+              {t("Payer")}
             </a>
           )}
           {invoice.status === "OPEN" && isAdmin(user) && (
@@ -110,12 +111,12 @@ export function InvoicesList({ userId }: { userId?: string }) {
               disabled={action.busy}
               onClick={() =>
                 action.run("pay", () => api(`invoices/${invoice.id}/pay`, { method: "POST" }), {
-                  success: "Nouvelle tentative de paiement lancée.",
+                  success: t("Nouvelle tentative de paiement lancée."),
                   onDone: list.refresh,
                 })
               }
             >
-              Relancer le paiement
+              {t("Relancer le paiement")}
             </Button>
           )}
         </div>
@@ -123,14 +124,14 @@ export function InvoicesList({ userId }: { userId?: string }) {
     },
   ];
   return (
-    <section className="flex flex-col gap-4" aria-label="Factures">
+    <section className="flex flex-col gap-4" aria-label={t("Factures")}>
       <OptionSelect
         value={status}
         onChange={setStatus}
-        label="Filtrer par état"
+        label={t("Filtrer par état")}
         className="w-full sm:w-52"
         options={[
-          { value: "all", label: "Tous les états" },
+          { value: "all", label: t("Tous les états") },
           ...statuses.map((value) => ({ value, label: display(value) })),
         ]}
       />
@@ -144,13 +145,13 @@ export function InvoicesList({ userId }: { userId?: string }) {
         empty={
           <EmptyState
             icon={<IconFileInvoice />}
-            title="Aucune facture"
-            description="Les factures des recharges apparaissent ici dès leur émission."
+            title={t("Aucune facture")}
+            description={t("Les factures des recharges apparaissent ici dès leur émission.")}
           />
         }
       >
         <DataTable
-          label="Factures"
+          label={t("Factures")}
           rows={list.items}
           columns={columns}
           rowKey={(invoice) => invoice.id}

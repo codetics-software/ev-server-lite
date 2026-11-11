@@ -3,9 +3,11 @@ package fr.codetics.ev_server.services.billing
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.I18n
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.api.PageResponse
@@ -44,7 +46,7 @@ import java.time.Instant
 import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
+import java.time.format.FormatStyle
 import java.util.UUID
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
@@ -119,19 +121,18 @@ class UserBillingService(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val zone = ZoneId.of("Europe/Paris")
-    private val months = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.FRENCH)
 
     private fun settings(tenant: UUID): WorkspacePaymentSettings? = settings.findById(tenant).orElse(null)
 
     private fun account(tenant: UUID): String {
-        ensure(gateway.configured) { "Stripe n’est pas configuré sur ce serveur." }
+        ensure(gateway.configured) { msg("billing.stripe_not_configured") }
         return settings(tenant)?.stripeAccountId
-            ?: throw ResponseStatusException(HttpStatus.CONFLICT, "Connectez d’abord le compte Stripe de l’espace.")
+            ?: throw ResponseStatusException(HttpStatus.CONFLICT, msg("billing.connect_stripe_first"))
     }
 
     fun updateSettings(user: AppPrincipal, input: UserBillingInput) {
-        ensure(input.mode in setOf("PER_SESSION", "MONTHLY")) { "Mode de facturation inconnu." }
-        ensure(input.taxRateId == null || input.taxRateId.matches(Regex("txr_[A-Za-z0-9]{1,100}"))) { "Taux de taxe invalide." }
+        ensure(input.mode in setOf("PER_SESSION", "MONTHLY")) { msg("billing.unknown_mode") }
+        ensure(input.taxRateId == null || input.taxRateId.matches(Regex("txr_[A-Za-z0-9]{1,100}"))) { msg("billing.invalid_tax_rate") }
         if (input.enabled) account(user.tenantId)
         db.atomic {
             val current = db.lock<WorkspacePaymentSettings>(user.tenantId) ?: WorkspacePaymentSettings(tenantId = user.tenantId)
@@ -145,16 +146,16 @@ class UserBillingService(
     }
 
     fun check(user: AppPrincipal): BillingCheck {
-        if (!gateway.configured) return BillingCheck(false, "Stripe n’est pas configuré sur ce serveur.")
-        val accountId = settings(user.tenantId)?.stripeAccountId ?: return BillingCheck(false, "Aucun compte Stripe n’est connecté.")
-        return if (connect.accountReady(accountId)) BillingCheck(true, "Le compte Stripe est prêt.")
-        else BillingCheck(false, "Terminez la vérification du compte chez Stripe.")
+        if (!gateway.configured) return BillingCheck(false, msg("billing.stripe_not_configured"))
+        val accountId = settings(user.tenantId)?.stripeAccountId ?: return BillingCheck(false, msg("billing.no_stripe_account"))
+        return if (connect.accountReady(accountId)) BillingCheck(true, msg("billing.stripe_ready"))
+        else BillingCheck(false, msg("billing.stripe_finish_verification"))
     }
 
     fun taxes(user: AppPrincipal): List<TaxRateResponse> = gateway.taxRates(account(user.tenantId)).map(TaxRateResponse::from)
 
     private fun user(tenant: UUID, id: UUID): UserEntity =
-        users.findByTenantIdAndId(tenant, id)?.takeIf { it.deletedAt == null } ?: throw NotFound("Utilisateur introuvable.")
+        users.findByTenantIdAndId(tenant, id)?.takeIf { it.deletedAt == null } ?: throw NotFound(msg("users.not_found"))
 
     fun synchronize(user: AppPrincipal, id: UUID): MutationResponse {
         val accountId = account(user.tenantId)
@@ -197,7 +198,7 @@ class UserBillingService(
     }
 
     fun setup(user: AppPrincipal): SetupResponse {
-        ensure(gateway.publishableKey.isNotBlank()) { "Configurez STRIPE_PUBLISHABLE_KEY pour enregistrer un moyen de paiement." }
+        ensure(gateway.publishableKey.isNotBlank()) { msg("billing.publishable_key_missing") }
         val (accountId, customer) = customer(user.tenantId, user.id)
         return SetupResponse(gateway.setupIntent(accountId, customer), accountId, gateway.publishableKey)
     }
@@ -209,7 +210,7 @@ class UserBillingService(
     }
 
     fun setDefault(user: AppPrincipal, paymentMethod: String): MutationResponse {
-        ensure(paymentMethod.matches(Regex("pm_[A-Za-z0-9]{1,100}"))) { "Moyen de paiement invalide." }
+        ensure(paymentMethod.matches(Regex("pm_[A-Za-z0-9]{1,100}"))) { msg("billing.invalid_payment_method") }
         val (accountId, customer) = customer(user.tenantId, user.id)
         gateway.setDefaultPaymentMethod(accountId, customer, paymentMethod)
         db.audit(user.tenantId, user.id.toString(), "PAYMENT_METHOD_DEFAULT", paymentMethod)
@@ -217,7 +218,7 @@ class UserBillingService(
     }
 
     fun detach(user: AppPrincipal, paymentMethod: String): MutationResponse {
-        ensure(paymentMethod.matches(Regex("pm_[A-Za-z0-9]{1,100}"))) { "Moyen de paiement invalide." }
+        ensure(paymentMethod.matches(Regex("pm_[A-Za-z0-9]{1,100}"))) { msg("billing.invalid_payment_method") }
         val (accountId, customer) = customer(user.tenantId, user.id)
         gateway.detachPaymentMethod(accountId, customer, paymentMethod)
         db.audit(user.tenantId, user.id.toString(), "PAYMENT_METHOD_DELETE", paymentMethod)
@@ -239,22 +240,22 @@ class UserBillingService(
     }
 
     private fun invoice(user: AppPrincipal, id: UUID): InvoiceEntity {
-        val invoice = invoices.findByTenantIdAndId(user.tenantId, id) ?: throw NotFound("Facture introuvable.")
-        if (user.role == UserRole.DRIVER && invoice.userId != user.id) throw NotFound("Facture introuvable.")
+        val invoice = invoices.findByTenantIdAndId(user.tenantId, id) ?: throw NotFound(msg("billing.invoice_not_found"))
+        if (user.role == UserRole.DRIVER && invoice.userId != user.id) throw NotFound(msg("billing.invoice_not_found"))
         return invoice
     }
 
     fun download(user: AppPrincipal, id: UUID): String {
         val invoice = invoice(user, id)
-        val stripeId = invoice.stripeInvoiceId ?: throw ResponseStatusException(HttpStatus.CONFLICT, "La facture n’est pas encore émise.")
+        val stripeId = invoice.stripeInvoiceId ?: throw ResponseStatusException(HttpStatus.CONFLICT, msg("billing.invoice_not_issued"))
         val current = gateway.retrieve(invoice.stripeAccountId, stripeId)
         return current.pdfUrl ?: current.hostedUrl
-            ?: throw ResponseStatusException(HttpStatus.CONFLICT, "Le document de facture n’est pas disponible.")
+            ?: throw ResponseStatusException(HttpStatus.CONFLICT, msg("billing.invoice_document_unavailable"))
     }
 
     fun pay(user: AppPrincipal, id: UUID): InvoiceResponse {
         val invoice = invoice(user, id)
-        val stripeId = invoice.stripeInvoiceId ?: throw ResponseStatusException(HttpStatus.CONFLICT, "La facture n’est pas encore émise.")
+        val stripeId = invoice.stripeInvoiceId ?: throw ResponseStatusException(HttpStatus.CONFLICT, msg("billing.invoice_not_issued"))
         val result = gateway.pay(invoice.stripeAccountId, stripeId)
         apply(invoice.id, result)
         db.audit(user.tenantId, user.id.toString(), "INVOICE_PAY", id.toString())
@@ -354,25 +355,36 @@ class UserBillingService(
                 sessions.map { it.stationId }.toSet().associateWith { id ->
                     stations.findById(StationKey(tenant, id)).map { it.name }.orElse(id)
                 }
+            val owner = users.findByTenantIdAndId(tenant, userId)
             val lines =
-                sessions.map {
-                    InvoiceLine(
-                        "session-${it.id}",
-                        "Recharge du ${it.startedAt.atZone(zone).toLocalDate()} — ${names[it.stationId]} — ${ChargingSessionResponse.energyKwh(it)} kWh",
-                        minor(it),
-                    )
+                I18n.with(owner?.locale) {
+                    val days = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(I18n.locale())
+                    sessions.map {
+                        InvoiceLine(
+                            "session-${it.id}",
+                            msg(
+                                "billing.invoice.line",
+                                it.startedAt.atZone(zone).toLocalDate().format(days),
+                                names[it.stationId],
+                                ChargingSessionResponse.energyKwh(it),
+                            ),
+                            minor(it),
+                        )
+                    }
                 }
             apply(entity.id, gateway.invoice(accountId, customer, entity.id, currency, lines, current.taxRateId))
-            val owner = users.findByTenantIdAndId(tenant, userId)
             if (owner != null) {
                 db.isolated {
                     notifications.notify(
                         owner,
                         NotificationType.INVOICE_AVAILABLE,
-                        "Votre facture est disponible",
-                        "Une facture de ${BigDecimal(entity.amountMinor).movePointLeft(2)} $currency" +
-                            (period?.let { " pour ${YearMonth.parse(it).format(months)}" } ?: "") +
-                            " est disponible dans votre espace.",
+                        { msg("notification.invoice.subject") },
+                        {
+                            val amount = "${BigDecimal(entity.amountMinor).movePointLeft(2)} $currency"
+                            period?.let {
+                                msg("notification.invoice.body_period", amount, YearMonth.parse(it).format(DateTimeFormatter.ofPattern("LLLL yyyy", I18n.locale())))
+                            } ?: msg("notification.invoice.body", amount)
+                        },
                         dedupeKey = "invoice:${entity.id}",
                     )
                 }
@@ -396,8 +408,8 @@ class UserBillingService(
                     notifications.notify(
                         owner,
                         NotificationType.BILLING_FAILED,
-                        "Le paiement de votre recharge a échoué",
-                        "Nous n’avons pas pu facturer votre recharge. Vérifiez votre moyen de paiement dans votre compte.",
+                        { msg("notification.billing_failed.subject") },
+                        { msg("notification.billing_failed.body") },
                         dedupeKey = "billing-failed:${entity.id}",
                     )
                 }
@@ -444,7 +456,7 @@ class UserBillingService(
         val id = runCatching { UUID.fromString(event.data.path("metadata").path("invoice_id").asText()) }.getOrNull() ?: return true
         val invoice = invoices.findById(id).orElse(null) ?: return true
         if (invoice.stripeAccountId != event.accountId) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Le compte Stripe ne correspond pas à la facture.")
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, msg("billing.account_mismatch_invoice"))
         }
         val stripeId = event.data.path("id").asText()
         if (invoice.stripeInvoiceId != null && invoice.stripeInvoiceId != stripeId) return true

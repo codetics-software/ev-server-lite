@@ -32,15 +32,16 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { BadgeForm } from "./badge-form";
 import type { Badge } from "./badge-types";
+import { t } from "@/lib/i18n";
 
 function badgeState(badge: Badge) {
   if (!badge.enabled) {
-    return <ToneBadge tone="neutral">Bloqué</ToneBadge>;
+    return <ToneBadge tone="neutral">{t("Bloqué")}</ToneBadge>;
   }
   if (badge.expires_at && new Date(badge.expires_at) < new Date()) {
-    return <ToneBadge tone="warning">Expiré</ToneBadge>;
+    return <ToneBadge tone="warning">{t("Expiré")}</ToneBadge>;
   }
-  return <ToneBadge tone="success">Actif</ToneBadge>;
+  return <ToneBadge tone="success">{t("Actif")}</ToneBadge>;
 }
 
 export function BadgesList({
@@ -65,13 +66,13 @@ export function BadgesList({
   const columns: Column<Badge>[] = [
     {
       id: "uid",
-      header: "Badge",
+      header: t("Badge"),
       sort: (badge) => badge.visual_id || badge.uid,
       cell: (badge) =>
         badge.vehicle_id ? (
           <span className="flex flex-col items-start gap-1">
             <span className="font-mono text-xs font-medium">{badge.uid}</span>
-            <ToneBadge tone="progress">Véhicule</ToneBadge>
+            <ToneBadge tone="progress">{t("Véhicule")}</ToneBadge>
           </span>
         ) : (
           <span className="flex flex-col">
@@ -84,12 +85,12 @@ export function BadgesList({
     },
     {
       id: "state",
-      header: "État",
+      header: t("État"),
       sort: (badge) => (badge.enabled ? 1 : 0),
       cell: (badge) => (
         <span className="flex flex-wrap items-center gap-1">
           {badgeState(badge)}
-          {badge.default && <ToneBadge tone="progress">Par défaut</ToneBadge>}
+          {badge.default && <ToneBadge tone="progress">{t("Par défaut")}</ToneBadge>}
         </span>
       ),
     },
@@ -97,7 +98,7 @@ export function BadgesList({
       ? [
           {
             id: "user",
-            header: "Utilisateur",
+            header: t("Utilisateur"),
             sort: (badge: Badge) => badge.user_name ?? "",
             cell: (badge: Badge) =>
               badge.user_id && isAdmin(user) ? (
@@ -106,17 +107,19 @@ export function BadgesList({
                   className="hover:text-primary dark:hover:text-sidebar-primary"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  {badge.user_name ?? "Utilisateur"}
+                  {badge.user_name ?? t("Utilisateur")}
                 </Link>
               ) : (
-                (badge.user_name ?? <span className="text-muted-foreground">Non attribué</span>)
+                (badge.user_name ?? (
+                  <span className="text-muted-foreground">{t("Non attribué")}</span>
+                ))
               ),
           },
         ]
       : []),
     {
       id: "description",
-      header: "Description",
+      header: t("Description"),
       cell: (badge) =>
         badge.vehicle_id ? (
           <span className="flex max-w-64 flex-col">
@@ -126,15 +129,15 @@ export function BadgesList({
                 className="truncate hover:text-primary dark:hover:text-sidebar-primary"
                 onClick={(event) => event.stopPropagation()}
               >
-                {badge.vehicle_name || badge.description || "Véhicule"}
+                {badge.vehicle_name || badge.description || t("Véhicule")}
               </Link>
             ) : (
               <span className="truncate">
-                {badge.vehicle_name || badge.description || "Véhicule"}
+                {badge.vehicle_name || badge.description || t("Véhicule")}
               </span>
             )}
             <span className="text-xs text-muted-foreground">
-              Recharge automatique, gérée depuis la fiche du véhicule
+              {t("Recharge automatique, gérée depuis la fiche du véhicule")}
             </span>
           </span>
         ) : (
@@ -143,13 +146,13 @@ export function BadgesList({
     },
     {
       id: "used",
-      header: "Dernière utilisation",
+      header: t("Dernière utilisation"),
       sort: (badge) => badge.last_used_at ?? "",
       cell: (badge) => (badge.last_used_at ? relative(badge.last_used_at) : "Jamais"),
     },
     {
       id: "expires",
-      header: "Expiration",
+      header: t("Expiration"),
       sort: (badge) => badge.expires_at ?? "",
       cell: (badge) => date(badge.expires_at),
     },
@@ -157,24 +160,26 @@ export function BadgesList({
       ? [
           {
             id: "actions",
-            header: "Actions",
+            header: t("Actions"),
             srOnlyHeader: true,
             align: "right" as const,
             cell: (badge: Badge) =>
               badge.vehicle_id ? (
                 <div onClick={(event) => event.stopPropagation()} className="flex justify-end">
                   <ConfirmButton
-                    title="Révoquer cet identifiant de véhicule ?"
-                    description="Les bornes ne démarreront plus automatiquement la recharge de ce véhicule."
-                    confirmLabel="Révoquer"
+                    title={t("Révoquer cet identifiant de véhicule ?")}
+                    description={t(
+                      "Les bornes ne démarreront plus automatiquement la recharge de ce véhicule.",
+                    )}
+                    confirmLabel={t("Révoquer")}
                     variant="ghost"
                     size="icon-sm"
-                    ariaLabel={`Révoquer ${badge.uid}`}
+                    ariaLabel={t("Révoquer {uid}", { uid: badge.uid })}
                     onConfirm={() =>
                       action.run(
                         "revoke",
                         () => api(`tokens/${encodeURIComponent(badge.uid)}`, { method: "DELETE" }),
-                        { success: "Identifiant du véhicule révoqué.", onDone: list.refresh },
+                        { success: t("Identifiant du véhicule révoqué."), onDone: list.refresh },
                       )
                     }
                   >
@@ -189,7 +194,7 @@ export function BadgesList({
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={`Actions du badge ${badge.uid}`}
+                          aria-label={t("Actions du badge {uid}", { uid: badge.uid })}
                         />
                       }
                     >
@@ -198,7 +203,7 @@ export function BadgesList({
                     <DropdownMenuContent align="end">
                       <DropdownMenuGroup>
                         <DropdownMenuItem onClick={() => setEditing(badge)}>
-                          Modifier
+                          {t("Modifier")}
                         </DropdownMenuItem>
                         {badge.user_id ? (
                           <DropdownMenuItem
@@ -210,17 +215,17 @@ export function BadgesList({
                                     method: "POST",
                                   }),
                                 {
-                                  success: "Badge retiré de l’utilisateur.",
+                                  success: t("Badge retiré de l’utilisateur."),
                                   onDone: list.refresh,
                                 },
                               )
                             }
                           >
-                            Retirer l’utilisateur
+                            {t("Retirer l’utilisateur")}
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem onClick={() => setAssigning(badge)}>
-                            Attribuer à un utilisateur
+                            {t("Attribuer à un utilisateur")}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
@@ -241,13 +246,13 @@ export function BadgesList({
                                   }),
                                 }),
                               {
-                                success: badge.enabled ? "Badge bloqué." : "Badge débloqué.",
+                                success: badge.enabled ? t("Badge bloqué.") : t("Badge débloqué."),
                                 onDone: list.refresh,
                               },
                             )
                           }
                         >
-                          {badge.enabled ? "Bloquer" : "Débloquer"}
+                          {badge.enabled ? t("Bloquer") : t("Débloquer")}
                         </DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
@@ -260,17 +265,17 @@ export function BadgesList({
   ];
 
   return (
-    <section className="flex min-w-0 flex-col gap-4" aria-label="Badges">
+    <section className="flex min-w-0 flex-col gap-4" aria-label={t("Badges")}>
       <div className="flex flex-wrap items-end gap-3">
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Identifiant, numéro, utilisateur…"
-          label="Rechercher un badge"
+          placeholder={t("Identifiant, numéro, utilisateur…")}
+          label={t("Rechercher un badge")}
         />
         <div className="ml-auto flex flex-wrap gap-2">
           {toolbar}
-          {write && <Button onClick={() => setEditing(null)}>Ajouter un badge</Button>}
+          {write && <Button onClick={() => setEditing(null)}>{t("Ajouter un badge")}</Button>}
         </div>
       </div>
       {list.error && list.data && <ErrorState error={list.error} onRetry={list.refresh} />}
@@ -283,17 +288,17 @@ export function BadgesList({
         empty={
           <EmptyState
             icon={<IconTag />}
-            title={search ? "Aucun badge correspondant" : "Aucun badge"}
+            title={search ? t("Aucun badge correspondant") : t("Aucun badge")}
             description={
               search
-                ? "Essayez une autre recherche."
-                : "Ajoutez un badge RFID pour autoriser la recharge."
+                ? t("Essayez une autre recherche.")
+                : t("Ajoutez un badge RFID pour autoriser la recharge.")
             }
           />
         }
       >
         <DataTable
-          label="Badges"
+          label={t("Badges")}
           rows={list.items}
           columns={columns}
           rowKey={(badge) => badge.uid}
@@ -311,7 +316,11 @@ export function BadgesList({
       <FormDialog
         open={editing !== undefined}
         onOpenChange={(open) => !open && setEditing(undefined)}
-        title={editing ? `Badge ${editing.visual_id || editing.uid}` : "Ajouter un badge"}
+        title={
+          editing
+            ? t("Badge {name}", { name: editing.visual_id || editing.uid })
+            : t("Ajouter un badge")
+        }
         wide
       >
         <BadgeForm
@@ -325,15 +334,17 @@ export function BadgesList({
         {editing && isAdmin(user) && (
           <div className="border-t pt-4">
             <ConfirmButton
-              title="Supprimer ce badge ?"
-              description="Impossible tant qu’une session est en cours avec ce badge. L’historique est conservé."
-              confirmLabel="Supprimer"
+              title={t("Supprimer ce badge ?")}
+              description={t(
+                "Impossible tant qu’une session est en cours avec ce badge. L’historique est conservé.",
+              )}
+              confirmLabel={t("Supprimer")}
               onConfirm={() =>
                 action.run(
                   "delete",
                   () => api(`tokens/${encodeURIComponent(editing.uid)}`, { method: "DELETE" }),
                   {
-                    success: "Badge supprimé.",
+                    success: t("Badge supprimé."),
                     onDone: () => {
                       setEditing(undefined);
                       list.refresh();
@@ -342,7 +353,7 @@ export function BadgesList({
                 )
               }
             >
-              Supprimer le badge
+              {t("Supprimer le badge")}
             </ConfirmButton>
           </div>
         )}
@@ -355,12 +366,14 @@ export function BadgesList({
             setAssignee("");
           }
         }}
-        title="Attribuer le badge"
-        description={assigning ? `Badge ${assigning.visual_id || assigning.uid}` : undefined}
+        title={t("Attribuer le badge")}
+        description={
+          assigning ? t("Badge {name}", { name: assigning.visual_id || assigning.uid }) : undefined
+        }
       >
         <div className="flex flex-col gap-4">
           <Field>
-            <FieldLabel htmlFor="badge-assignee">Utilisateur</FieldLabel>
+            <FieldLabel htmlFor="badge-assignee">{t("Utilisateur")}</FieldLabel>
             <EntityPicker
               id="badge-assignee"
               source="users"
@@ -381,7 +394,7 @@ export function BadgesList({
                     body: JSON.stringify({ userId: assignee }),
                   }),
                 {
-                  success: "Badge attribué.",
+                  success: t("Badge attribué."),
                   onDone: () => {
                     setAssigning(null);
                     setAssignee("");
@@ -391,7 +404,7 @@ export function BadgesList({
               )
             }
           >
-            Attribuer
+            {t("Attribuer")}
           </Button>
         </div>
       </FormDialog>

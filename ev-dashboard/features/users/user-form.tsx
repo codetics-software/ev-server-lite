@@ -10,18 +10,12 @@ import { email, maxLength, required, rules } from "@/lib/form";
 import { roleLabels } from "@/lib/labels";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
+import { localeNames, locales, t } from "@/lib/i18n";
 import type { ManagedUser } from "./user-types";
 
-export const roleOptions = [...userRoles]
-  .reverse()
-  .map((role) => ({ value: role, label: roleLabels[role] }));
-export const localeOptions = [
-  { value: "fr", label: "Français" },
-  { value: "en", label: "Anglais" },
-  { value: "de", label: "Allemand" },
-  { value: "es", label: "Espagnol" },
-  { value: "it", label: "Italien" },
-];
+export const roleOptions = () =>
+  [...userRoles].reverse().map((role) => ({ value: role, label: roleLabels[role] }));
+export const localeOptions = locales.map((value) => ({ value, label: localeNames[value] }));
 
 export function UserForm({
   user,
@@ -59,10 +53,10 @@ export function UserForm({
           },
         );
         const message = result && "message" in result ? result.message : undefined;
-        notify(user ? "Utilisateur enregistré." : "Utilisateur créé.", message);
+        notify(user ? t("Utilisateur enregistré.") : t("Utilisateur créé."), message);
         onSaved({ id: result?.id ?? user?.id ?? "", message });
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer l’utilisateur."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer l’utilisateur.")));
       }
     },
   });
@@ -77,12 +71,12 @@ export function UserForm({
       <FieldGroup>
         <form.Field
           name="name"
-          validators={{ onDynamic: rules(required("Renseignez le nom."), maxLength(200)) }}
+          validators={{ onDynamic: rules(required(t("Renseignez le nom.")), maxLength(200)) }}
         >
           {(field) => (
             <FormText
               field={field}
-              label="Nom complet"
+              label={t("Nom complet")}
               autoComplete="name"
               maxLength={200}
               required
@@ -91,12 +85,14 @@ export function UserForm({
         </form.Field>
         <form.Field
           name="email"
-          validators={{ onDynamic: rules(required("Renseignez l’adresse électronique."), email()) }}
+          validators={{
+            onDynamic: rules(required(t("Renseignez l’adresse électronique.")), email()),
+          }}
         >
           {(field) => (
             <FormText
               field={field}
-              label="Adresse électronique"
+              label={t("Adresse électronique")}
               type="email"
               autoComplete="email"
               required
@@ -105,24 +101,26 @@ export function UserForm({
         </form.Field>
         <div className="grid gap-4 sm:grid-cols-3">
           <form.Field name="role">
-            {(field) => <FormSelect field={field} label="Rôle" options={roleOptions} />}
+            {(field) => <FormSelect field={field} label={t("Rôle")} options={roleOptions()} />}
           </form.Field>
           <form.Field name="phone" validators={{ onDynamic: rules(maxLength(40)) }}>
-            {(field) => <FormText field={field} label="Téléphone" type="tel" autoComplete="tel" />}
+            {(field) => (
+              <FormText field={field} label={t("Téléphone")} type="tel" autoComplete="tel" />
+            )}
           </form.Field>
           <form.Field name="locale">
-            {(field) => <FormSelect field={field} label="Langue" options={localeOptions} />}
+            {(field) => <FormSelect field={field} label={t("Langue")} options={localeOptions} />}
           </form.Field>
         </div>
         <form.Field name="enabled">
           {(field) => (
             <FormSwitch
               field={field}
-              label="Compte activé"
+              label={t("Compte activé")}
               description={
                 user
-                  ? "Un compte désactivé ne peut plus se connecter ni recharger."
-                  : "L’utilisateur reçoit un courriel pour définir son mot de passe."
+                  ? t("Un compte désactivé ne peut plus se connecter ni recharger.")
+                  : t("L’utilisateur reçoit un courriel pour définir son mot de passe.")
               }
             />
           )}
@@ -132,7 +130,7 @@ export function UserForm({
             <FormFooter
               error={error}
               submitting={submitting}
-              label={user ? "Enregistrer" : "Créer l’utilisateur"}
+              label={user ? t("Enregistrer") : t("Créer l’utilisateur")}
             />
           )}
         </form.Subscribe>

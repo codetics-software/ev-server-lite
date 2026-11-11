@@ -2,6 +2,7 @@ package fr.codetics.ev_server.stripe
 
 import com.stripe.StripeClient
 import com.stripe.net.RequestOptions
+import fr.codetics.ev_server.core.msg
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
@@ -19,7 +20,7 @@ class StripeClientProvider(
         if (!configured)
             throw ResponseStatusException(
                 HttpStatus.SERVICE_UNAVAILABLE,
-                "Le paiement n’est pas configuré.",
+                msg("payment.not_configured"),
             )
         StripeClient.builder()
             .setApiKey(apiKey)

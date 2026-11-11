@@ -1,6 +1,7 @@
 import { ConnectorStatusBadge } from "@/features/shared/status-badge";
 import { duration, kw, kwh, percent } from "@/lib/format";
 import type { StationConnector } from "./station-types";
+import { t } from "@/lib/i18n";
 
 export function inactivitySeconds(connector: StationConnector) {
   return connector.inactive_since
@@ -10,7 +11,7 @@ export function inactivitySeconds(connector: StationConnector) {
 
 export function ConnectorSummary({ connectors }: { connectors: StationConnector[] }) {
   if (!connectors.length) {
-    return <span className="text-muted-foreground">Aucun connecteur</span>;
+    return <span className="text-muted-foreground">{t("Aucun connecteur")}</span>;
   }
   return (
     <ul className="flex flex-col gap-1.5">
@@ -29,7 +30,7 @@ export function ConnectorSummary({ connectors }: { connectors: StationConnector[
                   kw(connector.current_power_kw),
                   kwh(connector.current_energy_kwh),
                   connector.current_soc != null ? percent(connector.current_soc) : null,
-                  inactive ? `inactif ${duration(inactive)}` : null,
+                  inactive ? t("inactif {duration}", { duration: duration(inactive) }) : null,
                 ]
                   .filter(Boolean)
                   .join(" · ")}

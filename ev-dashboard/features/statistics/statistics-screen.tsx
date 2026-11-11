@@ -29,6 +29,7 @@ import { isAdmin, isStaff, useWorkspaceSession } from "@/features/workspace/work
 import { useApi } from "@/hooks/use-api";
 import { query } from "@/lib/api";
 import { money, monthLabels, number } from "@/lib/format";
+import { t, translated } from "@/lib/i18n";
 import { IconChartBar } from "@tabler/icons-react";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -48,7 +49,7 @@ type Statistics = {
   total: number;
 };
 
-const metrics: { value: Metric; label: string; description: string }[] = [
+const metrics: { value: Metric; label: string; description: string }[] = translated([
   { value: "consumption", label: "Consommation", description: "Énergie délivrée par mois (kWh)." },
   { value: "usage", label: "Utilisation", description: "Durée de branchement par mois (heures)." },
   {
@@ -58,7 +59,7 @@ const metrics: { value: Metric; label: string; description: string }[] = [
   },
   { value: "sessions", label: "Sessions", description: "Nombre de sessions par mois." },
   { value: "pricing", label: "Revenus", description: "Montant facturé par mois." },
-];
+]);
 
 const palette = [
   "var(--chart-1)",
@@ -94,14 +95,14 @@ export function StatisticsScreen() {
     label: String(value),
   }));
   const groupOptions = [
-    { value: "station", label: "Par borne" },
+    { value: "station", label: t("Par borne") },
     ...(components.organization
       ? [
-          { value: "site", label: "Par site" },
-          { value: "site-area", label: "Par zone" },
+          { value: "site", label: t("Par site") },
+          { value: "site-area", label: t("Par zone") },
         ]
       : []),
-    ...(isAdmin(user) ? [{ value: "user", label: "Par utilisateur" }] : []),
+    ...(isAdmin(user) ? [{ value: "user", label: t("Par utilisateur") }] : []),
   ];
   const format = (value: unknown) =>
     metric === "pricing"
@@ -112,11 +113,11 @@ export function StatisticsScreen() {
   return (
     <>
       <PageHeader
-        title="Statistiques"
+        title={t("Statistiques")}
         description={
           staff
-            ? "Consommation, utilisation et revenus de votre réseau, mois par mois."
-            : "Votre consommation et vos dépenses de recharge, mois par mois."
+            ? t("Consommation, utilisation et revenus de votre réseau, mois par mois.")
+            : t("Votre consommation et vos dépenses de recharge, mois par mois.")
         }
         actions={
           <ExportButton
@@ -136,7 +137,7 @@ export function StatisticsScreen() {
         }}
         variant="outline"
         className="flex-wrap"
-        aria-label="Indicateur"
+        aria-label={t("Indicateur")}
       >
         {metrics
           .filter((item) => item.value !== "pricing" || components.pricing)
@@ -149,14 +150,14 @@ export function StatisticsScreen() {
       <div className="flex flex-wrap items-end gap-3">
         <Field className="w-32">
           <FieldLabel htmlFor="stats-year" className="text-xs text-muted-foreground">
-            Année
+            {t("Année")}
           </FieldLabel>
           <OptionSelect id="stats-year" value={year} onChange={setYear} options={yearOptions} />
         </Field>
         {staff && (
           <Field className="w-44">
             <FieldLabel htmlFor="stats-group" className="text-xs text-muted-foreground">
-              Regroupement
+              {t("Regroupement")}
             </FieldLabel>
             <OptionSelect
               id="stats-group"
@@ -170,7 +171,7 @@ export function StatisticsScreen() {
           <>
             <Field className="w-full sm:w-48">
               <FieldLabel htmlFor="stats-site" className="text-xs text-muted-foreground">
-                Site
+                {t("Site")}
               </FieldLabel>
               <EntityPicker
                 id="stats-site"
@@ -180,12 +181,12 @@ export function StatisticsScreen() {
                   setSiteId(value);
                   setSiteAreaId("");
                 }}
-                placeholder="Tous"
+                placeholder={t("Tous")}
               />
             </Field>
             <Field className="w-full sm:w-48">
               <FieldLabel htmlFor="stats-area" className="text-xs text-muted-foreground">
-                Zone
+                {t("Zone")}
               </FieldLabel>
               <EntityPicker
                 id="stats-area"
@@ -193,7 +194,7 @@ export function StatisticsScreen() {
                 filters={{ siteId: siteId || undefined }}
                 value={siteAreaId}
                 onChange={setSiteAreaId}
-                placeholder="Toutes"
+                placeholder={t("Toutes")}
               />
             </Field>
           </>
@@ -201,28 +202,28 @@ export function StatisticsScreen() {
         {staff && (
           <Field className="w-full sm:w-48">
             <FieldLabel htmlFor="stats-station" className="text-xs text-muted-foreground">
-              Borne
+              {t("Borne")}
             </FieldLabel>
             <EntityPicker
               id="stats-station"
               source="stations"
               value={stationId}
               onChange={setStationId}
-              placeholder="Toutes"
+              placeholder={t("Toutes")}
             />
           </Field>
         )}
         {isAdmin(user) && (
           <Field className="w-full sm:w-48">
             <FieldLabel htmlFor="stats-user" className="text-xs text-muted-foreground">
-              Utilisateur
+              {t("Utilisateur")}
             </FieldLabel>
             <EntityPicker
               id="stats-user"
               source="users"
               value={userId}
               onChange={setUserId}
-              placeholder="Tous"
+              placeholder={t("Tous")}
             />
           </Field>
         )}
@@ -234,8 +235,8 @@ export function StatisticsScreen() {
       ) : !data || !data.groups.length ? (
         <EmptyState
           icon={<IconChartBar />}
-          title="Aucune donnée pour cette période"
-          description="Les statistiques sont calculées à partir des sessions terminées."
+          title={t("Aucune donnée pour cette période")}
+          description={t("Les statistiques sont calculées à partir des sessions terminées.")}
         />
       ) : (
         <StatisticsView data={data} label={current} format={format} />
@@ -262,7 +263,7 @@ function StatisticsView({
       ? [
           {
             key: "other",
-            label: `Autres (${rest.length})`,
+            label: t("Autres ({count})", { count: rest.length }),
             months: monthLabels.map((_, month) =>
               rest.reduce((sum, group) => sum + (group.months[month] ?? 0), 0),
             ),
@@ -331,16 +332,16 @@ function StatisticsView({
           </ChartContainer>
         </CardContent>
       </Card>
-      <Table aria-label={`${label.label} par mois`}>
+      <Table aria-label={t("{label} par mois", { label: label.label })}>
         <TableHeader>
           <TableRow>
-            <TableHead className="sticky left-0 bg-card">Regroupement</TableHead>
+            <TableHead className="sticky left-0 bg-card">{t("Regroupement")}</TableHead>
             {monthLabels.map((month) => (
               <TableHead key={month} className="text-right">
                 {month}
               </TableHead>
             ))}
-            <TableHead className="text-right">Total</TableHead>
+            <TableHead className="text-right">{t("Total")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -362,7 +363,7 @@ function StatisticsView({
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell className="sticky left-0 bg-muted">Total</TableCell>
+            <TableCell className="sticky left-0 bg-muted">{t("Total")}</TableCell>
             {data.months.map((value, index) => (
               <TableCell key={index} className="text-right tabular-nums">
                 {format(value)}

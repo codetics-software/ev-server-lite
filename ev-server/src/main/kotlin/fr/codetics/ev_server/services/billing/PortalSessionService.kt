@@ -2,6 +2,7 @@ package fr.codetics.ev_server.services.billing
 
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.billing.PaymentState
 import fr.codetics.ev_server.models.billing.PortalPaymentResponse
 import fr.codetics.ev_server.models.entities.ChargingPaymentEntity
@@ -23,7 +24,7 @@ class PortalSessionService(
     fun read(id: UUID, accessToken: String): PortalPaymentResponse {
         val order =
             payments.findById(id).orElse(null)
-                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Session introuvable.")
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, msg("sessions.not_found"))
         PortalAccessToken.verify(order.accessTokenHash, accessToken)
         return response(order)
     }
@@ -32,7 +33,7 @@ class PortalSessionService(
         db.atomic {
             val order =
                 db.lock<ChargingPaymentEntity>(id)
-                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Session introuvable.")
+                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, msg("sessions.not_found"))
             PortalAccessToken.verify(order.accessTokenHash, accessToken)
             if (order.state == PaymentState.CHARGING) {
                 val transaction = requireNotNull(order.transactionId)

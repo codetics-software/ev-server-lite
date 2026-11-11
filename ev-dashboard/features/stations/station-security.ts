@@ -1,4 +1,5 @@
 import type { Tone } from "@/features/shared/status-badge";
+import { t, tp, translated } from "@/lib/i18n";
 import type { Station, StationEvent } from "./station-types";
 
 export type SecurityProfile = 0 | 1 | 2 | 3;
@@ -15,23 +16,30 @@ export type SecurityCapabilities = {
 
 export type SecurityChange = { station: Station; command_id: string | null; message: string };
 
-export const securityProfiles: Record<SecurityProfile, string> = {
+export const securityProfiles: Record<SecurityProfile, string> = translated({
   0: "Profil 0 · sans authentification",
   1: "Profil 1 · mot de passe",
   2: "Profil 2 · TLS et mot de passe",
   3: "Profil 3 · certificat client (TLS mutuel)",
-};
+});
 
 export function profileLabel(profile: number | null | undefined) {
   return profile != null && profile in securityProfiles
     ? securityProfiles[profile as SecurityProfile]
-    : "Jamais connectée";
+    : t("Jamais connectée");
 }
 
-export const protectedKeyMessage =
-  "Ce paramètre de sécurité se modifie depuis la section Sécurité de la borne.";
-export const templateKeyMessage = "Ce paramètre de sécurité ne peut pas figurer dans un modèle.";
-export const fingerprintMessage = "Empreinte SHA-256 invalide (64 caractères hexadécimaux).";
+export function protectedKeyMessage() {
+  return t("Ce paramètre de sécurité se modifie depuis la section Sécurité de la borne.");
+}
+
+export function templateKeyMessage() {
+  return t("Ce paramètre de sécurité ne peut pas figurer dans un modèle.");
+}
+
+export function fingerprintMessage() {
+  return t("Empreinte SHA-256 invalide (64 caractères hexadécimaux).");
+}
 
 export function isProtectedKey(key: string) {
   const normalized = key.trim().toLowerCase();
@@ -64,12 +72,12 @@ export function certificateExpiry(expiresAt: string | null | undefined) {
   }
   const days = Math.ceil((time - Date.now()) / 86400000);
   if (days <= 0) {
-    return { tone: "danger" as Tone, label: "Expiré" };
+    return { tone: "danger" as Tone, label: t("Expiré") };
   }
   if (days <= 30) {
     return {
       tone: "warning" as Tone,
-      label: days === 1 ? "Expire dans 1 jour" : `Expire dans ${days} jours`,
+      label: tp(days, "Expire dans {count} jour", "Expire dans {count} jours"),
     };
   }
   return null;

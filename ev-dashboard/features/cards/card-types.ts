@@ -1,3 +1,4 @@
+import { translated } from "@/lib/i18n";
 // EV Supervision Lite — built by Kevin Vavelin, Codetics
 // https://codetics.fr
 // Copyright (c) 2026 Kevin Vavelin, Codetics
@@ -33,13 +34,13 @@ export type CardOrder = {
   visual_id?: string | null;
 };
 
-export const cardStateLabels: Record<CardOrderState, string> = {
+export const cardStateLabels: Record<CardOrderState, string> = translated({
   PENDING_PAYMENT: "En attente de paiement",
   PAID: "Payée, à préparer",
   SHIPPED: "Carte prête, à activer",
   ACTIVATED: "Activée",
   CANCELLED: "Annulée",
-};
+});
 
 export const cardStateTones = {
   PENDING_PAYMENT: "neutral",

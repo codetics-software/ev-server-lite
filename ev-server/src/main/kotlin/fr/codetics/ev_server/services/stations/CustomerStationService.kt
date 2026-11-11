@@ -8,6 +8,7 @@ package fr.codetics.ev_server.services.stations
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.ConnectorEntity
 import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationKey
@@ -136,7 +137,7 @@ class CustomerStationService(
     }
 
     private fun list(tenant: TenantEntity, user: AppPrincipal?, search: String): List<CustomerStationResponse> {
-        ensure(search.length <= 200) { "La recherche est trop longue." }
+        ensure(search.length <= 200) { msg("validation.search_too_long") }
         val snapshot = snapshot(tenant, user)
         val term = search.trim()
         return stations
@@ -171,7 +172,7 @@ class CustomerStationService(
         val snapshot = snapshot(tenant, user)
         val station =
             stations.findById(StationKey(tenant.id, id)).orElse(null)?.takeIf { visible(snapshot, it, user) }
-                ?: throw NotFound("Borne introuvable.")
+                ?: throw NotFound(msg("stations.not_found"))
         val connector = snapshot.plugs[id].orEmpty().minOfOrNull { it.key.connectorId } ?: 1
         return view(snapshot, station, photos.countByTenantIdAndStationId(tenant.id, id), tariff(station, connector))
     }
@@ -183,11 +184,11 @@ class CustomerStationService(
     fun requireVisible(user: AppPrincipal, id: String) {
         val tenant = tenants.findById(user.tenantId).orElseThrow()
         val station = stations.findById(StationKey(tenant.id, id)).orElse(null)
-        if (station == null || !visible(snapshot(tenant, user), station, user)) throw NotFound("Borne introuvable.")
+        if (station == null || !visible(snapshot(tenant, user), station, user)) throw NotFound(msg("stations.not_found"))
     }
 
     private fun publicTenant(slug: String) =
-        tenants.findBySlugAndActiveTrue(slug) ?: throw NotFound("Espace client introuvable.")
+        tenants.findBySlugAndActiveTrue(slug) ?: throw NotFound(msg("workspaces.not_found_customer"))
 
     fun publicList(slug: String, search: String) = list(publicTenant(slug), null, search)
 

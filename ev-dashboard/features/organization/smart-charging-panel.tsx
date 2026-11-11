@@ -25,6 +25,7 @@ import { useAction } from "@/features/shared/use-action";
 import { useApi, useRevision } from "@/hooks/use-api";
 import { api, query } from "@/lib/api";
 import { date, kw, number, time } from "@/lib/format";
+import { getIntlLocale, t, translated } from "@/lib/i18n";
 import { IconChartLine, IconPlayerPlay } from "@tabler/icons-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -50,17 +51,17 @@ type Point = {
   assets_power_kw: number | null;
 };
 
-const config = {
+const config = translated({
   power_kw: { label: "Bornes (kW)", color: "var(--chart-3)" },
   assets_power_kw: { label: "Équipements (kW)", color: "var(--chart-1)" },
   limit_kw: { label: "Limite (kW)", color: "var(--chart-5)" },
-} satisfies ChartConfig;
+} satisfies ChartConfig);
 
-const ranges = [
+const ranges = translated([
   { value: "6", label: "6 dernières heures" },
   { value: "24", label: "24 dernières heures" },
   { value: "168", label: "7 derniers jours" },
-];
+]);
 
 export function useWindow(hours: string) {
   return useMemo(() => {
@@ -94,7 +95,7 @@ export function ConsumptionPanel({
             onChange={setHours}
             options={ranges}
             className="w-48"
-            label="Période"
+            label={t("Période")}
           />
         </CardAction>
       </CardHeader>
@@ -104,7 +105,7 @@ export function ConsumptionPanel({
         ) : loading && !data ? (
           <LoadingState rows={3} />
         ) : !points.length ? (
-          <EmptyState icon={<IconChartLine />} title="Aucune mesure sur cette période" />
+          <EmptyState icon={<IconChartLine />} title={t("Aucune mesure sur cette période")} />
         ) : (
           <ChartContainer config={config} className="aspect-auto h-72 w-full">
             <ComposedChart data={points} margin={{ left: 4, right: 4, top: 8 }}>
@@ -116,7 +117,7 @@ export function ConsumptionPanel({
                 domain={["dataMin", "dataMax"]}
                 tickFormatter={(value: number) =>
                   Number(hours) > 24
-                    ? new Date(value).toLocaleDateString("fr-FR", {
+                    ? new Date(value).toLocaleDateString(getIntlLocale(), {
                         day: "2-digit",
                         month: "2-digit",
                       })
@@ -196,27 +197,30 @@ export function SmartChargingPanel({
   const columns: Column<Plan["allocations"][number]>[] = [
     {
       id: "station",
-      header: "Borne",
+      header: t("Borne"),
       sort: (row) => row.station_id,
       cell: (row) => (
         <Link
           className="hover:text-primary dark:hover:text-sidebar-primary"
           href={`/stations/${encodeURIComponent(row.station_id)}`}
         >
-          {row.station_id} · connecteur {row.connector_id}
+          {t("{station} · connecteur {connector}", {
+            station: row.station_id,
+            connector: row.connector_id,
+          })}
         </Link>
       ),
     },
     {
       id: "session",
-      header: "Session",
+      header: t("Session"),
       cell: (row) =>
         row.transaction_id ? (
           <Link
             className="hover:text-primary dark:hover:text-sidebar-primary"
             href={`/transactions/${row.transaction_id}`}
           >
-            n° {row.transaction_id}
+            {t("n° {id}", { id: row.transaction_id })}
           </Link>
         ) : (
           "—"
@@ -224,7 +228,7 @@ export function SmartChargingPanel({
     },
     {
       id: "limit",
-      header: "Puissance allouée",
+      header: t("Puissance allouée"),
       align: "right",
       sort: (row) => row.limit_kw,
       cell: (row) => kw(row.limit_kw),
@@ -233,11 +237,11 @@ export function SmartChargingPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Plan de recharge intelligente</CardTitle>
+        <CardTitle>{t("Plan de recharge intelligente")}</CardTitle>
         <CardDescription>
           {data?.computed_at
-            ? `Calculé le ${date(data.computed_at)}`
-            : "Répartition de la puissance entre les sessions."}
+            ? t("Calculé le {date}", { date: date(data.computed_at) })
+            : t("Répartition de la puissance entre les sessions.")}
         </CardDescription>
         <CardAction>
           {canTrigger && (
@@ -249,14 +253,14 @@ export function SmartChargingPanel({
                   "trigger",
                   () => api(`site-areas/${siteAreaId}/smart-charging/trigger`, { method: "POST" }),
                   {
-                    success: "Nouveau calcul demandé.",
+                    success: t("Nouveau calcul demandé."),
                     onDone: () => setTimeout(refresh, 2000),
                   },
                 )
               }
             >
               <IconPlayerPlay data-icon="inline-start" />
-              Recalculer
+              {t("Recalculer")}
             </Button>
           )}
         </CardAction>
@@ -270,21 +274,21 @@ export function SmartChargingPanel({
           <>
             <dl className="grid grid-cols-3 gap-4">
               <div>
-                <dt className="text-xs text-muted-foreground">État</dt>
+                <dt className="text-xs text-muted-foreground">{t("État")}</dt>
                 <dd className="mt-1">
                   <ToneBadge tone={data.enabled ? "success" : "neutral"}>
-                    {data.enabled ? "Active" : "Inactive"}
+                    {data.enabled ? t("Active") : t("Inactive")}
                   </ToneBadge>
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Puissance de la zone</dt>
+                <dt className="text-xs text-muted-foreground">{t("Puissance de la zone")}</dt>
                 <dd className="mt-1 text-lg font-medium tabular-nums">
                   {kw(data.maximum_power_kw)}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Disponible pour les bornes</dt>
+                <dt className="text-xs text-muted-foreground">{t("Disponible pour les bornes")}</dt>
                 <dd className="mt-1 text-lg font-medium tabular-nums">
                   {kw(data.available_power_kw)}
                 </dd>
@@ -292,14 +296,14 @@ export function SmartChargingPanel({
             </dl>
             {data.allocations.length ? (
               <DataTable
-                label="Allocations"
+                label={t("Allocations")}
                 rows={data.allocations}
                 columns={columns}
                 rowKey={(row) => `${row.station_id}-${row.connector_id}`}
               />
             ) : (
               <p className="text-sm text-muted-foreground">
-                Aucune session à piloter actuellement.
+                {t("Aucune session à piloter actuellement.")}
               </p>
             )}
           </>

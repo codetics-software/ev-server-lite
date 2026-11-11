@@ -12,6 +12,7 @@ import { integerBetween, optionalNumber, required, rules } from "@/lib/form";
 import { IconCalculator } from "@tabler/icons-react";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 type Resolution = {
   definition: RecordItem | null;
@@ -47,16 +48,16 @@ export function PricingResolve({ onOpen }: { onOpen: (record: RecordItem) => voi
           }),
         );
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible de calculer le tarif."));
+        setError(errorMessage(failure, t("Impossible de calculer le tarif.")));
       }
     },
   });
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Simuler un tarif</CardTitle>
+        <CardTitle>{t("Simuler un tarif")}</CardTitle>
         <CardDescription>
-          Retrouvez le tarif appliqué à un connecteur et estimez le prix d’une session.
+          {t("Retrouvez le tarif appliqué à un connecteur et estimez le prix d’une session.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -71,15 +72,17 @@ export function PricingResolve({ onOpen }: { onOpen: (record: RecordItem) => voi
             <div className="grid gap-4 sm:grid-cols-[1fr_7rem]">
               <form.Field
                 name="stationId"
-                validators={{ onDynamic: rules(required("Choisissez une borne.")) }}
+                validators={{ onDynamic: rules(required(t("Choisissez une borne."))) }}
               >
-                {(field) => <FormPicker field={field} source="stations" label="Borne" />}
+                {(field) => <FormPicker field={field} source="stations" label={t("Borne")} />}
               </form.Field>
               <form.Field
                 name="connectorId"
-                validators={{ onDynamic: rules(integerBetween(1, 100, "Connecteur invalide.")) }}
+                validators={{ onDynamic: rules(integerBetween(1, 100, t("Connecteur invalide."))) }}
               >
-                {(field) => <FormText field={field} label="Connecteur" type="number" min={1} />}
+                {(field) => (
+                  <FormText field={field} label={t("Connecteur")} type="number" min={1} />
+                )}
               </form.Field>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
@@ -87,9 +90,9 @@ export function PricingResolve({ onOpen }: { onOpen: (record: RecordItem) => voi
                 {(field) => (
                   <FormText
                     field={field}
-                    label="Début de session"
+                    label={t("Début de la session")}
                     type="datetime-local"
-                    description="Maintenant si vide."
+                    description={t("Maintenant si vide.")}
                   />
                 )}
               </form.Field>
@@ -97,25 +100,29 @@ export function PricingResolve({ onOpen }: { onOpen: (record: RecordItem) => voi
                 name="energyKwh"
                 validators={{
                   onDynamic: rules(
-                    required("Requis."),
-                    optionalNumber(0, 10000, "Énergie invalide."),
+                    required(t("Requis.")),
+                    optionalNumber(0, 10000, t("Énergie invalide.")),
                   ),
                 }}
               >
-                {(field) => <FormText field={field} label="Énergie (kWh)" type="number" min={0} />}
+                {(field) => (
+                  <FormText field={field} label={t("Énergie (kWh)")} type="number" min={0} />
+                )}
               </form.Field>
               <form.Field
                 name="durationMinutes"
-                validators={{ onDynamic: rules(integerBetween(0, 100000, "Durée invalide.")) }}
+                validators={{ onDynamic: rules(integerBetween(0, 100000, t("Durée invalide."))) }}
               >
-                {(field) => <FormText field={field} label="Durée (min)" type="number" min={0} />}
+                {(field) => (
+                  <FormText field={field} label={t("Durée (min)")} type="number" min={0} />
+                )}
               </form.Field>
             </div>
             <form.Subscribe selector={(state) => state.isSubmitting}>
               {(submitting) => (
                 <Button type="submit" variant="outline" className="w-fit" disabled={submitting}>
                   <IconCalculator data-icon="inline-start" />
-                  {submitting ? "Calcul…" : "Calculer"}
+                  {submitting ? t("Calcul…") : t("Calculer")}
                 </Button>
               )}
             </form.Subscribe>
@@ -130,11 +137,14 @@ export function PricingResolve({ onOpen }: { onOpen: (record: RecordItem) => voi
           (result.definition && result.preview ? (
             <Alert>
               <AlertTitle>
-                {money(result.preview.price, result.preview.currency)} pour{" "}
-                {number(result.preview.energy_kwh, 2)} kWh en {result.preview.duration_minutes} min
+                {t("{price} pour {energy} kWh en {minutes} min", {
+                  price: money(result.preview.price, result.preview.currency),
+                  energy: number(result.preview.energy_kwh, 2),
+                  minutes: result.preview.duration_minutes,
+                })}
               </AlertTitle>
               <AlertDescription>
-                Tarif appliqué :{" "}
+                {t("Tarif appliqué :")}{" "}
                 <button
                   type="button"
                   className="font-medium text-primary underline-offset-4 dark:text-sidebar-primary hover:underline"
@@ -146,9 +156,9 @@ export function PricingResolve({ onOpen }: { onOpen: (record: RecordItem) => voi
             </Alert>
           ) : (
             <Alert>
-              <AlertTitle>Aucun tarif applicable</AlertTitle>
+              <AlertTitle>{t("Aucun tarif applicable")}</AlertTitle>
               <AlertDescription>
-                La session serait gratuite. Créez un tarif couvrant ce connecteur.
+                {t("La session serait gratuite. Créez un tarif couvrant ce connecteur.")}
               </AlertDescription>
             </Alert>
           ))}

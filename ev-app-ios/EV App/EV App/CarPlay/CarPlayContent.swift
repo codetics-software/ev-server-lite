@@ -22,7 +22,7 @@ enum CarPlayContent {
             CPInformationItem(title: String(localized: "Duration"), detail: Formatters.duration(seconds: session.durationSeconds)),
         ]
         if let soc = session.stateOfCharge {
-            items.append(CPInformationItem(title: String(localized: "Battery"), detail: "\(soc)%"))
+            items.append(CPInformationItem(title: String(localized: "Battery"), detail: (Double(soc) / 100).formatted(.percent)))
         }
         if session.price != nil {
             items.append(CPInformationItem(title: String(localized: "Estimated price"), detail: Formatters.price(session.price, currency: session.currency)))

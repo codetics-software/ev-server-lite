@@ -13,8 +13,11 @@ import { monthLabels, number } from "@/lib/format";
 import { IconArrowUpRight } from "@tabler/icons-react";
 import Link from "next/link";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { t, translated } from "@/lib/i18n";
 
-const config = { value: { label: "Énergie (kWh)", color: "var(--chart-3)" } } satisfies ChartConfig;
+const config = translated({
+  value: { label: "Énergie (kWh)", color: "var(--chart-3)" },
+}) satisfies ChartConfig;
 
 export function YearConsumption({ revision }: { revision: number }) {
   const year = new Date().getFullYear();
@@ -29,9 +32,9 @@ export function YearConsumption({ revision }: { revision: number }) {
   return (
     <section className="operational-panel" aria-labelledby="consumption-heading">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="consumption-heading">Énergie délivrée en {year}</h2>
+        <h2 id="consumption-heading">{t("Énergie délivrée en {year}", { year })}</h2>
         <Link href="/statistics" className="text-xs text-muted-foreground hover:text-foreground">
-          {number(data.total, 0)} kWh · statistiques
+          {t("{energy} kWh · statistiques", { energy: number(data.total, 0) })}
         </Link>
       </div>
       <ChartContainer config={config} className="aspect-auto h-56 w-full">
@@ -64,7 +67,9 @@ function Anomaly({ href, label, count }: { href: string; label: string; count: n
     <Link className="operation-link" href={href}>
       <div>
         <strong>{label}</strong>
-        <span>{count === null ? "Indisponible" : count ? "À examiner" : "Aucune anomalie"}</span>
+        <span>
+          {count === null ? t("Indisponible") : count ? t("À examiner") : t("Aucune anomalie")}
+        </span>
       </div>
       <span className="flex items-center gap-2">
         {count !== null && <ToneBadge tone={count ? "danger" : "success"}>{count}</ToneBadge>}
@@ -89,17 +94,17 @@ export function Anomalies({ revision }: { revision: number }) {
   const assets = useApi<unknown[]>(components.assets ? "assets/in-error" : null, revision);
   return (
     <section className="operational-panel" aria-labelledby="anomalies-heading">
-      <h2 id="anomalies-heading">Anomalies</h2>
+      <h2 id="anomalies-heading">{t("Anomalies")}</h2>
       <Anomaly
         href="/stations"
-        label="Bornes en erreur"
+        label={t("Bornes en erreur")}
         count={stations.data ? stations.data.length : null}
       />
-      <Anomaly href="/transactions" label="Sessions en erreur" count={sessionCount} />
+      <Anomaly href="/transactions" label={t("Sessions en erreur")} count={sessionCount} />
       {components.assets && (
         <Anomaly
           href="/assets"
-          label="Équipements en erreur"
+          label={t("Équipements en erreur")}
           count={assets.data ? assets.data.length : null}
         />
       )}

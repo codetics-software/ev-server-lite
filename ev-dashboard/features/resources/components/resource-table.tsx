@@ -12,6 +12,7 @@ import { StateBadge } from "@/features/shared/status-badge";
 import type { Row } from "@/lib/api-types";
 import { formatCell, valueAt } from "../resource-format";
 import type { ResourceColumn } from "../types";
+import { t } from "@/lib/i18n";
 
 type Props = {
   rows: Row[];
@@ -36,7 +37,7 @@ export function ResourceTable({ rows, columns, canEdit, onView, onEdit }: Props)
             </TableHead>
           ))}
           <TableHead className="text-right">
-            <span className="sr-only">Actions</span>
+            <span className="sr-only">{t("Actions")}</span>
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -59,11 +60,11 @@ export function ResourceTable({ rows, columns, canEdit, onView, onEdit }: Props)
             ))}
             <TableCell className="text-right">
               <Button variant="ghost" size="sm" onClick={() => onView(row)}>
-                Consulter
+                {t("Consulter")}
               </Button>
               {canEdit && (
                 <Button variant="ghost" size="sm" onClick={() => onEdit(row)}>
-                  Modifier
+                  {t("Modifier")}
                 </Button>
               )}
             </TableCell>

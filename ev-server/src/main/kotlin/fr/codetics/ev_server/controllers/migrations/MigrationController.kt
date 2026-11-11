@@ -3,6 +3,7 @@ package fr.codetics.ev_server.controllers.migrations
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.MigrationDocumentEntity
 import fr.codetics.ev_server.models.entities.MigrationDocumentKey
@@ -33,7 +34,7 @@ class MigrationController(
         @AuthenticationPrincipal user: AppPrincipal,
     ): Map<String, Int> {
         require(collection.matches(Regex("[A-Za-z][A-Za-z0-9_-]{0,79}")))
-        ensure(exportBytes.size <= 1_048_576) { "Découpez l’export en lots de 1 Mio au maximum." }
+        ensure(exportBytes.size <= 1_048_576) { msg("migration.batch_too_large") }
         val export =
             try {
                 Charsets.UTF_8.newDecoder()
@@ -43,7 +44,7 @@ class MigrationController(
             } catch (_: CharacterCodingException) {
                 throw ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "L’export doit être encodé en UTF-8 valide.",
+                    msg("migration.invalid_utf8"),
                 )
             }
         val lines = export.lineSequence().filter(String::isNotBlank).toList()
@@ -60,11 +61,11 @@ class MigrationController(
                     } catch (_: JacksonException) {
                         throw ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
-                            "L’export contient un document JSON invalide.",
+                            msg("migration.invalid_json"),
                         )
                     }
                 ensure(document.isObject && document.hasNonNull("_id")) {
-                    "Chaque document exporté doit conserver son identifiant _id d’origine."
+                    msg("migration.missing_id")
                 }
 
                 val identity = db.encode(document.path("_id"))
@@ -87,7 +88,7 @@ class MigrationController(
                 } else {
                     throw ResponseStatusException(
                         HttpStatus.CONFLICT,
-                        "Un document archivé a changé. Réconciliez les données avant de le réimporter.",
+                        msg("migration.document_changed"),
                     )
                 }
             }

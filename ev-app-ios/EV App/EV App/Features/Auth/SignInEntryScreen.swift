@@ -114,7 +114,7 @@ struct SignInEntryScreen: View {
             password = ""
         } catch {
             errorMessage = error.localizedDescription
-            canResendVerification = error.localizedDescription.contains("Vérifiez")
+            canResendVerification = (error as? APIError)?.code == "email_not_verified"
         }
     }
 

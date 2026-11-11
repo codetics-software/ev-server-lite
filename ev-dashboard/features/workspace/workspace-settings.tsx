@@ -26,6 +26,7 @@ import { revalidateLogic, useForm } from "@tanstack/react-form";
 import Image from "next/image";
 import { useId, useState } from "react";
 import { useWorkspaceSession, workspaceLogo } from "./workspace-context";
+import { t } from "@/lib/i18n";
 
 const nameRule = "Le nom de l’espace doit contenir entre 1 et 200 caractères.";
 
@@ -57,10 +58,10 @@ function NameForm({ workspace, onSaved }: { workspace: Workspace; onSaved: () =>
           method: "PUT",
           body: JSON.stringify({ name: value.name.trim() }),
         });
-        notify("Le nom de l’espace a été enregistré.");
+        notify(t("Le nom de l’espace a été enregistré."));
         onSaved();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer l’espace."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer l’espace.")));
       }
     },
   });
@@ -77,13 +78,15 @@ function NameForm({ workspace, onSaved }: { workspace: Workspace; onSaved: () =>
           name="name"
           validators={{ onDynamic: rules(required(nameRule), maxLength(200, nameRule)) }}
         >
-          {(field) => <FormText field={field} label="Nom de l’espace" maxLength={200} required />}
+          {(field) => (
+            <FormText field={field} label={t("Nom de l’espace")} maxLength={200} required />
+          )}
         </form.Field>
         <Field>
-          <FieldLabel htmlFor="workspace-slug">Identifiant de connexion</FieldLabel>
+          <FieldLabel htmlFor="workspace-slug">{t("Identifiant de connexion")}</FieldLabel>
           <Input id="workspace-slug" value={workspace.slug} readOnly />
           <FieldDescription>
-            Utilisé pour la connexion et dans les liens des QR codes. Il est permanent.
+            {t("Utilisé pour la connexion et dans les liens des QR codes. Il est permanent.")}
           </FieldDescription>
         </Field>
         <form.Subscribe selector={(state) => state.isSubmitting}>
@@ -112,15 +115,15 @@ function Logo({
       return;
     }
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-      notifyError("Format non pris en charge", "Choisissez une image PNG, JPEG ou WebP.");
+      notifyError(t("Format non pris en charge"), t("Choisissez une image PNG, JPEG ou WebP."));
       return;
     }
     if (file.size > 256 * 1024) {
-      notifyError("Image trop volumineuse", "Le logo ne doit pas dépasser 256 Ko.");
+      notifyError(t("Image trop volumineuse"), t("Le logo ne doit pas dépasser 256 Ko."));
       return;
     }
     await action.run("upload", () => upload("workspace/logo", file, file.type, "PUT"), {
-      success: "Logo enregistré.",
+      success: t("Logo enregistré."),
       onDone: onSaved,
     });
   }
@@ -131,7 +134,7 @@ function Logo({
         {logo ? (
           <Image
             src={logo}
-            alt="Logo de l’espace"
+            alt={t("Logo de l’espace")}
             width={72}
             height={72}
             unoptimized
@@ -150,7 +153,7 @@ function Logo({
             nativeButton={false}
           >
             <IconPhotoUp data-icon="inline-start" />
-            {logo ? "Remplacer le logo" : "Téléverser un logo"}
+            {logo ? t("Remplacer le logo") : t("Téléverser un logo")}
           </Button>
           <input
             id={id}
@@ -168,19 +171,20 @@ function Logo({
               disabled={action.busy}
               onClick={() =>
                 action.run("delete", () => api("workspace/logo", { method: "DELETE" }), {
-                  success: "Logo retiré.",
+                  success: t("Logo retiré."),
                   onDone: onSaved,
                 })
               }
             >
               <IconTrash data-icon="inline-start" />
-              Retirer
+              {t("Retirer")}
             </Button>
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          PNG, JPEG ou WebP, 256 Ko au plus. Affiché dans la navigation, sur la page de connexion et
-          sur les portails de recharge.
+          {t(
+            "PNG, JPEG ou WebP, 256 Ko au plus. Affiché dans la navigation, sur la page de connexion et sur les portails de recharge.",
+          )}
         </p>
       </div>
     </div>
@@ -237,7 +241,7 @@ function ComponentsForm({ components, onSaved }: { components: Components; onSav
                   body: JSON.stringify(componentsInput(value)),
                 }),
               {
-                success: "Fonctionnalités enregistrées.",
+                success: t("Fonctionnalités enregistrées."),
                 onDone: () => {
                   setDraft(null);
                   onSaved();
@@ -246,11 +250,11 @@ function ComponentsForm({ components, onSaved }: { components: Components; onSav
             )
           }
         >
-          Enregistrer
+          {t("Enregistrer")}
         </Button>
         {draft && (
           <Button variant="ghost" onClick={() => setDraft(null)}>
-            Annuler
+            {t("Annuler")}
           </Button>
         )}
       </div>
@@ -263,8 +267,10 @@ export function WorkspaceSettings() {
   return (
     <>
       <PageHeader
-        title="Espace client"
-        description="L’identité de votre réseau et les fonctionnalités proposées à vos utilisateurs."
+        title={t("Espace client")}
+        description={t(
+          "L’identité de votre réseau et les fonctionnalités proposées à vos utilisateurs.",
+        )}
       />
       {!workspace ? (
         <LoadingState rows={4} />
@@ -273,9 +279,9 @@ export function WorkspaceSettings() {
           <div className="flex flex-col gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Identité</CardTitle>
+                <CardTitle>{t("Identité")}</CardTitle>
                 <CardDescription>
-                  Nom affiché aux utilisateurs et identifiant de connexion.
+                  {t("Nom affiché aux utilisateurs et identifiant de connexion.")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -284,7 +290,7 @@ export function WorkspaceSettings() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Logo</CardTitle>
+                <CardTitle>{t("Logo")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Logo workspace={workspace} revision={revision} onSaved={refreshWorkspace} />
@@ -293,10 +299,11 @@ export function WorkspaceSettings() {
           </div>
           <Card>
             <CardHeader>
-              <CardTitle>Fonctionnalités</CardTitle>
+              <CardTitle>{t("Fonctionnalités")}</CardTitle>
               <CardDescription>
-                Les fonctionnalités désactivées disparaissent de la navigation de tous les
-                utilisateurs.
+                {t(
+                  "Les fonctionnalités désactivées disparaissent de la navigation de tous les utilisateurs.",
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>

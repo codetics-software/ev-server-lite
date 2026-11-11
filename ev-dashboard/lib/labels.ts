@@ -1,20 +1,25 @@
 import type { AuthorizationStatus, CommandState, UserRole } from "./api-types";
+import { t, translated } from "./i18n";
 
-export const roleLabels: Record<UserRole, string> = {
+const roles: Record<UserRole, string> = {
   ADMIN: "Administrateur",
   OPERATOR: "Exploitant",
   VIEWER: "Lecteur",
   DRIVER: "Conducteur",
 };
 
-export const authorizationLabels: Record<AuthorizationStatus, string> = {
+export const roleLabels = translated(roles);
+
+const authorizations: Record<AuthorizationStatus, string> = {
   Accepted: "Acceptée",
   Blocked: "Bloquée",
   Expired: "Expirée",
   Invalid: "Invalide",
 };
 
-export const commandStateLabels: Record<CommandState, string> = {
+export const authorizationLabels = translated(authorizations);
+
+const commandStates: Record<CommandState, string> = {
   QUEUED: "En attente",
   SENT: "Envoyée",
   SUCCEEDED: "Réponse reçue",
@@ -23,7 +28,9 @@ export const commandStateLabels: Record<CommandState, string> = {
   CANCELLED: "Annulée",
 };
 
-export const notificationLabels: Record<string, string> = {
+export const commandStateLabels = translated(commandStates);
+
+const notifications: Record<string, string> = {
   SESSION_STARTED: "Début de session",
   END_OF_CHARGE: "Fin de charge",
   END_OF_SESSION: "Fin de session",
@@ -45,7 +52,9 @@ export const notificationLabels: Record<string, string> = {
   STATION_CERTIFICATE_EXPIRING: "Certificat de borne à renouveler",
 };
 
-export const componentLabels: Record<string, { label: string; description: string }> = {
+export const notificationLabels = translated(notifications);
+
+export const componentLabels: Record<string, { label: string; description: string }> = translated({
   organization: {
     label: "Organisation",
     description: "Entreprises, sites et zones de recharge.",
@@ -67,13 +76,13 @@ export const componentLabels: Record<string, { label: string; description: strin
     label: "Recharge publique",
     description: "Portails de paiement par QR code et paiements Stripe.",
   },
-};
+});
 
-const values: Record<string, string> = {
-  ...roleLabels,
-  ...notificationLabels,
-  ...authorizationLabels,
-  ...commandStateLabels,
+const values: Record<string, string> = translated({
+  ...roles,
+  ...notifications,
+  ...authorizations,
+  ...commandStates,
   METER: "Compteur",
   SOLAR: "Production solaire",
   BATTERY: "Batterie",
@@ -319,25 +328,27 @@ const values: Record<string, string> = {
   Type3: "Type 3",
   PUSH: "Envoi par l’équipement",
   VID: "Véhicule",
-};
+});
 
-export const ocpiModuleLabels: Record<string, string> = {
+export const ocpiModuleLabels: Record<string, string> = translated({
   locations: "Sites et points de charge",
   statuses: "États des points de charge",
   tokens: "Badges",
   cdrs: "Relevés de session",
   sessions: "Sessions",
   tariffs: "Tarifs",
-};
+});
 
 export function valueLabel(value: string) {
   if (value.startsWith("STATION_COMMAND_")) {
-    return `Commande · ${values[value.slice(16)] ?? "Opération de la borne"}`;
+    return t("Commande · {operation}", {
+      operation: values[value.slice(16)] ?? t("Opération de la borne"),
+    });
   }
   return values[value] ?? value;
 }
 
-const fields: Record<string, string> = {
+const fields: Record<string, string> = translated({
   id: "Identifiant",
   uid: "Identifiant du badge",
   name: "Nom",
@@ -400,8 +411,8 @@ const fields: Record<string, string> = {
   phone: "Téléphone",
   locale: "Langue",
   last_login_at: "Dernière connexion",
-};
+});
 
 export function fieldLabel(key: string) {
-  return fields[key] ?? "Information complémentaire";
+  return fields[key] ?? t("Information complémentaire");
 }

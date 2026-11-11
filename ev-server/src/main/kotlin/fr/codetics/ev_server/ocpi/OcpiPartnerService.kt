@@ -5,6 +5,7 @@ import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.models.api.PageResponse
 import fr.codetics.ev_server.models.entities.OcpiJobEntity
@@ -113,18 +114,18 @@ class OcpiPartnerService(
         )
     }
 
-    private fun partner(user: AppPrincipal, id: UUID) = partners.findByTenantIdAndId(user.tenantId, id) ?: throw NotFound("Partenaire introuvable.")
+    private fun partner(user: AppPrincipal, id: UUID) = partners.findByTenantIdAndId(user.tenantId, id) ?: throw NotFound(msg("ocpi.partner.not_found"))
 
     fun update(user: AppPrincipal, id: UUID, input: PartnerUpdate): PartnerResponse {
-        ensure(input.name.isNotBlank() && input.name.length <= 200) { "Le nom doit contenir entre 1 et 200 caractères." }
+        ensure(input.name.isNotBlank() && input.name.length <= 200) { msg("validation.name_length") }
         transport.validateRemote(input.remoteUrl, input.remoteUrl)
         return db.atomic {
-            val partner = db.lock<PartnerEntity>(id)?.takeIf { it.tenantId == user.tenantId } ?: throw NotFound("Partenaire introuvable.")
+            val partner = db.lock<PartnerEntity>(id)?.takeIf { it.tenantId == user.tenantId } ?: throw NotFound(msg("ocpi.partner.not_found"))
             ensure(!partner.registered || partner.remoteUrl == input.remoteUrl) {
-                "Désenregistrez le partenaire avant de changer son adresse."
+                msg("ocpi.partner.unregister_first")
             }
             ensure(partner.localTokenEncrypted != null || !input.enabled) {
-                "Ce partenaire a été révoqué : créez-en un nouveau pour rétablir la connexion."
+                msg("ocpi.partner.revoked")
             }
             partner.name = input.name.trim()
             partner.remoteUrl = input.remoteUrl
@@ -137,22 +138,22 @@ class OcpiPartnerService(
 
     fun register(user: AppPrincipal, id: UUID, input: PartnerRegistration): PartnerResponse {
         val partner = partner(user, id)
-        ensure(partner.enabled && partner.localTokenEncrypted != null) { "Ce partenaire est désactivé." }
-        ensure(!partner.registered) { "Ce partenaire est déjà enregistré." }
-        ensure(input.token.isNotBlank() && input.token.length <= 64) { "Le jeton fourni par le partenaire est invalide." }
+        ensure(partner.enabled && partner.localTokenEncrypted != null) { msg("ocpi.partner.disabled") }
+        ensure(!partner.registered) { msg("ocpi.partner.already_registered") }
+        ensure(input.token.isNotBlank() && input.token.length <= 64) { msg("ocpi.partner.invalid_token") }
         val remote = requireNotNull(partner.remoteUrl)
         val failure =
             try {
                 val versions = transport.request(partner, remote, token = input.token)
                 val version =
                     versions.firstOrNull { it.path("version").asText() == "2.1.1" }
-                        ?: throw OcpiFault(3001, "Le partenaire ne publie pas OCPI 2.1.1.")
+                        ?: throw OcpiFault(3001, msg("ocpi.partner.no_211"))
                 val details = transport.request(partner, version.path("url").asText(), token = input.token)
                 val endpoints = details.path("endpoints")
                 endpoints.forEach { transport.validateRemote(it.path("url").asText(), remote) }
                 val credentialsUrl =
                     endpoints.firstOrNull { it.path("identifier").asText() == "credentials" }?.path("url")?.asText()
-                        ?: throw OcpiFault(3001, "Le partenaire ne publie pas le module credentials.")
+                        ?: throw OcpiFault(3001, msg("ocpi.partner.no_credentials"))
                 val local = vault.decrypt(requireNotNull(partner.localTokenEncrypted))
                 val theirs =
                     transport.request(
@@ -163,7 +164,7 @@ class OcpiPartnerService(
                         input.token,
                     )
                 val token = theirs.path("token").asText()
-                if (token.isBlank() || token.length > 64) throw OcpiFault(3001, "Le partenaire n’a pas renvoyé de jeton valide.")
+                if (token.isBlank() || token.length > 64) throw OcpiFault(3001, msg("ocpi.partner.no_valid_token"))
                 db.atomic {
                     val locked = requireNotNull(db.lock<PartnerEntity>(id))
                     locked.remoteTokenEncrypted = vault.encrypt(token)
@@ -188,7 +189,7 @@ class OcpiPartnerService(
 
     fun unregister(user: AppPrincipal, id: UUID): PartnerResponse {
         val partner = partner(user, id)
-        ensure(partner.registered) { "Ce partenaire n’est pas enregistré." }
+        ensure(partner.registered) { msg("ocpi.partner.not_registered") }
         val url = transport.endpoint(partner, "credentials")
         val failure =
             try {
@@ -213,10 +214,10 @@ class OcpiPartnerService(
         val partner = partner(user, id)
         val result =
             try {
-                ensure(partner.registered) { "Enregistrez d’abord le partenaire." }
+                ensure(partner.registered) { msg("ocpi.partner.register_first") }
                 val versions = transport.request(partner, requireNotNull(partner.remoteUrl))
-                if (versions.none { it.path("version").asText() == "2.1.1" }) throw OcpiFault(3001, "Le partenaire ne publie plus OCPI 2.1.1.")
-                PingResponse(true, "Le partenaire répond.")
+                if (versions.none { it.path("version").asText() == "2.1.1" }) throw OcpiFault(3001, msg("ocpi.partner.no_longer_211"))
+                PingResponse(true, msg("ocpi.partner.responding"))
             } catch (fault: OcpiFault) {
                 PingResponse(false, fault.message)
             }
@@ -240,11 +241,11 @@ class OcpiPartnerService(
 
     fun push(user: AppPrincipal, id: UUID, module: String): JobResponse {
         val partner = partner(user, id)
-        ensure(partner.registered && partner.enabled) { "Enregistrez d’abord le partenaire." }
+        ensure(partner.registered && partner.enabled) { msg("ocpi.partner.register_first") }
         val allowed = if (partner.localRole == "cpo") setOf("locations", "statuses", "tariffs", "sessions", "cdrs") else setOf("tokens")
-        ensure(module in allowed) { "Ce module ne peut pas être envoyé à ce partenaire." }
+        ensure(module in allowed) { msg("ocpi.partner.module_not_pushable") }
         val identifier = if (module == "statuses") "locations" else module
-        val base = transport.endpoint(partner, identifier) ?: throw ResponseStatusException(HttpStatus.CONFLICT, "Le partenaire ne publie pas le module $identifier.")
+        val base = transport.endpoint(partner, identifier) ?: throw ResponseStatusException(HttpStatus.CONFLICT, msg("ocpi.partner.module_missing", identifier))
         val prefix = "/${mapper.countryCode}/${mapper.partyId}"
         val operations = mutableListOf<Triple<String, String, Any?>>()
         when (module) {
@@ -304,10 +305,10 @@ class OcpiPartnerService(
 
     fun pull(user: AppPrincipal, id: UUID, module: String): JobResponse {
         val partner = partner(user, id)
-        ensure(partner.registered && partner.enabled) { "Enregistrez d’abord le partenaire." }
+        ensure(partner.registered && partner.enabled) { msg("ocpi.partner.register_first") }
         val allowed = if (partner.localRole == "cpo") setOf("tokens") else setOf("locations", "sessions", "cdrs", "tariffs")
-        ensure(module in allowed) { "Ce module ne peut pas être récupéré depuis ce partenaire." }
-        var url: String? = transport.endpoint(partner, module) ?: throw ResponseStatusException(HttpStatus.CONFLICT, "Le partenaire ne publie pas le module $module.")
+        ensure(module in allowed) { msg("ocpi.partner.module_not_pullable") }
+        var url: String? = transport.endpoint(partner, module) ?: throw ResponseStatusException(HttpStatus.CONFLICT, msg("ocpi.partner.module_missing", module))
         val job = OcpiJobEntity(tenantId = user.tenantId, partnerId = id, module = module, direction = "PULL")
         val errors = mutableListOf<String>()
         var pages = 0
@@ -360,8 +361,8 @@ class OcpiPartnerService(
 
     fun objects(user: AppPrincipal, id: UUID, module: String, direction: String, offset: Int, limit: Int): PageResponse<ObjectResponse> {
         partner(user, id)
-        ensure(direction in setOf("SENDER", "RECEIVER")) { "Sens inconnu." }
-        ensure(module in setOf("locations", "sessions", "cdrs", "tariffs", "tokens")) { "Module inconnu." }
+        ensure(direction in setOf("SENDER", "RECEIVER")) { msg("ocpi.partner.unknown_direction") }
+        ensure(module in setOf("locations", "sessions", "cdrs", "tariffs", "tokens")) { msg("ocpi.partner.unknown_module") }
         val page =
             queries.page<OcpiObjectEntity>(
                 listOf(

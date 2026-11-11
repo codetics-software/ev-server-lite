@@ -1,5 +1,6 @@
 package fr.codetics.ev_server.models.notifications
 
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.NotificationEntity
 import java.time.Instant
 import java.util.UUID
@@ -11,26 +12,29 @@ enum class NotificationAudience {
     ADMIN,
 }
 
-enum class NotificationType(val audience: NotificationAudience, val label: String) {
-    SESSION_STARTED(NotificationAudience.DRIVER, "Début de session"),
-    END_OF_CHARGE(NotificationAudience.DRIVER, "Fin de charge"),
-    END_OF_SESSION(NotificationAudience.DRIVER, "Fin de session"),
-    ACCOUNT_STATUS_CHANGED(NotificationAudience.DRIVER, "Changement d’état du compte"),
-    ACCOUNT_INACTIVITY(NotificationAudience.DRIVER, "Compte inactif"),
-    PREPARING_SESSION_NOT_STARTED(NotificationAudience.DRIVER, "Véhicule branché sans session"),
-    SESSION_NOT_STARTED_AFTER_AUTHORIZE(NotificationAudience.DRIVER, "Badge présenté sans session"),
-    INVOICE_AVAILABLE(NotificationAudience.DRIVER, "Facture disponible"),
-    BILLING_FAILED(NotificationAudience.DRIVER, "Échec de paiement"),
-    CARD_READY(NotificationAudience.DRIVER, "Carte de recharge prête"),
-    CARD_ORDER_PAID(NotificationAudience.ADMIN, "Commande de carte de recharge"),
-    STATION_STATUS_ERROR(NotificationAudience.ADMIN, "Borne en erreur"),
-    STATION_OFFLINE(NotificationAudience.ADMIN, "Borne hors ligne"),
-    STATION_REGISTERED(NotificationAudience.ADMIN, "Nouvelle borne enregistrée"),
-    UNKNOWN_BADGE(NotificationAudience.ADMIN, "Badge inconnu"),
-    STATION_SECURITY_EVENT(NotificationAudience.ADMIN, "Événement de sécurité d’une borne"),
-    STATION_CERTIFICATE_EXPIRING(NotificationAudience.ADMIN, "Certificat de borne à renouveler"),
-    NEW_REGISTERED_USER(NotificationAudience.ADMIN, "Nouvel utilisateur"),
-    END_USER_ERROR_REPORT(NotificationAudience.ADMIN, "Signalement d’un utilisateur"),
+enum class NotificationType(val audience: NotificationAudience) {
+    SESSION_STARTED(NotificationAudience.DRIVER),
+    END_OF_CHARGE(NotificationAudience.DRIVER),
+    END_OF_SESSION(NotificationAudience.DRIVER),
+    ACCOUNT_STATUS_CHANGED(NotificationAudience.DRIVER),
+    ACCOUNT_INACTIVITY(NotificationAudience.DRIVER),
+    PREPARING_SESSION_NOT_STARTED(NotificationAudience.DRIVER),
+    SESSION_NOT_STARTED_AFTER_AUTHORIZE(NotificationAudience.DRIVER),
+    INVOICE_AVAILABLE(NotificationAudience.DRIVER),
+    BILLING_FAILED(NotificationAudience.DRIVER),
+    CARD_READY(NotificationAudience.DRIVER),
+    CARD_ORDER_PAID(NotificationAudience.ADMIN),
+    STATION_STATUS_ERROR(NotificationAudience.ADMIN),
+    STATION_OFFLINE(NotificationAudience.ADMIN),
+    STATION_REGISTERED(NotificationAudience.ADMIN),
+    UNKNOWN_BADGE(NotificationAudience.ADMIN),
+    STATION_SECURITY_EVENT(NotificationAudience.ADMIN),
+    STATION_CERTIFICATE_EXPIRING(NotificationAudience.ADMIN),
+    NEW_REGISTERED_USER(NotificationAudience.ADMIN),
+    END_USER_ERROR_REPORT(NotificationAudience.ADMIN);
+
+    val label: String
+        get() = msg("notification.type.${name.lowercase()}")
 }
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)

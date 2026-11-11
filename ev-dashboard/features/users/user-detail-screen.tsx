@@ -24,6 +24,7 @@ import { UserForm } from "./user-form";
 import { UserSites } from "./user-sites";
 import { UserState } from "./users-screen";
 import type { ManagedUser } from "./user-types";
+import { t } from "@/lib/i18n";
 
 export function UserDetailScreen({ id }: { id: string }) {
   const { user: me, workspace, components } = useWorkspaceSession();
@@ -35,7 +36,7 @@ export function UserDetailScreen({ id }: { id: string }) {
   if (error && !user) {
     return (
       <>
-        <PageHeader title="Utilisateur" back={{ href: "/users", label: "Utilisateurs" }} />
+        <PageHeader title={t("Utilisateur")} back={{ href: "/users", label: t("Utilisateurs") }} />
         <ErrorState error={error} onRetry={refresh} />
       </>
     );
@@ -51,15 +52,17 @@ export function UserDetailScreen({ id }: { id: string }) {
   return (
     <>
       <PageHeader
-        back={{ href: "/users", label: "Utilisateurs" }}
+        back={{ href: "/users", label: t("Utilisateurs") }}
         title={user.display_name}
-        description={`${user.email} · ${roleLabels[user.role]} · créé le ${date(user.created_at)}`}
+        description={`${user.email} · ${roleLabels[user.role]} · ${t("créé le {date}", { date: date(user.created_at) })}`}
         meta={
           <>
             <UserState user={user} />
-            {user.billing_customer && <ToneBadge tone="progress">Client facturé</ToneBadge>}
+            {user.billing_customer && <ToneBadge tone="progress">{t("Client facturé")}</ToneBadge>}
             <span className="text-xs text-muted-foreground">
-              Dernière connexion : {user.last_login_at ? date(user.last_login_at) : "jamais"}
+              {t("Dernière connexion : {date}", {
+                date: user.last_login_at ? date(user.last_login_at) : t("jamais"),
+              })}
             </span>
           </>
         }
@@ -77,12 +80,14 @@ export function UserDetailScreen({ id }: { id: string }) {
                         method: "POST",
                         body: JSON.stringify({ tenant: workspace.slug, email: user.email }),
                       }),
-                    { success: "Lien de définition du mot de passe envoyé." },
+                    { success: t("Lien de définition du mot de passe envoyé.") },
                   )
                 }
               >
                 <IconMailForward data-icon="inline-start" />
-                {user.email_verified ? "Réinitialiser le mot de passe" : "Renvoyer l’invitation"}
+                {user.email_verified
+                  ? t("Réinitialiser le mot de passe")
+                  : t("Renvoyer l’invitation")}
               </Button>
             )}
             {components.billing && (
@@ -94,29 +99,31 @@ export function UserDetailScreen({ id }: { id: string }) {
                     "sync",
                     () => api(`billing/users/${user.id}/synchronize`, { method: "POST" }),
                     {
-                      success: "Client de facturation synchronisé.",
+                      success: t("Client de facturation synchronisé."),
                       onDone: refresh,
                     },
                   )
                 }
               >
                 <IconRefresh data-icon="inline-start" />
-                Synchroniser la facturation
+                {t("Synchroniser la facturation")}
               </Button>
             )}
             {!self && (
               <ConfirmButton
-                title={`Supprimer ${user.display_name} ?`}
-                description="Le compte est anonymisé, ses badges sont libérés et l’historique des sessions est conservé. Cette action est irréversible."
-                confirmLabel="Supprimer le compte"
+                title={t("Supprimer {name} ?", { name: user.display_name })}
+                description={t(
+                  "Le compte est anonymisé, ses badges sont libérés et l’historique des sessions est conservé. Cette action est irréversible.",
+                )}
+                confirmLabel={t("Supprimer le compte")}
                 onConfirm={() =>
                   action.run("delete", () => api(`users/${user.id}`, { method: "DELETE" }), {
-                    success: "Compte supprimé.",
+                    success: t("Compte supprimé."),
                     onDone: () => router.replace("/users"),
                   })
                 }
               >
-                Supprimer
+                {t("Supprimer")}
               </ConfirmButton>
             )}
           </>
@@ -125,14 +132,16 @@ export function UserDetailScreen({ id }: { id: string }) {
       <Tabs defaultValue="profile">
         <div className="overflow-x-auto">
           <TabsList variant="line">
-            <TabsTrigger value="profile">Profil</TabsTrigger>
-            <TabsTrigger value="badges">Badges</TabsTrigger>
-            {components.organization && <TabsTrigger value="sites">Sites</TabsTrigger>}
-            <TabsTrigger value="sessions">Sessions</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            {components.billing && <TabsTrigger value="payment">Moyens de paiement</TabsTrigger>}
-            {components.billing && <TabsTrigger value="invoices">Factures</TabsTrigger>}
-            {components.cars && <TabsTrigger value="cars">Véhicules</TabsTrigger>}
+            <TabsTrigger value="profile">{t("Profil")}</TabsTrigger>
+            <TabsTrigger value="badges">{t("Badges")}</TabsTrigger>
+            {components.organization && <TabsTrigger value="sites">{t("Sites")}</TabsTrigger>}
+            <TabsTrigger value="sessions">{t("Sessions")}</TabsTrigger>
+            <TabsTrigger value="notifications">{t("Notifications")}</TabsTrigger>
+            {components.billing && (
+              <TabsTrigger value="payment">{t("Moyens de paiement")}</TabsTrigger>
+            )}
+            {components.billing && <TabsTrigger value="invoices">{t("Factures")}</TabsTrigger>}
+            {components.cars && <TabsTrigger value="cars">{t("Véhicules")}</TabsTrigger>}
           </TabsList>
         </div>
         <TabsContent value="profile" className="max-w-3xl pt-4">

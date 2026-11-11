@@ -1,4 +1,5 @@
-export const columns: Record<string, [string, string][]> = {
+import { translated } from "@/lib/i18n";
+export const columns: Record<string, [string, string][]> = translated({
   stations: [
     ["name", "Borne"],
     ["id", "Identifiant"],
@@ -48,4 +49,4 @@ export const columns: Record<string, [string, string][]> = {
     ["target", "Cible"],
     ["created_at", "Date"],
   ],
-};
+});

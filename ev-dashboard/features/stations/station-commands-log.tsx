@@ -8,6 +8,7 @@ import { useApi, useRevision } from "@/hooks/use-api";
 import type { Row } from "@/lib/api-types";
 import { date, display } from "@/lib/format";
 import { IconHistory, IconRefresh } from "@tabler/icons-react";
+import { t } from "@/lib/i18n";
 
 export function StationCommandsLog({
   stationId,
@@ -27,20 +28,20 @@ export function StationCommandsLog({
   const columns: Column<Row>[] = [
     {
       id: "action",
-      header: "Commande",
+      header: t("Commande"),
       sort: (command) => String(command.action),
       cell: (command) => display(command.action),
     },
-    { id: "state", header: "État", cell: (command) => <StateBadge state={command.state} /> },
+    { id: "state", header: t("État"), cell: (command) => <StateBadge state={command.state} /> },
     {
       id: "created",
-      header: "Demandée le",
+      header: t("Demandée le"),
       sort: (command) => String(command.created_at),
       cell: (command) => date(command.created_at),
     },
     {
       id: "completed",
-      header: "Réponse",
+      header: t("Réponse"),
       cell: (command) => (
         <span className="flex flex-col">
           <span>{date(command.completed_at)}</span>
@@ -54,10 +55,10 @@ export function StationCommandsLog({
     },
   ];
   return (
-    <section className="flex flex-col gap-4" aria-label="Commandes de la borne">
+    <section className="flex flex-col gap-4" aria-label={t("Commandes de la borne")}>
       <Button variant="outline" className="w-fit" onClick={refresh}>
         <IconRefresh data-icon="inline-start" />
-        Actualiser
+        {t("Actualiser")}
       </Button>
       <ListState
         data={data}
@@ -68,13 +69,15 @@ export function StationCommandsLog({
         empty={
           <EmptyState
             icon={<IconHistory />}
-            title="Aucune commande"
-            description="Les commandes envoyées à cette borne et leurs réponses apparaîtront ici."
+            title={t("Aucune commande envoyée")}
+            description={t(
+              "Les commandes envoyées à cette borne et leurs réponses apparaîtront ici.",
+            )}
           />
         }
       >
         <DataTable
-          label="Commandes"
+          label={t("Commandes")}
           rows={items}
           columns={columns}
           rowKey={(command) => String(command.id)}

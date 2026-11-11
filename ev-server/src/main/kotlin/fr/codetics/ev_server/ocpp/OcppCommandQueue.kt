@@ -4,6 +4,7 @@ import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.InvalidRequest
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.commands.CommandState
 import fr.codetics.ev_server.models.entities.CommandEntity
 import fr.codetics.ev_server.models.entities.StationKey
@@ -79,7 +80,7 @@ class OcppCommandQueue(
         val device = stations.findById(StationKey(tenant, station)).orElse(null)
 
         if (device == null || !device.enabled || device.deleted) {
-            throw NotFound("Borne introuvable ou désactivée.")
+            throw NotFound(msg("stations.not_found_or_disabled"))
         }
 
         val command =

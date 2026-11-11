@@ -9,6 +9,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { api, errorMessage } from "@/lib/api";
 import { loadStripe, type Stripe, type StripeCardElement } from "@stripe/stripe-js";
 import { useEffect, useRef, useState } from "react";
+import { getLocale, t } from "@/lib/i18n";
 
 type Setup = { client_secret: string; account_id: string; publishable_key: string };
 
@@ -50,12 +51,12 @@ export function CardSetup({ onDone, onCancel }: { onDone: () => void; onCancel: 
         const setup = await api<Setup>("account/payment-methods/setup", { method: "POST" });
         const instance = await loadStripe(setup.publishable_key, {
           stripeAccount: setup.account_id,
-          locale: "fr",
+          locale: getLocale(),
         });
         if (!active || !instance || !mount.current) {
           return;
         }
-        element = instance.elements({ locale: "fr" }).create("card", {
+        element = instance.elements({ locale: getLocale() }).create("card", {
           hidePostalCode: true,
           style: {
             base: {
@@ -76,7 +77,7 @@ export function CardSetup({ onDone, onCancel }: { onDone: () => void; onCancel: 
         setSecret(setup.client_secret);
       } catch (failure) {
         if (active) {
-          setError(errorMessage(failure, "Le formulaire de paiement n’a pas pu être chargé."));
+          setError(errorMessage(failure, t("Le formulaire de paiement n’a pas pu être chargé.")));
         }
       }
     }
@@ -96,17 +97,17 @@ export function CardSetup({ onDone, onCancel }: { onDone: () => void; onCancel: 
     const result = await stripe.confirmCardSetup(secret, { payment_method: { card } });
     setPending(false);
     if (result.error) {
-      setError(result.error.message ?? "La carte a été refusée.");
+      setError(result.error.message ?? t("La carte a été refusée."));
       return;
     }
-    notify("Carte enregistrée.");
+    notify(t("Carte enregistrée."));
     onDone();
   }
 
   return (
     <div className="flex flex-col gap-4">
       <Field>
-        <FieldLabel>Carte bancaire</FieldLabel>
+        <FieldLabel>{t("Carte bancaire")}</FieldLabel>
         <div className="relative min-h-9 rounded-lg border border-input px-3 py-2.5 dark:bg-input/30">
           {!ready && !error && <Skeleton className="absolute inset-2" />}
           <div ref={mount} />
@@ -119,10 +120,10 @@ export function CardSetup({ onDone, onCancel }: { onDone: () => void; onCancel: 
       )}
       <div className="flex gap-2">
         <Button onClick={submit} disabled={!ready || pending}>
-          {pending ? "Vérification…" : "Enregistrer la carte"}
+          {pending ? t("Vérification…") : t("Enregistrer la carte")}
         </Button>
         <Button variant="ghost" onClick={onCancel}>
-          Annuler
+          {t("Annuler")}
         </Button>
       </div>
     </div>

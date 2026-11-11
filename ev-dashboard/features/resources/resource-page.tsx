@@ -21,6 +21,7 @@ import { exportCsv } from "./export-csv";
 import { useResourceList } from "./hooks/use-resource-list";
 import { resourceAccess } from "./resource-access";
 import type { ResourceColumn } from "./types";
+import { getIntlLocale, t, tp } from "@/lib/i18n";
 
 export function ResourcePage({ section, user }: { section: string; user: User }) {
   const list = useResourceList(section);
@@ -28,7 +29,7 @@ export function ResourcePage({ section, user }: { section: string; user: User })
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [detail, setDetail] = useState<Row | null>(null);
-  const title = sections.find((item) => item.id === section)?.label ?? section;
+  const title = t(sections.find((item) => item.id === section)?.label ?? section);
   const name = resourceName(section);
   const tableColumns: readonly ResourceColumn[] = columns[section] ?? [
     ["name", "Nom"],
@@ -54,20 +55,24 @@ export function ResourcePage({ section, user }: { section: string; user: User })
         {access.canCreate && fields[section] && (
           <Button onClick={() => edit(null)}>
             <IconPlus data-icon="inline-start" />
-            Ajouter {name}
+            {t("Ajouter {name}", { name })}
           </Button>
         )}
       </div>
       {list.error && (
         <Alert variant="destructive">
-          <AlertTitle>Impossible de charger {title.toLowerCase()}</AlertTitle>
+          <AlertTitle>
+            {t("Impossible de charger {title}", { title: title.toLowerCase() })}
+          </AlertTitle>
           <AlertDescription>{list.error.message}</AlertDescription>
         </Alert>
       )}
       <section className="flex min-w-0 flex-col gap-5" aria-label={title}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground tabular-nums">
-            {list.total.toLocaleString("fr-FR")} élément{list.total > 1 ? "s" : ""}
+            {tp(list.total, "{count} élément", "{count} éléments", {
+              count: list.total.toLocaleString(getIntlLocale()),
+            })}
           </p>
           <ResourceToolbar
             search={list.search}
@@ -85,15 +90,15 @@ export function ResourcePage({ section, user }: { section: string; user: User })
             <EmptyHeader>
               <EmptyTitle>
                 {list.search
-                  ? `Aucun résultat pour « ${list.search} »`
-                  : "Aucun élément enregistré"}
+                  ? t("Aucun résultat pour « {search} »", { search: list.search })
+                  : t("Aucun élément enregistré")}
               </EmptyTitle>
               <EmptyDescription>
                 {list.search
-                  ? "Essayez une autre recherche dans cette page."
+                  ? t("Essayez une autre recherche dans cette page.")
                   : access.canCreate && fields[section]
-                    ? `Utilisez le bouton « Ajouter ${name} » pour commencer.`
-                    : "Aucun élément à afficher."}
+                    ? t("Utilisez le bouton « Ajouter {name} » pour commencer.", { name })
+                    : t("Aucun élément à afficher.")}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

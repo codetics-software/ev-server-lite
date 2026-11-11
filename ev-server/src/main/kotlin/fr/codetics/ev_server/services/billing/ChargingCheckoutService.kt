@@ -3,6 +3,7 @@ package fr.codetics.ev_server.services.billing
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.billing.CheckoutDetails
 import fr.codetics.ev_server.models.billing.CheckoutRequest
@@ -43,24 +44,24 @@ class ChargingCheckoutService(
     fun create(workspace: String, evseId: UUID, request: CheckoutRequest): CheckoutResponse {
         PortalAccessToken.validateFormat(request.accessToken)
         ensure(request.creditMinor in 500..10000) {
-            "Le crédit doit être compris entre 5 € et 100 €."
+            msg("checkout.credit_range")
         }
         if (!gateway.configured || !vault.configured)
             throw ResponseStatusException(
                 HttpStatus.SERVICE_UNAVAILABLE,
-                "Le paiement n’est pas configuré.",
+                msg("payment.not_configured"),
             )
         val tenant =
             tenants.findBySlugAndActiveTrue(workspace)
                 ?: throw ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "Point de charge introuvable.",
+                    msg("evses.not_found"),
                 )
         val existing = payments.findByTenantIdAndRequestId(tenant.id, request.requestId)
         if (existing != null) {
             PortalAccessToken.verify(existing.accessTokenHash, request.accessToken)
             ensure(existing.evseId == evseId && existing.prepaidMinor == request.creditMinor) {
-                "Cette demande de paiement a déjà été utilisée."
+                msg("checkout.already_used")
             }
             return initialize(existing.id)
         }
@@ -73,7 +74,7 @@ class ChargingCheckoutService(
         ) {
             throw ResponseStatusException(
                 HttpStatus.CONFLICT,
-                "L’exploitant n’a pas encore activé les paiements.",
+                msg("checkout.payments_disabled"),
             )
         }
 
@@ -81,12 +82,12 @@ class ChargingCheckoutService(
             db.atomic {
                 val evse = evses.find(tenant.id, evseId)
                 db.lock<StationEntity>(StationKey(tenant.id, evse.stationId))
-                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Borne introuvable.")
+                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, msg("stations.not_found"))
                 val raced = payments.findByTenantIdAndRequestId(tenant.id, request.requestId)
                 if (raced != null) {
                     PortalAccessToken.verify(raced.accessTokenHash, request.accessToken)
                     ensure(raced.evseId == evseId && raced.prepaidMinor == request.creditMinor) {
-                        "Cette demande de paiement a déjà été utilisée."
+                        msg("checkout.already_used")
                     }
                     return@atomic raced.id
                 }
@@ -94,7 +95,7 @@ class ChargingCheckoutService(
                 if (!portal.available)
                     throw ResponseStatusException(
                         HttpStatus.CONFLICT,
-                        "Ce point de charge n’est pas disponible pour une nouvelle session.",
+                        msg("checkout.evse_unavailable"),
                     )
                 val order =
                     ChargingPaymentEntity(
@@ -106,7 +107,7 @@ class ChargingCheckoutService(
                         accessTokenHash = sha256(request.accessToken),
                         accessTokenEncrypted = vault.encrypt(request.accessToken),
                         portalUrl = evses.portalUrl(tenant.id, evseId),
-                        description = "Crédit de recharge — ${evse.name}",
+                        description = msg("checkout.line_item", evse.name),
                         stripeAccountId = accountId,
                         prepaidMinor = request.creditMinor,
                         currency = portal.tariff.currency,
@@ -138,7 +139,7 @@ class ChargingCheckoutService(
         ) {
             throw ResponseStatusException(
                 HttpStatus.CONFLICT,
-                "Cette demande de paiement a expiré.",
+                msg("checkout.expired"),
             )
         }
         val accessToken = vault.decrypt(order.accessTokenEncrypted)

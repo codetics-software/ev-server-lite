@@ -48,6 +48,7 @@ import type { SecurityCapabilities } from "./station-security";
 import { PinDialog } from "./station-security-dialogs";
 import { StationSecurityPanel } from "./station-security-panel";
 import type { Station } from "./station-types";
+import { t } from "@/lib/i18n";
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
@@ -92,7 +93,7 @@ export function StationDetailScreen({ id }: { id: string }) {
   if (error && !station) {
     return (
       <>
-        <PageHeader title={id} back={{ href: "/stations", label: "Bornes" }} />
+        <PageHeader title={id} back={{ href: "/stations", label: t("Bornes") }} />
         <ErrorState error={error} onRetry={refresh} />
       </>
     );
@@ -107,51 +108,63 @@ export function StationDetailScreen({ id }: { id: string }) {
   return (
     <>
       <PageHeader
-        back={{ href: "/stations", label: "Bornes" }}
+        back={{ href: "/stations", label: t("Bornes") }}
         title={station.name}
-        description={`${station.id} · ${[station.vendor, station.model].filter(Boolean).join(" ") || "Matériel inconnu"} · OCPP ${station.ocpp_version ?? "1.6"}`}
+        description={[
+          station.id,
+          [station.vendor, station.model].filter(Boolean).join(" ") || t("Matériel inconnu"),
+          `OCPP ${station.ocpp_version ?? "1.6"}`,
+        ].join(" · ")}
         meta={
           <>
             <ToneBadge
               tone={!station.enabled ? "neutral" : station.connected ? "success" : "danger"}
             >
-              {!station.enabled ? "Désactivée" : station.connected ? "Connectée" : "Hors ligne"}
+              {!station.enabled
+                ? t("Désactivée")
+                : station.connected
+                  ? t("Connectée")
+                  : t("Hors ligne")}
             </ToneBadge>
-            {station.public && <ToneBadge tone="progress">Publique</ToneBadge>}
-            {station.auto_charge && <ToneBadge tone="progress">Recharge automatique</ToneBadge>}
+            {station.public && <ToneBadge tone="progress">{t("Publique")}</ToneBadge>}
+            {station.auto_charge && (
+              <ToneBadge tone="progress">{t("Recharge automatique")}</ToneBadge>
+            )}
             {station.security_profile === 0 && (
-              <ToneBadge tone="danger">Sans authentification</ToneBadge>
+              <ToneBadge tone="danger">{t("Sans authentification")}</ToneBadge>
             )}
             {station.requested_security_profile != null && (
               <ToneBadge tone="progress">
-                Profil {station.security_profile ?? 1} → {station.requested_security_profile} en
-                attente
+                {t("Profil {current} → {requested} en attente", {
+                  current: station.security_profile ?? 1,
+                  requested: station.requested_security_profile,
+                })}
               </ToneBadge>
             )}
             {station.password_rotation_pending && (
-              <ToneBadge tone="warning">Mot de passe en cours de renouvellement</ToneBadge>
+              <ToneBadge tone="warning">{t("Mot de passe en cours de renouvellement")}</ToneBadge>
             )}
             <span className="text-xs text-muted-foreground">
-              Dernier signal {relative(station.last_seen)}
+              {t("Dernier signal {time}", { time: relative(station.last_seen) })}
             </span>
           </>
         }
         actions={
           <>
-            <Button variant="outline" size="icon" aria-label="Actualiser" onClick={refresh}>
+            <Button variant="outline" size="icon" aria-label={t("Actualiser")} onClick={refresh}>
               <IconRefresh />
             </Button>
             <ReportErrorButton
               user={user}
               stationId={station.id}
               variant="outline"
-              label="Signaler"
+              label={t("Signaler")}
             />
             {operate && <StationActionMenu onSelect={setRequest} />}
             {admin && (
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  render={<Button variant="outline" size="icon" aria-label="Plus d’options" />}
+                  render={<Button variant="outline" size="icon" aria-label={t("Plus d’options")} />}
                 >
                   <IconDots />
                 </DropdownMenuTrigger>
@@ -168,19 +181,19 @@ export function StationDetailScreen({ id }: { id: string }) {
                           {
                             success: (result) =>
                               result?.template_id
-                                ? "Modèle de configuration appliqué."
-                                : "Aucun modèle ne correspond à cette borne.",
+                                ? t("Modèle de configuration appliqué.")
+                                : t("Aucun modèle ne correspond à cette borne."),
                             onDone: refresh,
                           },
                         )
                       }
                     >
                       <IconTemplate />
-                      Appliquer le modèle correspondant
+                      {t("Appliquer le modèle correspondant")}
                     </DropdownMenuItem>
                     <DropdownMenuItem variant="destructive" onClick={() => setDeleting(true)}>
                       <IconTrash />
-                      Supprimer la borne
+                      {t("Supprimer la borne")}
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
@@ -191,36 +204,36 @@ export function StationDetailScreen({ id }: { id: string }) {
       />
       <dl className="grid grid-cols-2 gap-4 border-y py-4 sm:grid-cols-3 lg:grid-cols-6">
         <Info
-          label="Site · zone"
+          label={t("Site · zone")}
           value={
             station.site_area_id
               ? `${sites.get(station.site_id ?? "") ?? "—"} · ${areas.get(station.site_area_id) ?? "—"}`
-              : "Sans zone"
+              : t("Sans zone")
           }
         />
-        <Info label="Micrologiciel" value={display(station.firmware_version)} />
+        <Info label={t("Micrologiciel")} value={display(station.firmware_version)} />
         <Info
-          label="Mise à jour"
+          label={t("Mise à jour")}
           value={station.firmware_status ? display(station.firmware_status) : "—"}
         />
-        <Info label="Diagnostic" value={display(station.diagnostics_status)} />
-        {station.log_status && <Info label="Journaux" value={display(station.log_status)} />}
-        <Info label="Dernier démarrage" value={date(station.last_boot)} />
-        <Info label="Dernier contact" value={date(station.last_seen)} />
+        <Info label={t("Diagnostic")} value={display(station.diagnostics_status)} />
+        {station.log_status && <Info label={t("Journaux")} value={display(station.log_status)} />}
+        <Info label={t("Dernier démarrage")} value={date(station.last_boot)} />
+        <Info label={t("Dernier contact")} value={date(station.last_seen)} />
       </dl>
       <Tabs value={tab} onValueChange={(value) => setTab(String(value))}>
         <div className="overflow-x-auto">
           <TabsList variant="line">
-            <TabsTrigger value="connectors">Connecteurs</TabsTrigger>
-            <TabsTrigger value="properties">Propriétés</TabsTrigger>
-            <TabsTrigger value="security">Sécurité</TabsTrigger>
-            <TabsTrigger value="parameters">Paramètres OCPP</TabsTrigger>
-            <TabsTrigger value="charging">Limitation et profils</TabsTrigger>
-            <TabsTrigger value="sessions">Sessions</TabsTrigger>
-            <TabsTrigger value="events">Événements</TabsTrigger>
-            <TabsTrigger value="commands">Commandes</TabsTrigger>
-            <TabsTrigger value="photos">Photos</TabsTrigger>
-            {admin && <TabsTrigger value="advanced">Avancé</TabsTrigger>}
+            <TabsTrigger value="connectors">{t("Connecteurs")}</TabsTrigger>
+            <TabsTrigger value="properties">{t("Propriétés")}</TabsTrigger>
+            <TabsTrigger value="security">{t("Sécurité")}</TabsTrigger>
+            <TabsTrigger value="parameters">{t("Paramètres OCPP")}</TabsTrigger>
+            <TabsTrigger value="charging">{t("Limitation et profils")}</TabsTrigger>
+            <TabsTrigger value="sessions">{t("Sessions")}</TabsTrigger>
+            <TabsTrigger value="events">{t("Événements")}</TabsTrigger>
+            <TabsTrigger value="commands">{t("Commandes")}</TabsTrigger>
+            <TabsTrigger value="photos">{t("Photos")}</TabsTrigger>
+            {admin && <TabsTrigger value="advanced">{t("Avancé")}</TabsTrigger>}
           </TabsList>
         </div>
         <TabsContent value="connectors" className="pt-4">
@@ -286,8 +299,9 @@ export function StationDetailScreen({ id }: { id: string }) {
         {admin && (
           <TabsContent value="advanced" className="max-w-2xl pt-4">
             <p className="mb-4 text-sm text-muted-foreground">
-              Envoi d’une commande OCPP 1.6 brute. Réservé aux administrateurs : préférez les
-              actions dédiées.
+              {t(
+                "Envoi d’une commande OCPP 1.6 brute. Réservé aux administrateurs : préférez les actions dédiées.",
+              )}
             </p>
             <StationCommandForm station={station.id} />
           </TabsContent>
@@ -310,25 +324,28 @@ export function StationDetailScreen({ id }: { id: string }) {
       <AlertDialog open={deleting} onOpenChange={setDeleting}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer la borne {station.name} ?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("Supprimer la borne {name} ?", { name: station.name })}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              La borne disparaît des listes et ne peut plus se connecter. L’historique des sessions
-              est conservé. Impossible tant qu’une session est en cours.
+              {t(
+                "La borne disparaît des listes et ne peut plus se connecter. L’historique des sessions est conservé. Impossible tant qu’une session est en cours.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t("Annuler")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={action.busy}
               onClick={() =>
                 action.run("delete", () => api(path, { method: "DELETE" }), {
-                  success: "Borne supprimée.",
+                  success: t("Borne supprimée."),
                   onDone: () => router.replace("/stations"),
                 })
               }
             >
-              Supprimer
+              {t("Supprimer")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

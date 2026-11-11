@@ -9,6 +9,7 @@ import { integerBetween, isInvalid, rules } from "@/lib/form";
 import { revalidateLogic, useForm, useStore } from "@tanstack/react-form";
 import { useState } from "react";
 import type { PublicEvse } from "./portal-types";
+import { t } from "@/lib/i18n";
 
 export function CheckoutForm({ evse }: { evse: PublicEvse }) {
   const [redirecting, setRedirecting] = useState(false);
@@ -48,7 +49,7 @@ export function CheckoutForm({ evse }: { evse: PublicEvse }) {
         window.location.assign(result.checkoutUrl);
       } catch (failure) {
         setError(
-          failure instanceof Error ? failure.message : "Le paiement n’a pas pu être ouvert.",
+          failure instanceof Error ? failure.message : t("Le paiement n’a pas pu être ouvert."),
         );
       }
     },
@@ -72,7 +73,10 @@ export function CheckoutForm({ evse }: { evse: PublicEvse }) {
               integerBetween(
                 minimum,
                 maximum,
-                `Le crédit doit être compris entre ${minimum} € et ${maximum} €.`,
+                t("Le crédit doit être compris entre {minimum} € et {maximum} €.", {
+                  minimum,
+                  maximum,
+                }),
               ),
             ),
           }}
@@ -81,7 +85,7 @@ export function CheckoutForm({ evse }: { evse: PublicEvse }) {
             const invalid = isInvalid(field);
             return (
               <Field data-invalid={invalid}>
-                <FieldLabel htmlFor="credit">Crédit de recharge (€)</FieldLabel>
+                <FieldLabel htmlFor="credit">{t("Crédit de recharge (€)")}</FieldLabel>
                 <Input
                   id="credit"
                   name={field.name}
@@ -97,8 +101,9 @@ export function CheckoutForm({ evse }: { evse: PublicEvse }) {
                   disabled={pending}
                 />
                 <FieldDescription>
-                  De 5 € à 100 €. Le crédit est débité avant le démarrage. Le montant non utilisé
-                  est remboursé après la fin de la recharge.
+                  {t(
+                    "De 5 € à 100 €. Le crédit est débité avant le démarrage. Le montant non utilisé est remboursé après la fin de la recharge.",
+                  )}
                 </FieldDescription>
                 {invalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
@@ -106,9 +111,9 @@ export function CheckoutForm({ evse }: { evse: PublicEvse }) {
           }}
         </form.Field>
         <p className="text-sm text-muted-foreground">
-          Branchez votre véhicule avant de payer. La borne recevra la demande de démarrage après
-          confirmation du paiement. La facturation est plafonnée au crédit choisi ; l’arrêt dépend
-          de la connexion et de la réponse de la borne.
+          {t(
+            "Branchez votre véhicule avant de payer. La borne recevra la demande de démarrage après confirmation du paiement. La facturation est plafonnée au crédit choisi ; l’arrêt dépend de la connexion et de la réponse de la borne.",
+          )}
         </p>
         {error && (
           <Alert variant="destructive">
@@ -116,7 +121,7 @@ export function CheckoutForm({ evse }: { evse: PublicEvse }) {
           </Alert>
         )}
         <Button type="submit" className="w-full" disabled={pending || !evse.available}>
-          {pending ? "Ouverture du paiement…" : "Payer et démarrer"}
+          {pending ? t("Ouverture du paiement…") : t("Payer et démarrer")}
         </Button>
       </FieldGroup>
     </form>

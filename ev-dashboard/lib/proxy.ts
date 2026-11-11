@@ -1,3 +1,5 @@
+import { translate } from "@/lib/i18n";
+import { LOCALE_COOKIE, resolveLocale } from "@/lib/i18n/locales";
 import { NextRequest, NextResponse } from "next/server";
 
 const titles: Record<number, string> = {
@@ -6,9 +8,13 @@ const titles: Record<number, string> = {
   502: "Bad Gateway",
 };
 
-function problem(status: number, detail: string) {
+function problem(request: NextRequest, status: number, detail: string) {
+  const locale = resolveLocale(
+    request.cookies.get(LOCALE_COOKIE)?.value,
+    request.headers.get("accept-language"),
+  );
   return NextResponse.json(
-    { status, title: titles[status], detail },
+    { status, title: titles[status], detail: translate(detail, locale) },
     {
       status,
       headers: { "Content-Type": "application/problem+json", "Cache-Control": "no-store" },
@@ -44,6 +50,7 @@ export async function proxy(request: NextRequest, path: string) {
     "cookie",
     "content-type",
     "accept",
+    "accept-language",
     "x-xsrf-token",
     "x-charge-token",
     "stripe-signature",
@@ -61,16 +68,16 @@ export async function proxy(request: NextRequest, path: string) {
   if (isMutation && !["login/oauth2/code/apple", "api/v1/stripe/webhook"].includes(path)) {
     const allowed = new URL(process.env.APP_PUBLIC_URL || request.nextUrl.origin).origin;
     if (request.headers.get("origin") !== allowed) {
-      return problem(403, "Origine de la demande non autorisée.");
+      return problem(request, 403, "Origine de la demande non autorisée.");
     }
   }
   try {
     if (Number(request.headers.get("content-length") || 0) > 1_048_576) {
-      return problem(413, "La demande est trop volumineuse.");
+      return problem(request, 413, "La demande est trop volumineuse.");
     }
     const body = isMutation ? await request.arrayBuffer() : undefined;
     if (body && body.byteLength > 1_048_576) {
-      return problem(413, "La demande est trop volumineuse.");
+      return problem(request, 413, "La demande est trop volumineuse.");
     }
     if (process.env.EV_LOCAL_TEST_CLASSPATH && process.env.NODE_ENV !== "production") {
       const { localTestRequest } = await import("@/lib/local-test-bridge");
@@ -126,6 +133,7 @@ export async function proxy(request: NextRequest, path: string) {
     return response;
   } catch {
     return problem(
+      request,
       502,
       "Le serveur de supervision est indisponible. Vérifiez la connexion et réessayez.",
     );

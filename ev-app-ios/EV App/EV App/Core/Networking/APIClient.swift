@@ -97,6 +97,7 @@ nonisolated final class APIClient: Sendable {
         request.httpMethod = method
         request.httpBody = body
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(AppLanguage.current, forHTTPHeaderField: "Accept-Language")
         if let contentType { request.setValue(contentType, forHTTPHeaderField: "Content-Type") }
         if let bearer = tokens.bearerToken { request.setValue("Bearer \(bearer)", forHTTPHeaderField: "Authorization") }
         headers.forEach { request.setValue($0.value, forHTTPHeaderField: $0.key) }
@@ -119,9 +120,9 @@ nonisolated final class APIClient: Sendable {
             tokens.csrfToken = nil
             return try await send(method: method, path: path, query: query, headers: headers, body: body, contentType: contentType, retried: true)
         }
-        let detail = (try? JSONCoding.decoder.decode(ProblemDetail.self, from: data))?.detail
+        let problem = try? JSONCoding.decoder.decode(ProblemDetail.self, from: data)
         if http.statusCode == 401, tokens.bearerToken != nil { throw APIError.unauthorized }
-        throw APIError.server(status: http.statusCode, message: detail)
+        throw APIError.server(status: http.statusCode, message: problem?.detail, code: problem?.code)
     }
 
     private func csrfToken() async throws -> CsrfResponse {

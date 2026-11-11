@@ -17,6 +17,7 @@ import type { ImportResult } from "@/lib/api-types";
 import { IconDownload, IconUpload } from "@tabler/icons-react";
 import { useId, useState } from "react";
 import { notify, notifyError } from "./use-action";
+import { t, tp } from "@/lib/i18n";
 
 type Parameters = Record<string, string | number | boolean | null | undefined>;
 
@@ -38,7 +39,7 @@ export function ExportButton({
     try {
       await download(`${path}${query(parameters)}`, `${filename}.csv`);
     } catch (error) {
-      notifyError("L’export n’a pas abouti", errorMessage(error, "Réessayez plus tard."));
+      notifyError(t("L’export n’a pas abouti"), errorMessage(error, t("Réessayez plus tard.")));
     } finally {
       setPending(false);
     }
@@ -47,7 +48,7 @@ export function ExportButton({
   return (
     <Button variant="outline" onClick={exportFile} disabled={pending}>
       <IconDownload data-icon="inline-start" />
-      {pending ? "Export…" : label}
+      {pending ? t("Export…") : label}
     </Button>
   );
 }
@@ -81,7 +82,7 @@ export function ImportButton({
 
   async function submit() {
     if (!file) {
-      setError("Choisissez un fichier CSV.");
+      setError(t("Choisissez un fichier CSV."));
       return;
     }
     setPending(true);
@@ -90,9 +91,15 @@ export function ImportButton({
       const imported = await upload<ImportResult>(path, await file.text(), "text/csv");
       setResult(imported);
       onImported();
-      notify("Import terminé", `${imported.created} créés, ${imported.updated} mis à jour.`);
+      notify(
+        t("Import terminé"),
+        t("{created} créés, {updated} mis à jour.", {
+          created: imported.created,
+          updated: imported.updated,
+        }),
+      );
     } catch (failure) {
-      setError(errorMessage(failure, "L’import n’a pas abouti."));
+      setError(errorMessage(failure, t("L’import n’a pas abouti.")));
     } finally {
       setPending(false);
     }
@@ -102,14 +109,16 @@ export function ImportButton({
     <>
       <Button variant="outline" onClick={() => reset(true)}>
         <IconUpload data-icon="inline-start" />
-        Importer
+        {t("Importer")}
       </Button>
       <Dialog open={open} onOpenChange={reset}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>
-              Fichier CSV encodé en UTF-8, séparateur point-virgule, avec une ligne d’en-tête.
+              {t(
+                "Fichier CSV encodé en UTF-8, séparateur point-virgule, avec une ligne d’en-tête.",
+              )}
             </DialogDescription>
           </DialogHeader>
           {result ? (
@@ -117,9 +126,9 @@ export function ImportButton({
               <dl className="grid grid-cols-3 gap-3 text-center">
                 {(
                   [
-                    ["Créés", result.created],
-                    ["Mis à jour", result.updated],
-                    ["Ignorés", result.skipped],
+                    [t("Créés"), result.created],
+                    [t("Mis à jour"), result.updated],
+                    [t("Ignorés"), result.skipped],
                   ] as const
                 ).map(([label, value]) => (
                   <div key={label} className="rounded-lg border p-3">
@@ -130,12 +139,21 @@ export function ImportButton({
               </dl>
               {result.errors.length > 0 && (
                 <Alert variant="destructive">
-                  <AlertTitle>{result.errors.length} ligne(s) en erreur</AlertTitle>
+                  <AlertTitle>
+                    {tp(
+                      result.errors.length,
+                      "{count} ligne en erreur",
+                      "{count} lignes en erreur",
+                    )}
+                  </AlertTitle>
                   <AlertDescription>
                     <ul className="max-h-40 list-disc overflow-auto pl-4">
                       {result.errors.map((item) => (
                         <li key={`${item.line}-${item.message}`}>
-                          Ligne {item.line} : {item.message}
+                          {t("Ligne {line} : {message}", {
+                            line: item.line,
+                            message: item.message,
+                          })}
                         </li>
                       ))}
                     </ul>
@@ -145,14 +163,16 @@ export function ImportButton({
             </div>
           ) : (
             <Field>
-              <FieldLabel htmlFor={id}>Fichier</FieldLabel>
+              <FieldLabel htmlFor={id}>{t("Fichier")}</FieldLabel>
               <Input
                 id={id}
                 type="file"
                 accept=".csv,text/csv,text/plain"
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               />
-              <FieldDescription>Colonnes attendues : {columns}</FieldDescription>
+              <FieldDescription>
+                {t("Colonnes attendues : {columns}", { columns })}
+              </FieldDescription>
             </Field>
           )}
           {error && (
@@ -162,10 +182,10 @@ export function ImportButton({
           )}
           <DialogFooter>
             {result ? (
-              <Button onClick={() => reset(false)}>Terminer</Button>
+              <Button onClick={() => reset(false)}>{t("Terminer")}</Button>
             ) : (
               <Button onClick={submit} disabled={pending || !file}>
-                {pending ? "Import…" : "Importer le fichier"}
+                {pending ? t("Import…") : t("Importer le fichier")}
               </Button>
             )}
           </DialogFooter>

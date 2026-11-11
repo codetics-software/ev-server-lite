@@ -1,5 +1,6 @@
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import type { NetworkOverview } from "./overview-types";
+import { t, tp } from "@/lib/i18n";
 
 const statusLabels: Record<string, string> = {
   Available: "Disponible",
@@ -23,15 +24,17 @@ export function ConnectorAvailability({
   return (
     <section className="operational-panel" aria-labelledby="connector-heading">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="connector-heading">État des connecteurs</h2>
-        <span className="text-xs text-muted-foreground tabular-nums">{total} connecteurs</span>
+        <h2 id="connector-heading">{t("État des connecteurs")}</h2>
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {tp(total, "{count} connecteur", "{count} connecteurs")}
+        </span>
       </div>
       {!total ? (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>Aucun connecteur déclaré</EmptyTitle>
+            <EmptyTitle>{t("Aucun connecteur déclaré")}</EmptyTitle>
             <EmptyDescription>
-              Ajoutez une borne et connectez-la pour recevoir l’état de ses connecteurs.
+              {t("Ajoutez une borne et connectez-la pour recevoir l’état de ses connecteurs.")}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -63,7 +66,7 @@ export function ConnectorAvailability({
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        Dernier état reçu. La connexion de la borne est indiquée séparément.
+        {t("Dernier état reçu. La connexion de la borne est indiquée séparément.")}
       </p>
     </section>
   );

@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { sessionColumns } from "./session-columns";
 import type { ChargingSession } from "./session-types";
+import { t } from "@/lib/i18n";
 
 function startOfDay(value: string) {
   return value ? new Date(`${value}T00:00:00`).toISOString() : null;
@@ -79,15 +80,19 @@ export function SessionsList({
   });
 
   return (
-    <section className="flex min-w-0 flex-col gap-4" aria-label="Sessions">
+    <section className="flex min-w-0 flex-col gap-4" aria-label={t("Sessions")}>
       {filters && (
         <div className="flex flex-wrap items-end gap-3">
-          <SearchInput value={search} onChange={setSearch} placeholder="Badge, borne, session…" />
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={t("Badge, borne, session…")}
+          />
           {status !== "active" && (
             <>
               <Field className="w-full sm:w-40">
                 <FieldLabel htmlFor="sessions-from" className="text-xs text-muted-foreground">
-                  Du
+                  {t("Du")}
                 </FieldLabel>
                 <Input
                   id="sessions-from"
@@ -99,7 +104,7 @@ export function SessionsList({
               </Field>
               <Field className="w-full sm:w-40">
                 <FieldLabel htmlFor="sessions-to" className="text-xs text-muted-foreground">
-                  Au
+                  {t("Au")}
                 </FieldLabel>
                 <Input
                   id="sessions-to"
@@ -114,14 +119,14 @@ export function SessionsList({
           {staff && !fixed.stationId && (
             <Field className="w-full sm:w-52">
               <FieldLabel htmlFor="sessions-station" className="text-xs text-muted-foreground">
-                Borne
+                {t("Borne")}
               </FieldLabel>
               <EntityPicker
                 id="sessions-station"
                 source="stations"
                 value={stationId}
                 onChange={setStationId}
-                placeholder="Toutes les bornes"
+                placeholder={t("Toutes les bornes")}
               />
             </Field>
           )}
@@ -132,28 +137,28 @@ export function SessionsList({
             !fixed.siteAreaId && (
               <Field className="w-full sm:w-52">
                 <FieldLabel htmlFor="sessions-site" className="text-xs text-muted-foreground">
-                  Site
+                  {t("Site")}
                 </FieldLabel>
                 <EntityPicker
                   id="sessions-site"
                   source="sites"
                   value={siteId}
                   onChange={setSiteId}
-                  placeholder="Tous les sites"
+                  placeholder={t("Tous les sites")}
                 />
               </Field>
             )}
           {isAdmin(user) && !fixed.userId && (
             <Field className="w-full sm:w-52">
               <FieldLabel htmlFor="sessions-user" className="text-xs text-muted-foreground">
-                Utilisateur
+                {t("Utilisateur")}
               </FieldLabel>
               <EntityPicker
                 id="sessions-user"
                 source="users"
                 value={userId}
                 onChange={setUserId}
-                placeholder="Tous les utilisateurs"
+                placeholder={t("Tous les utilisateurs")}
               />
             </Field>
           )}
@@ -172,17 +177,17 @@ export function SessionsList({
         empty={
           <EmptyState
             icon={<IconBolt />}
-            title={status === "active" ? "Aucune session en cours" : "Aucune session"}
+            title={status === "active" ? t("Aucune session en cours") : t("Aucune session")}
             description={
               status === "active"
-                ? "Les recharges en cours apparaissent ici en temps réel."
-                : "Modifiez la période ou les filtres pour retrouver une session."
+                ? t("Les recharges en cours apparaissent ici en temps réel.")
+                : t("Modifiez la période ou les filtres pour retrouver une session.")
             }
           />
         }
       >
         <DataTable
-          label="Sessions de recharge"
+          label={t("Sessions de recharge")}
           rows={list.items}
           columns={columns}
           rowKey={(session) => String(session.id)}

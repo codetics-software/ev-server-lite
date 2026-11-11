@@ -2,6 +2,7 @@ package fr.codetics.ev_server.stripe
 
 import com.stripe.param.RefundCreateParams
 import com.stripe.param.checkout.SessionCreateParams
+import fr.codetics.ev_server.core.I18n
 import fr.codetics.ev_server.models.billing.CheckoutDetails
 import fr.codetics.ev_server.models.billing.CreatedCheckout
 import fr.codetics.ev_server.models.billing.RefundResult
@@ -30,7 +31,13 @@ class StripeChargingCheckout(private val stripe: StripeClientProvider) {
         val parameters =
             SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setLocale(SessionCreateParams.Locale.FR)
+                .setLocale(
+                    when (I18n.locale().language) {
+                        "en" -> SessionCreateParams.Locale.EN
+                        "es" -> SessionCreateParams.Locale.ES
+                        else -> SessionCreateParams.Locale.FR
+                    }
+                )
                 .setClientReferenceId(details.orderId.toString())
                 .setSuccessUrl(details.successUrl)
                 .setCancelUrl(details.cancelUrl)

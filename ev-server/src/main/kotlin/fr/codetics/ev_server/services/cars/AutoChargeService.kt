@@ -5,6 +5,7 @@ import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.invalid
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.entities.ChargingTokenEntity
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
@@ -84,16 +85,16 @@ class AutoChargeService(
     fun enroll(user: AppPrincipal, carId: UUID, input: AutoChargeInput, own: Boolean): VehicleIdResponse {
         val car = car(user, carId, own)
         val owner =
-            car.data.userId ?: invalid("Attribuez ce véhicule à un utilisateur avant d’activer la recharge automatique.")
+            car.data.userId ?: invalid(msg("autocharge.assign_user_first"))
         ensure((input.transactionId == null) != (input.vid == null)) {
-            "Indiquez soit la session de recharge, soit l’identifiant du véhicule."
+            msg("autocharge.session_or_id")
         }
         val uid =
             if (input.transactionId != null) observed(user, owner, input.transactionId)
             else {
                 if (own) throw ResponseStatusException(HttpStatus.FORBIDDEN)
                 VehicleIds.normalize(requireNotNull(input.vid))
-                    ?: invalid("L’identifiant du véhicule s’écrit VID: suivi de 12 caractères hexadécimaux.")
+                    ?: invalid(msg("autocharge.vid_format"))
             }
 
         return db.atomic {
@@ -104,11 +105,11 @@ class AutoChargeService(
                 }
                 throw ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Ce véhicule est déjà enregistré pour la recharge automatique.",
+                    msg("autocharge.already_registered"),
                 )
             }
             ensure(vehicleIds(user.tenantId, carId).size < VehicleIds.MAXIMUM_PER_VEHICLE) {
-                "Ce véhicule possède déjà ${VehicleIds.MAXIMUM_PER_VEHICLE} identifiants de recharge automatique."
+                msg("autocharge.too_many", VehicleIds.MAXIMUM_PER_VEHICLE)
             }
             val token =
                 tokens.save(
@@ -127,11 +128,11 @@ class AutoChargeService(
 
     fun revoke(user: AppPrincipal, carId: UUID, uid: String, own: Boolean): MutationResponse {
         car(user, carId, own)
-        val normalized = VehicleIds.normalize(uid) ?: throw NotFound("Identifiant de véhicule introuvable.")
+        val normalized = VehicleIds.normalize(uid) ?: throw NotFound(msg("autocharge.id_not_found"))
         return db.atomic {
             val token =
                 tokens.findById(ChargingTokenKey(user.tenantId, normalized)).orElse(null)?.takeIf { it.vehicleId == carId }
-                    ?: throw NotFound("Identifiant de véhicule introuvable.")
+                    ?: throw NotFound(msg("autocharge.id_not_found"))
             tokens.delete(token)
             db.audit(user.tenantId, user.id.toString(), "AUTOCHARGE_REVOKE", "$carId/$normalized")
             MutationResponse()
@@ -141,10 +142,10 @@ class AutoChargeService(
     private fun observed(user: AppPrincipal, owner: UUID, transactionId: Int): String {
         val transaction =
             transactions.findByTenantIdAndId(user.tenantId, transactionId)?.takeIf { it.userId == owner }
-                ?: throw NotFound("Session introuvable.")
-        val vid = transaction.vid ?: invalid("La borne n’a transmis aucun identifiant de véhicule pendant cette session.")
+                ?: throw NotFound(msg("sessions.not_found"))
+        val vid = transaction.vid ?: invalid(msg("autocharge.no_id_in_session"))
         ensure(transaction.startedAt.isAfter(Instant.now().minus(VehicleIds.ENROLLMENT_WINDOW))) {
-            "Cette session est trop ancienne. Rebranchez le véhicule puis recommencez."
+            msg("autocharge.session_too_old")
         }
         return vid
     }
@@ -154,7 +155,7 @@ class AutoChargeService(
 
     private fun car(user: AppPrincipal, id: UUID, own: Boolean): Entry<CarData> {
         val car = organization.find(user.tenantId, "cars", id, CarData::class.java)
-        if (car == null || (own && car.data.userId != user.id)) throw NotFound("Véhicule introuvable.")
+        if (car == null || (own && car.data.userId != user.id)) throw NotFound(msg("cars.not_found"))
         return car
     }
 }

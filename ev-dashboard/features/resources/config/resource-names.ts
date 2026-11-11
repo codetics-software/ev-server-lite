@@ -1,4 +1,5 @@
-const names: Record<string, string> = {
+import { t, translated } from "@/lib/i18n";
+const names: Record<string, string> = translated({
   stations: "une borne",
   transactions: "une session",
   commands: "une commande",
@@ -14,8 +15,8 @@ const names: Record<string, string> = {
   "pricing-definitions": "un tarif",
   settings: "un paramètre",
   audit: "un événement",
-};
+});
 
 export function resourceName(section: string) {
-  return names[section] ?? "configuration";
+  return names[section] ?? t("configuration");
 }

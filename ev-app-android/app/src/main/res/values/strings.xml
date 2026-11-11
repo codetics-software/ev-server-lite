@@ -72,7 +72,6 @@
     <string name="credit">Credit</string>
     <string name="credit_paid">Credit paid</string>
     <string name="credits">Credits</string>
-    <string name="czech">Czech</string>
     <string name="dc_power">DC power</string>
     <string name="dc_power_kw">DC power (kW)</string>
     <string name="debug_only">Debug only</string>
@@ -113,7 +112,6 @@
     <string name="format">Format</string>
     <string name="french">French</string>
     <string name="full_name">Full name</string>
-    <string name="german">German</string>
     <string name="get_directions">Get directions</string>
     <string name="google_wallet_could_not_save_this_pass">Google Wallet could not save this pass.</string>
     <string name="google_wallet_is_not_available_for_this_badge_on">Google Wallet is not available for this badge on this server or device.</string>
@@ -133,7 +131,6 @@
     <string name="indicator">Indicator</string>
     <string name="invoiced">Invoiced</string>
     <string name="invoices">Invoices</string>
-    <string name="italian">Italian</string>
     <string name="language">Language</string>
     <string name="last_used">Last used</string>
     <string name="licence_plate">Licence plate</string>
@@ -202,7 +199,6 @@
     <string name="plug_this_vehicle_into_a_compatible_station_and">Plug this vehicle into a compatible station and start a session once. You can then enable automatic charging here for 24 hours.</string>
     <string name="plugged_in">Plugged in</string>
     <string name="point_the_camera_at_the_code_on_the_station">Point the camera at the code on the station.</string>
-    <string name="portuguese">Portuguese</string>
     <string name="power">Power</string>
     <string name="preferences">Preferences</string>
     <string name="price">Price</string>

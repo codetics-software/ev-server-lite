@@ -12,6 +12,7 @@ import { ProvisionDialog } from "./provision-dialog";
 import { RegistrationTokens } from "./registration-tokens";
 import { StationsInError } from "./stations-in-error";
 import { StationsList } from "./stations-list";
+import { t } from "@/lib/i18n";
 
 export function StationsScreen() {
   const user = useWorkspace();
@@ -21,18 +22,20 @@ export function StationsScreen() {
   return (
     <>
       <PageHeader
-        title="Bornes de recharge"
-        description="Connexion des bornes, état des connecteurs en temps réel et commandes à distance."
+        title={t("Bornes de recharge")}
+        description={t(
+          "Connexion des bornes, état des connecteurs en temps réel et commandes à distance.",
+        )}
         actions={
           <>
-            <Button variant="outline" size="icon" aria-label="Actualiser" onClick={refresh}>
+            <Button variant="outline" size="icon" aria-label={t("Actualiser")} onClick={refresh}>
               <IconRefresh />
             </Button>
             <ExportButton path="stations/export" filename="bornes" />
             {isAdmin(user) && (
               <Button onClick={() => setProvisioning(true)}>
                 <IconPlus data-icon="inline-start" />
-                Ajouter une borne
+                {t("Ajouter une borne")}
               </Button>
             )}
           </>
@@ -40,9 +43,9 @@ export function StationsScreen() {
       />
       <Tabs defaultValue="all">
         <TabsList variant="line">
-          <TabsTrigger value="all">Toutes les bornes</TabsTrigger>
-          <TabsTrigger value="errors">En erreur</TabsTrigger>
-          <TabsTrigger value="tokens">Jetons d’enregistrement</TabsTrigger>
+          <TabsTrigger value="all">{t("Toutes les bornes")}</TabsTrigger>
+          <TabsTrigger value="errors">{t("En erreur")}</TabsTrigger>
+          <TabsTrigger value="tokens">{t("Jetons d’enregistrement")}</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="pt-4">
           <StationsList revision={revision} />

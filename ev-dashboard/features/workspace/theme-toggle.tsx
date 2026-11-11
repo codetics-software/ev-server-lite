@@ -12,34 +12,35 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme, type ThemePreference } from "@/hooks/use-theme";
 import { IconDeviceDesktop, IconMoon, IconSun } from "@tabler/icons-react";
+import { t } from "@/lib/i18n";
 
 export function ThemeToggle() {
   const { preference, dark, setPreference } = useTheme();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" size="icon" aria-label="Changer l’apparence" />}
+        render={<Button variant="ghost" size="icon" aria-label={t("Changer l’apparence")} />}
       >
         {dark ? <IconMoon /> : <IconSun />}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Apparence</DropdownMenuLabel>
+          <DropdownMenuLabel>{t("Apparence")}</DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={preference}
             onValueChange={(value) => setPreference(value as ThemePreference)}
           >
             <DropdownMenuRadioItem value="light">
               <IconSun />
-              Clair
+              {t("Clair")}
             </DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="dark">
               <IconMoon />
-              Sombre
+              {t("Sombre")}
             </DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="system">
               <IconDeviceDesktop />
-              Système
+              {t("Système")}
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuGroup>

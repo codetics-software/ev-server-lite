@@ -5,6 +5,7 @@ import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.stationSecret
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.api.MutationResponse
@@ -67,14 +68,14 @@ class RegistrationTokenService(
 
     fun create(user: AppPrincipal, input: RegistrationTokenInput): RegistrationTokenResponse {
         ensure(input.description.isNotBlank() && input.description.length <= 200) {
-            "La description doit contenir entre 1 et 200 caractères."
+            msg("validation.description_length")
         }
         ensure(input.expiresAt == null || input.expiresAt.isAfter(Instant.now())) {
-            "La date d’expiration doit être future."
+            msg("registration.expiry_future")
         }
         input.siteAreaId?.let { area ->
             ensure(organization.siteArea(user.tenantId, area) != null) {
-                "La zone sélectionnée n’existe pas dans cet espace."
+                msg("areas.not_in_workspace")
             }
         }
         val raw = stationSecret()

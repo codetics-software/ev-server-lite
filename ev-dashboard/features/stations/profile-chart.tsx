@@ -9,8 +9,7 @@ import {
 import { number } from "@/lib/format";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import type { OcppChargingProfile } from "./station-types";
-
-const config = { limit: { label: "Limite", color: "var(--chart-3)" } } satisfies ChartConfig;
+import { t } from "@/lib/i18n";
 
 function clock(seconds: number) {
   const hours = Math.floor(seconds / 3600);
@@ -50,8 +49,9 @@ export function ProfileChart({
   className?: string;
 }) {
   const { points, unit, ticks } = profilePoints(profile);
+  const config = { limit: { label: t("Limite"), color: "var(--chart-3)" } } satisfies ChartConfig;
   if (!points.length) {
-    return <p className="text-sm text-muted-foreground">Aucune période définie.</p>;
+    return <p className="text-sm text-muted-foreground">{t("Aucune période définie.")}</p>;
   }
   return (
     <ChartContainer config={config} className={`aspect-auto ${className}`}>

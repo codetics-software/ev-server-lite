@@ -20,6 +20,7 @@ import { useState } from "react";
 import { valueLabel } from "@/lib/labels";
 import { commands, isCommandAction, type CommandAction } from "./station-commands";
 import { isProtectedKey, protectedKeyMessage } from "./station-security";
+import { t } from "@/lib/i18n";
 
 const initialAction: CommandAction = "GetConfiguration";
 
@@ -36,11 +37,11 @@ const jsonObject: Rule<string> = (value) => {
   try {
     JSON.parse(value);
   } catch {
-    return "Le format JSON des paramètres est invalide.";
+    return t("Le format JSON des paramètres est invalide.");
   }
   return parsePayload(value)
     ? undefined
-    : "Renseignez un objet JSON pour les paramètres de la commande.";
+    : t("Renseignez un objet JSON pour les paramètres de la commande.");
 };
 
 function protectedPayload(action: string): Rule<string> {
@@ -49,7 +50,7 @@ function protectedPayload(action: string): Rule<string> {
     return action === "ChangeConfiguration" &&
       typeof payload?.key === "string" &&
       isProtectedKey(payload.key)
-      ? protectedKeyMessage
+      ? protectedKeyMessage()
       : undefined;
   };
 }
@@ -69,10 +70,12 @@ export function StationCommandForm({ station }: { station: string }) {
           body: JSON.stringify({ action: value.action, payload: parsePayload(value.payload) }),
         });
         setMessage(
-          `Commande enregistrée : ${result.id}. Consultez sa réponse dans le suivi des commandes.`,
+          t("Commande enregistrée : {id}. Consultez sa réponse dans le suivi des commandes.", {
+            id: String(result.id),
+          }),
         );
       } catch (error) {
-        setFailure(error instanceof Error ? error.message : "Impossible d’envoyer la commande.");
+        setFailure(error instanceof Error ? error.message : t("Impossible d’envoyer la commande."));
       }
     },
   });
@@ -96,7 +99,7 @@ export function StationCommandForm({ station }: { station: string }) {
         >
           {(field) => (
             <Field>
-              <FieldLabel>Commande OCPP 1.6</FieldLabel>
+              <FieldLabel>{t("Commande OCPP 1.6")}</FieldLabel>
               <Select
                 name={field.name}
                 value={field.state.value}
@@ -135,7 +138,7 @@ export function StationCommandForm({ station }: { station: string }) {
             const invalid = isInvalid(field);
             return (
               <Field data-invalid={invalid}>
-                <FieldLabel htmlFor="command-payload">Paramètres de la commande</FieldLabel>
+                <FieldLabel htmlFor="command-payload">{t("Paramètres de la commande")}</FieldLabel>
                 <Textarea
                   id="command-payload"
                   name={field.name}
@@ -147,9 +150,9 @@ export function StationCommandForm({ station }: { station: string }) {
                   required
                 />
                 <FieldDescription>
-                  Vérifiez le connecteur et les paramètres avant l’envoi. La réponse confirme la
-                  réception de la commande ; le suivi de session confirme le démarrage de la
-                  recharge.
+                  {t(
+                    "Vérifiez le connecteur et les paramètres avant l’envoi. La réponse confirme la réception de la commande ; le suivi de session confirme le démarrage de la recharge.",
+                  )}
                 </FieldDescription>
                 {invalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
@@ -158,7 +161,7 @@ export function StationCommandForm({ station }: { station: string }) {
         </form.Field>
         {message && (
           <Alert>
-            <AlertTitle>En attente d’envoi</AlertTitle>
+            <AlertTitle>{t("En attente d’envoi")}</AlertTitle>
             <AlertDescription>{message}</AlertDescription>
           </Alert>
         )}
@@ -168,7 +171,7 @@ export function StationCommandForm({ station }: { station: string }) {
           </Alert>
         )}
         <Button type="submit" disabled={pending}>
-          {pending ? "Envoi…" : "Envoyer la commande"}
+          {pending ? t("Envoi…") : t("Envoyer la commande")}
         </Button>
       </FieldGroup>
     </form>

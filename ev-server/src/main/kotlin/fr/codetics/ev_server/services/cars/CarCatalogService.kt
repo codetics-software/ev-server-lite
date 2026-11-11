@@ -6,6 +6,7 @@ import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ImportResult
 import fr.codetics.ev_server.core.InvalidRequest
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.RecordEntity
 import fr.codetics.ev_server.models.entities.RecordKey
 import fr.codetics.ev_server.models.organization.CarCatalogData
@@ -29,14 +30,14 @@ class CarCatalogService(
 ) {
     fun synchronize(user: AppPrincipal): ImportResult {
         val key = properties.evDatabase.apiKey
-        ensure(key.isNotBlank()) { "Configurez EV_DATABASE_API_KEY pour synchroniser le catalogue." }
+        ensure(key.isNotBlank()) { msg("catalog.api_key_missing") }
         val data =
             try {
                 http.send(HttpRequest.newBuilder(http.uri(properties.evDatabase.url, "/$key")).GET())
             } catch (error: AssetConnectionError) {
-                throw InvalidRequest(error.message ?: "EV Database est indisponible.")
+                throw InvalidRequest(error.message ?: msg("catalog.unavailable"))
             }
-        ensure(data.isArray) { "La réponse d’EV Database est inattendue." }
+        ensure(data.isArray) { msg("catalog.unexpected_response") }
         val existing =
             organization.raw(user.tenantId, "car-catalog").associateBy { db.decode(it.data).path("externalId").asText() }
         var created = 0

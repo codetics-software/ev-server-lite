@@ -14,7 +14,7 @@ enum ConnectorType {
         case "CCS", "CCS2", "IEC_62196_T2_COMBO": "CCS"
         case "CHADEMO", "CHAdeMO": "CHAdeMO"
         case "T3", "IEC_62196_T3": "Type 3"
-        case "DOMESTIC", "Domestic", "E/F": "Domestic"
+        case "DOMESTIC", "Domestic", "E/F": String(localized: "Domestic")
         case let value?: value
         case nil: String(localized: "Connector")
         }

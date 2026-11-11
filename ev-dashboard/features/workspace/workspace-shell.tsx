@@ -12,9 +12,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, type ReactNode } from "react";
 import { homeFor, navigationFor, sectionLabel } from "./navigation-access";
 import { sections } from "./navigation";
+import { LanguageToggle } from "./language-toggle";
 import { ThemeToggle } from "./theme-toggle";
 import { resolveComponents, WorkspaceContext } from "./workspace-context";
 import { WorkspaceSidebar } from "./workspace-sidebar";
+import { t } from "@/lib/i18n";
 
 export function WorkspaceShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -59,7 +61,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-8" aria-busy={!error}>
         {error ? (
           <Alert variant="destructive">
-            <AlertTitle>Impossible d’ouvrir votre espace</AlertTitle>
+            <AlertTitle>{t("Impossible d’ouvrir votre espace")}</AlertTitle>
             <AlertDescription>{error.message}</AlertDescription>
           </Alert>
         ) : (
@@ -88,14 +90,15 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               <SidebarTrigger />
               <Separator orientation="vertical" className="h-4" />
               <span className="truncate text-sm">
-                {current ? sectionLabel(current, user) : "Accès restreint"}
+                {current ? sectionLabel(current, user) : t("Accès restreint")}
               </span>
             </div>
             <div className="flex items-center gap-1">
               <span className="mr-2 hidden text-xs text-muted-foreground lg:block">
-                {workspace?.name ?? "Codetics · Supervision de recharge"}
+                {workspace?.name ?? t("Codetics · Supervision de recharge")}
               </span>
               <ReportErrorButton user={user} />
+              <LanguageToggle />
               <ThemeToggle />
             </div>
           </header>
@@ -104,11 +107,13 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               children
             ) : (
               <Alert>
-                <AlertTitle>{known ? "Accès restreint" : "Page introuvable"}</AlertTitle>
+                <AlertTitle>{known ? t("Accès restreint") : t("Page introuvable")}</AlertTitle>
                 <AlertDescription>
                   {known
-                    ? "Votre rôle ou la configuration de l’espace ne permet pas d’accéder à cette page."
-                    : "Cette page n’existe pas ou n’est plus disponible."}
+                    ? t(
+                        "Votre rôle ou la configuration de l’espace ne permet pas d’accéder à cette page.",
+                      )
+                    : t("Cette page n’existe pas ou n’est plus disponible.")}
                 </AlertDescription>
               </Alert>
             )}

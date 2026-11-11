@@ -4,6 +4,7 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.ConnectorEntity
 import fr.codetics.ev_server.models.entities.SmartChargingPlanEntity
 import fr.codetics.ev_server.models.entities.StationEntity
@@ -129,14 +130,14 @@ class SmartChargingService(
     }
 
     fun trigger(user: AppPrincipal, areaId: UUID): SmartChargingPlan {
-        organization.siteArea(user.tenantId, areaId) ?: throw NotFound("Zone introuvable.")
+        organization.siteArea(user.tenantId, areaId) ?: throw NotFound(msg("areas.not_found"))
         compute(user.tenantId)
         db.audit(user.tenantId, user.id.toString(), "SMART_CHARGING_TRIGGER", areaId.toString())
         return plan(user, areaId)
     }
 
     fun plan(user: AppPrincipal, areaId: UUID): SmartChargingPlan {
-        val area = organization.siteArea(user.tenantId, areaId) ?: throw NotFound("Zone introuvable.")
+        val area = organization.siteArea(user.tenantId, areaId) ?: throw NotFound(msg("areas.not_found"))
         val stored = plans.findById(areaId).orElse(null)?.takeIf { it.tenantId == user.tenantId }
         return stored?.let { db.json.readValue(it.plan, SmartChargingPlan::class.java) }
             ?: SmartChargingPlan(area.data.smartCharging, area.data.maximumPowerKw, null, null, emptyList())
@@ -303,11 +304,11 @@ class SmartChargingService(
     }
 
     fun consumptions(user: AppPrincipal, areaId: UUID, from: Instant?, to: Instant?): List<AreaConsumption> {
-        val area = organization.siteArea(user.tenantId, areaId) ?: throw NotFound("Zone introuvable.")
+        val area = organization.siteArea(user.tenantId, areaId) ?: throw NotFound(msg("areas.not_found"))
         val end = to ?: Instant.now()
         val start = from ?: end.minus(Duration.ofDays(1))
         ensure(start.isBefore(end) && Duration.between(start, end) <= Duration.ofDays(31)) {
-            "Choisissez une période de 31 jours au plus."
+            msg("validation.period_31_days")
         }
         val children = organization.siteAreas(user.tenantId).groupBy { it.data.parentSiteAreaId }
         val subtree = subtree(areaId, children)

@@ -26,6 +26,7 @@ import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { isProtectedKey, protectedKeyMessage, stationFileName } from "./station-security";
 import type { StationParameter } from "./station-types";
+import { t } from "@/lib/i18n";
 
 export function StationParameters({ stationId, canEdit }: { stationId: string; canEdit: boolean }) {
   const [revision, refresh] = useRevision();
@@ -40,13 +41,13 @@ export function StationParameters({ stationId, canEdit }: { stationId: string; c
   const columns: Column<StationParameter>[] = [
     {
       id: "key",
-      header: "Paramètre",
+      header: t("Paramètre"),
       sort: (parameter) => parameter.key,
       cell: (parameter) => <code className="text-xs">{parameter.key}</code>,
     },
     {
       id: "value",
-      header: "Valeur",
+      header: t("Valeur"),
       sort: (parameter) => parameter.value ?? "",
       cell: (parameter) => (
         <span className="block max-w-96 break-all font-mono text-xs">{parameter.value ?? "—"}</span>
@@ -54,19 +55,19 @@ export function StationParameters({ stationId, canEdit }: { stationId: string; c
     },
     {
       id: "access",
-      header: "Accès",
+      header: t("Accès"),
       cell: (parameter) =>
         isProtectedKey(parameter.key) ? (
-          <ToneBadge tone="neutral">Section Sécurité</ToneBadge>
+          <ToneBadge tone="neutral">{t("Section Sécurité")}</ToneBadge>
         ) : parameter.readonly ? (
-          <ToneBadge tone="neutral">Lecture seule</ToneBadge>
+          <ToneBadge tone="neutral">{t("Lecture seule")}</ToneBadge>
         ) : (
-          <ToneBadge tone="success">Modifiable</ToneBadge>
+          <ToneBadge tone="success">{t("Modifiable")}</ToneBadge>
         ),
     },
     {
       id: "updated",
-      header: "Lu le",
+      header: t("Lu le"),
       sort: (parameter) => parameter.updated_at ?? "",
       cell: (parameter) => (
         <span className="text-muted-foreground">{date(parameter.updated_at)}</span>
@@ -74,7 +75,7 @@ export function StationParameters({ stationId, canEdit }: { stationId: string; c
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("Actions"),
       srOnlyHeader: true,
       align: "right",
       cell: (parameter) =>
@@ -94,9 +95,9 @@ export function StationParameters({ stationId, canEdit }: { stationId: string; c
   ];
 
   return (
-    <section className="flex flex-col gap-4" aria-label="Paramètres OCPP">
+    <section className="flex flex-col gap-4" aria-label={t("Paramètres OCPP")}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SearchInput value={search} onChange={setSearch} label="Filtrer les paramètres" />
+        <SearchInput value={search} onChange={setSearch} label={t("Filtrer les paramètres")} />
         <div className="flex flex-wrap gap-2">
           {canEdit && (
             <Button
@@ -104,13 +105,13 @@ export function StationParameters({ stationId, canEdit }: { stationId: string; c
               disabled={action.busy}
               onClick={() =>
                 action.run("refresh", () => api(`${path}/refresh`, { method: "POST" }), {
-                  success: "Lecture de la configuration demandée à la borne.",
+                  success: t("Lecture de la configuration demandée à la borne."),
                   onDone: () => setTimeout(refresh, 4000),
                 })
               }
             >
               <IconRefresh data-icon="inline-start" />
-              Relire la configuration
+              {t("Relire la configuration")}
             </Button>
           )}
           <ExportButton
@@ -129,17 +130,19 @@ export function StationParameters({ stationId, canEdit }: { stationId: string; c
         empty={
           <EmptyState
             icon={<IconSettings />}
-            title={search ? "Aucun paramètre correspondant" : "Configuration non lue"}
+            title={search ? t("Aucun paramètre correspondant") : t("Configuration non lue")}
             description={
               search
-                ? "Essayez une autre recherche."
-                : "Demandez la lecture de la configuration : les valeurs apparaissent dès la réponse de la borne."
+                ? t("Essayez une autre recherche.")
+                : t(
+                    "Demandez la lecture de la configuration : les valeurs apparaissent dès la réponse de la borne.",
+                  )
             }
           />
         }
       >
         <DataTable
-          label="Paramètres OCPP"
+          label={t("Paramètres OCPP")}
           rows={items}
           columns={columns}
           rowKey={(parameter) => parameter.key}
@@ -178,7 +181,7 @@ function ParameterForm({
     validationLogic: revalidateLogic(),
     onSubmit: async ({ value }) => {
       if (isProtectedKey(parameter.key)) {
-        notifyError(protectedKeyMessage);
+        notifyError(protectedKeyMessage());
         return;
       }
       await action.run(
@@ -189,8 +192,8 @@ function ParameterForm({
             body: JSON.stringify({ key: parameter.key, value: value.value }),
           }),
         {
-          success: "Modification envoyée à la borne.",
-          failure: "La modification n’a pas pu être envoyée",
+          success: t("Modification envoyée à la borne."),
+          failure: t("La modification n’a pas pu être envoyée"),
           onDone,
         },
       );
@@ -206,21 +209,23 @@ function ParameterForm({
       }}
     >
       <DialogHeader>
-        <DialogTitle>Modifier {parameter.key}</DialogTitle>
+        <DialogTitle>{t("Modifier {name}", { name: parameter.key })}</DialogTitle>
         <DialogDescription>
-          La valeur est enregistrée lorsque la borne accepte la modification (ChangeConfiguration).
+          {t(
+            "La valeur est enregistrée lorsque la borne accepte la modification (ChangeConfiguration).",
+          )}
         </DialogDescription>
       </DialogHeader>
       <FieldGroup>
         <form.Field name="value" validators={{ onDynamic: rules(maxLength(500)) }}>
-          {(field) => <FormText field={field} label="Nouvelle valeur" maxLength={500} />}
+          {(field) => <FormText field={field} label={t("Nouvelle valeur")} maxLength={500} />}
         </form.Field>
       </FieldGroup>
       <DialogFooter>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Envoi…" : "Envoyer"}
+              {submitting ? t("Envoi…") : t("Envoyer")}
             </Button>
           )}
         </form.Subscribe>

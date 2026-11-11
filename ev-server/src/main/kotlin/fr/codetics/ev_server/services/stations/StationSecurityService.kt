@@ -3,9 +3,11 @@ package fr.codetics.ev_server.services.stations
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.I18n
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.stationSecret
 import fr.codetics.ev_server.models.commands.CommandState
 import fr.codetics.ev_server.models.entities.CommandEntity
@@ -30,6 +32,9 @@ import fr.codetics.ev_server.repositories.StationRepository
 import fr.codetics.ev_server.services.notifications.NotificationService
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.UUID
 import org.springframework.context.event.EventListener
 import org.springframework.data.domain.PageRequest
@@ -65,14 +70,14 @@ class StationSecurityService(
         )
 
     fun changeProfile(user: AppPrincipal, stationId: String, input: SecurityProfileInput): SecurityChange {
-        ensure(input.securityProfile in 0..3) { "Le profil de sécurité est compris entre 0 et 3." }
+        ensure(input.securityProfile in 0..3) { msg("security.profile_range") }
         conflict(input.securityProfile != 0 || properties.ocpp.allowUnauthenticated) {
-            "Le profil 0 est désactivé sur ce serveur."
+            msg("security.profile_zero_disabled")
         }
         val pinned =
             input.pinnedCertificateFingerprint?.let(ChargerCertificates::normalizeFingerprint)?.ifBlank { null }
         ensure(pinned == null || pinned.matches(Regex("[0-9a-f]{64}"))) {
-            "Empreinte SHA-256 invalide (64 caractères hexadécimaux)."
+            msg("security.fingerprint")
         }
 
         val identity = StationIdentity(user.tenantId, stationId)
@@ -89,7 +94,7 @@ class StationSecurityService(
 
                 if (raising && target == 3) {
                     conflict(pinned != null || certificates.clientAuthorityConfigured) {
-                        "Aucune autorité de certification cliente n’est configurée sur le serveur."
+                        msg("security.no_client_ca")
                     }
                 }
                 station.pinnedCertificateFingerprint = pinned
@@ -103,12 +108,12 @@ class StationSecurityService(
                 }
 
                 if (target == from) {
-                    message = "Paramètres de sécurité enregistrés."
+                    message = msg("security.saved")
                 } else if (raising && input.sendToStation && target > 0) {
-                    conflict(connected) { "La borne doit être connectée pour changer de profil." }
+                    conflict(connected) { msg("security.must_be_connected_profile") }
                     if (target >= 2) {
                         conflict((station.connectionSecurityProfile ?: 0) >= 2) {
-                            "La borne doit d’abord se connecter en wss:// (TLS)."
+                            msg("security.must_use_tls")
                         }
                     }
                     if (target == 3) {
@@ -117,7 +122,7 @@ class StationSecurityService(
                                 station.issuedCertificateFingerprint != null ||
                                 station.connectionSecurityProfile == 3
                         ) {
-                            "Aucun certificat client connu pour cette borne."
+                            msg("security.no_client_certificate")
                         }
                     }
                     station.requestedSecurityProfile = target
@@ -129,15 +134,15 @@ class StationSecurityService(
                             db.json.valueToTree(mapOf("key" to SECURITY_PROFILE_KEY, "value" to target.toString())),
                         )
                     message =
-                        "Demande envoyée à la borne. Le profil $target sera appliqué dès qu’elle se reconnectera avec ce profil."
+                        msg("security.profile_requested", target)
                 } else {
                     station.securityProfile = target
                     station.requestedSecurityProfile = null
                     message =
                         if (raising) {
-                            "Profil $target appliqué. Configurez la borne pour qu’elle se reconnecte avec ce profil."
+                            msg("security.profile_applied", target)
                         } else {
-                            "Profil $target appliqué côté serveur, à reconfigurer sur place : une borne ne peut pas abaisser son propre profil."
+                            msg("security.profile_lowered", target)
                         }
                 }
                 stations.save(station)
@@ -170,7 +175,7 @@ class StationSecurityService(
 
     fun rotateRemotely(user: AppPrincipal, stationId: String): ProvisionedStation {
         conflict(gateway.isConnected(StationIdentity(user.tenantId, stationId))) {
-            "La borne doit être connectée pour recevoir un nouveau mot de passe."
+            msg("security.must_be_connected_password")
         }
         val secret = stationSecret()
         return db.atomic {
@@ -188,8 +193,7 @@ class StationSecurityService(
             ProvisionedStation(
                 stationId,
                 secret,
-                "Nouveau mot de passe envoyé à la borne. L’ancien reste accepté jusqu’à sa reconnexion avec le nouveau. " +
-                    "Conservez-le : il n’est affiché qu’une seule fois.",
+                msg("security.password_rotated"),
             )
         }
     }
@@ -213,7 +217,7 @@ class StationSecurityService(
                             last.result?.let { db.decode(it).path("status").asText() } in
                                 setOf("Accepted", "RebootRequired"))
                 conflict(!delivered) {
-                    "La borne a peut-être déjà reçu le nouveau mot de passe : révoquez l’ancien plutôt que d’annuler."
+                    msg("security.password_maybe_received")
                 }
                 db.lock<CommandEntity>(last.id)?.takeIf { it.state == CommandState.QUEUED }?.let { queued ->
                     queued.state = CommandState.CANCELLED
@@ -232,7 +236,7 @@ class StationSecurityService(
     fun revokePreviousPassword(user: AppPrincipal, stationId: String): StationResponse {
         db.atomic {
             val station = locked(user, stationId)
-            conflict(station.pendingSecretHash != null) { "Aucun nouveau mot de passe en attente." }
+            conflict(station.pendingSecretHash != null) { msg("security.no_pending_password") }
             station.secretHash = requireNotNull(station.pendingSecretHash)
             station.pendingSecretHash = null
             stations.save(station)
@@ -258,9 +262,9 @@ class StationSecurityService(
     }
 
     fun certificateCommand(user: AppPrincipal, stationId: String, action: String, payload: Map<String, Any?>): UUID {
-        ensure(action in ADMIN_CERTIFICATE_ACTIONS) { "Action de certificat inconnue." }
+        ensure(action in ADMIN_CERTIFICATE_ACTIONS) { msg("security.unknown_certificate_action") }
         conflict(action != "ExtendedTriggerMessage" || certificates.signingConfigured) {
-            "Aucune autorité de signature n’est configurée sur le serveur."
+            msg("security.no_signing_ca")
         }
         stationService.station(user.tenantId, stationId)
         val request =
@@ -272,11 +276,11 @@ class StationSecurityService(
 
     fun changeSettings(user: AppPrincipal, stationId: String, input: OcppSettingsInput): SecurityChange {
         ensure(input.heartbeatInterval == null || input.heartbeatInterval in 10..300) {
-            "L’intervalle de battement est compris entre 10 et 300 secondes."
+            msg("security.heartbeat_range")
         }
         val vendors = input.dataTransferVendors.map(String::trim).filter(String::isNotBlank).distinct()
-        ensure(vendors.all { it.length <= 255 && !it.contains(',') }) { "Identifiant de fournisseur invalide." }
-        ensure(vendors.joinToString(",").length <= 1000) { "La liste des fournisseurs est trop longue." }
+        ensure(vendors.all { it.length <= 255 && !it.contains(',') }) { msg("security.invalid_vendor") }
+        ensure(vendors.joinToString(",").length <= 1000) { msg("security.vendors_too_long") }
 
         val command =
             db.atomic {
@@ -302,7 +306,7 @@ class StationSecurityService(
                     null
                 }
             }
-        return SecurityChange(stationService.find(user.tenantId, stationId), command, "Paramètres OCPP enregistrés.")
+        return SecurityChange(stationService.find(user.tenantId, stationId), command, msg("security.ocpp_saved"))
     }
 
     @EventListener
@@ -373,10 +377,17 @@ class StationSecurityService(
                 notifications.notifyAdmins(
                     station.key.tenantId,
                     NotificationType.STATION_CERTIFICATE_EXPIRING,
-                    if (expired) "Certificat expiré : ${station.name}" else "Certificat bientôt expiré : ${station.name}",
-                    "Le certificat client de la borne ${station.name} (${station.key.stationId}) " +
-                        (if (expired) "a expiré" else "expire") + " le ${station.certificateExpiresAt}. " +
-                        "Renouvelez-le depuis la section Sécurité de la borne.",
+                    { msg(if (expired) "notification.certificate_expired.subject" else "notification.certificate_expiring.subject", station.name) },
+                    {
+                        msg(
+                            if (expired) "notification.certificate_expired.body" else "notification.certificate_expiring.body",
+                            station.name,
+                            station.key.stationId,
+                            station.certificateExpiresAt?.let {
+                                DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(I18n.locale()).withZone(ZoneId.of("Europe/Paris")).format(it)
+                            },
+                        )
+                    },
                     dedupeKey = "certificate:${station.key.stationId}:${station.certificateFingerprint}",
                     window = Duration.ofDays(7),
                 )
@@ -401,7 +412,7 @@ class StationSecurityService(
 
     private fun locked(user: AppPrincipal, stationId: String): StationEntity =
         db.lock<StationEntity>(StationKey(user.tenantId, stationId))?.takeUnless { it.deleted }
-            ?: throw NotFound("Borne introuvable.")
+            ?: throw NotFound(msg("stations.not_found"))
 
     private fun event(station: StationEntity, status: String, info: String? = null) {
         stationEvents.save(

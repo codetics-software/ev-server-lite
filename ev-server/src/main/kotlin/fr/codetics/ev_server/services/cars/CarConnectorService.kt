@@ -5,6 +5,7 @@ import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.InvalidRequest
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.IntegrationSecretEntity
 import fr.codetics.ev_server.models.organization.CarConnectorData
 import fr.codetics.ev_server.models.organization.CarData
@@ -43,11 +44,11 @@ class CarConnectorService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     private fun connector(tenant: UUID, id: UUID): Entry<CarConnectorData> =
-        organization.find(tenant, "car-connectors", id, CarConnectorData::class.java) ?: throw NotFound("Connecteur introuvable.")
+        organization.find(tenant, "car-connectors", id, CarConnectorData::class.java) ?: throw NotFound(msg("car_connectors.not_found"))
 
     fun updateSecret(user: AppPrincipal, id: UUID, input: CarConnectorSecretInput): ConnectionCheck {
         connector(user.tenantId, id)
-        ensure(input.clientSecret.isNotBlank() && input.clientSecret.length <= 1000) { "Le secret client est invalide." }
+        ensure(input.clientSecret.isNotBlank() && input.clientSecret.length <= 1000) { msg("car_connectors.invalid_secret") }
         db.atomic {
             val entity = secrets.findById(id).orElse(null)?.takeIf { it.tenantId == user.tenantId } ?: IntegrationSecretEntity(id, user.tenantId)
             entity.secretsEncrypted = vault.encrypt(input.clientSecret)
@@ -56,32 +57,32 @@ class CarConnectorService(
             db.audit(user.tenantId, user.id.toString(), "CAR_CONNECTOR_SECRET", id.toString())
         }
         http.forget("car:$id")
-        return ConnectionCheck(true, "Secret enregistré.")
+        return ConnectionCheck(true, msg("car_connectors.secret_saved"))
     }
 
     fun check(user: AppPrincipal, id: UUID): ConnectionCheck =
         try {
             token(connector(user.tenantId, id))
-            ConnectionCheck(true, "Connexion réussie.")
+            ConnectionCheck(true, msg("common.connection_ok"))
         } catch (error: AssetConnectionError) {
-            ConnectionCheck(false, error.message ?: "Connexion impossible.")
+            ConnectionCheck(false, error.message ?: msg("common.connection_failed"))
         } catch (error: InvalidRequest) {
             ConnectionCheck(false, error.message)
         }
 
     fun soc(user: AppPrincipal, carId: UUID): SocResponse {
-        val car = organization.find(user.tenantId, "cars", carId, CarData::class.java) ?: throw NotFound("Véhicule introuvable.")
+        val car = organization.find(user.tenantId, "cars", carId, CarData::class.java) ?: throw NotFound(msg("cars.not_found"))
         return SocResponse(carId, soc(user.tenantId, car.data))
     }
 
     fun soc(tenant: UUID, car: CarData): Int? {
-        val connector = car.carConnectorId?.let { connector(tenant, it) } ?: throw InvalidRequest("Aucun connecteur n’est associé à ce véhicule.")
+        val connector = car.carConnectorId?.let { connector(tenant, it) } ?: throw InvalidRequest(msg("car_connectors.none"))
         val token = token(connector)
         val data = connector.data
         val url =
             when (data.type) {
-                "TRONITY" -> "/v1/vehicles/${car.carConnectorMeterId ?: throw InvalidRequest("Renseignez l’identifiant Tronity du véhicule.")}/battery"
-                else -> "/v1/digital-twin/vehicles/${car.vin ?: throw InvalidRequest("Renseignez le VIN du véhicule.")}"
+                "TRONITY" -> "/v1/vehicles/${car.carConnectorMeterId ?: throw InvalidRequest(msg("car_connectors.tronity_id_required"))}/battery"
+                else -> "/v1/digital-twin/vehicles/${car.vin ?: throw InvalidRequest(msg("car_connectors.vin_required"))}"
             }
         val response = http.send(HttpRequest.newBuilder(http.uri(data.apiUrl, url)).header("Authorization", "Bearer $token").GET())
         val value =
@@ -93,7 +94,7 @@ class CarConnectorService(
     private fun token(connector: Entry<CarConnectorData>): String {
         val secret =
             secrets.findById(connector.id).orElse(null)?.let { vault.decrypt(it.secretsEncrypted) }
-                ?: throw InvalidRequest("Renseignez le secret client du connecteur.")
+                ?: throw InvalidRequest(msg("car_connectors.secret_required"))
         val data = connector.data
         return http.token("car:${connector.id}") {
             val response =
@@ -120,7 +121,7 @@ class CarConnectorService(
                             )
                     )
                 }
-            (response.path("access_token").asText().ifBlank { throw AssetConnectionError("Identifiants du connecteur refusés.") }) to
+            (response.path("access_token").asText().ifBlank { throw AssetConnectionError(msg("car_connectors.refused")) }) to
                 response.path("expires_in").asLong(600)
         }
     }

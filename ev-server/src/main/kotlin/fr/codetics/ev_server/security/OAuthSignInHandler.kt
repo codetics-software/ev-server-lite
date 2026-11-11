@@ -2,6 +2,7 @@ package fr.codetics.ev_server.security
 
 import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import java.util.UUID
@@ -52,7 +53,7 @@ class OAuthSignInHandler(
         val tokenHash = session.getAttribute("LINK_TOKEN") as? String
 
         ensure(tokenHash != null && accounts.authenticateTokenHash(tokenHash)?.id == user) {
-            "La session d’origine du compte n’est plus valide."
+            msg("auth.oauth_origin_expired")
         }
 
         return user

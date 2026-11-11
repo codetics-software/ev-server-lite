@@ -2,6 +2,7 @@ package fr.codetics.ev_server.services.organization
 
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.InvalidRequest
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.RecordEntity
 import fr.codetics.ev_server.models.entities.RecordKey
 import fr.codetics.ev_server.models.entities.StationEntity
@@ -34,7 +35,7 @@ data class Entry<T : RecordData>(
 @Service
 class Organization(private val records: RecordRepository, private val db: Database) {
     fun strict(kind: String, data: JsonNode): RecordData {
-        val type = RecordKinds.types[kind] ?: throw InvalidRequest("Type d’élément inconnu.")
+        val type = RecordKinds.types[kind] ?: throw InvalidRequest(msg("records.unknown_kind"))
         val parsed =
             try {
                 db.json
@@ -45,9 +46,9 @@ class Organization(private val records: RecordRepository, private val db: Databa
             } catch (error: JacksonException) {
                 val field =
                     error.path.joinToString(".") { it.propertyName ?: "[${it.index}]" }.ifBlank {
-                        "données"
+                        msg("records.data")
                     }
-                throw InvalidRequest("Le champ « $field » est absent, inconnu ou invalide.")
+                throw InvalidRequest(msg("records.field_invalid", field))
             }
         parsed.validate()
         return parsed

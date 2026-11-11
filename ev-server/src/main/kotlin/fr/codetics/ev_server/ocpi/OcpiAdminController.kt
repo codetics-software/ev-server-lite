@@ -2,6 +2,7 @@ package fr.codetics.ev_server.ocpi
 
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.randomToken
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.PartnerEntity
@@ -77,7 +78,7 @@ class OcpiAdminController(
             mapOf(
                 "id" to partner.id,
                 "token" to token,
-                "message" to "Transmettez ce jeton initial au partenaire par un canal sécurisé.",
+                "message" to msg("ocpi.partner.initial_token"),
             )
         }
     }

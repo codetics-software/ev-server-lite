@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 import { IconTrash, IconUsers } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 type SiteUser = {
   user_id: string;
@@ -54,7 +55,7 @@ export function SiteUsers({ siteId, canEdit }: { siteId: string; canEdit: boolea
   const columns: Column<SiteUser>[] = [
     {
       id: "name",
-      header: "Utilisateur",
+      header: t("Utilisateur"),
       sort: (row) => row.name,
       cell: (row) => (
         <Link
@@ -68,10 +69,10 @@ export function SiteUsers({ siteId, canEdit }: { siteId: string; canEdit: boolea
     },
     {
       id: "admin",
-      header: "Administrateur du site",
+      header: t("Administrateur du site"),
       cell: (row) => (
         <Switch
-          aria-label={`Administrateur du site : ${row.name}`}
+          aria-label={t("Administrateur du site : {name}", { name: row.name })}
           checked={row.site_admin}
           disabled={!canEdit}
           onCheckedChange={(checked) => update(row.user_id, { site_admin: checked === true })}
@@ -80,10 +81,10 @@ export function SiteUsers({ siteId, canEdit }: { siteId: string; canEdit: boolea
     },
     {
       id: "owner",
-      header: "Propriétaire",
+      header: t("Propriétaire"),
       cell: (row) => (
         <Switch
-          aria-label={`Propriétaire du site : ${row.name}`}
+          aria-label={t("Propriétaire du site : {name}", { name: row.name })}
           checked={row.site_owner}
           disabled={!canEdit}
           onCheckedChange={(checked) => update(row.user_id, { site_owner: checked === true })}
@@ -94,14 +95,14 @@ export function SiteUsers({ siteId, canEdit }: { siteId: string; canEdit: boolea
       ? [
           {
             id: "remove",
-            header: "Retirer",
+            header: t("Retirer"),
             srOnlyHeader: true,
             align: "right" as const,
             cell: (row: SiteUser) => (
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={`Retirer ${row.name}`}
+                aria-label={t("Retirer {name}", { name: row.name })}
                 onClick={() => setDraft(rows.filter((item) => item.user_id !== row.user_id))}
               >
                 <IconTrash />
@@ -119,17 +120,17 @@ export function SiteUsers({ siteId, canEdit }: { siteId: string; canEdit: boolea
     return <LoadingState rows={3} />;
   }
   return (
-    <section className="flex flex-col gap-4" aria-label="Utilisateurs du site">
+    <section className="flex flex-col gap-4" aria-label={t("Utilisateurs du site")}>
       {canEdit && (
         <div className="flex flex-wrap items-end gap-3">
           <Field className="w-full sm:w-72">
-            <FieldLabel htmlFor="site-user-add">Affecter un utilisateur</FieldLabel>
+            <FieldLabel htmlFor="site-user-add">{t("Affecter un utilisateur")}</FieldLabel>
             <EntityPicker
               id="site-user-add"
               source="users"
               value={picker}
               onChange={(_, option) => add(option)}
-              placeholder="Rechercher un utilisateur…"
+              placeholder={t("Rechercher un utilisateur…")}
             />
           </Field>
           {dirty && (
@@ -151,7 +152,7 @@ export function SiteUsers({ siteId, canEdit }: { siteId: string; canEdit: boolea
                         ),
                       }),
                     {
-                      success: "Affectations enregistrées.",
+                      success: t("Affectations enregistrées."),
                       onDone: () => {
                         setDraft(null);
                         refresh();
@@ -160,10 +161,10 @@ export function SiteUsers({ siteId, canEdit }: { siteId: string; canEdit: boolea
                   )
                 }
               >
-                Enregistrer les affectations
+                {t("Enregistrer les affectations")}
               </Button>
               <Button variant="ghost" onClick={() => setDraft(null)}>
-                Annuler
+                {t("Annuler")}
               </Button>
             </>
           )}
@@ -171,7 +172,7 @@ export function SiteUsers({ siteId, canEdit }: { siteId: string; canEdit: boolea
       )}
       {rows.length ? (
         <DataTable
-          label="Utilisateurs du site"
+          label={t("Utilisateurs du site")}
           rows={rows}
           columns={columns}
           rowKey={(row) => row.user_id}
@@ -179,8 +180,10 @@ export function SiteUsers({ siteId, canEdit }: { siteId: string; canEdit: boolea
       ) : (
         <EmptyState
           icon={<IconUsers />}
-          title="Aucun utilisateur affecté"
-          description="Affectez des utilisateurs pour leur donner accès au site lorsque le contrôle d’accès est actif."
+          title={t("Aucun utilisateur affecté")}
+          description={t(
+            "Affectez des utilisateurs pour leur donner accès au site lorsque le contrôle d’accès est actif.",
+          )}
         />
       )}
     </section>

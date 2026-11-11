@@ -16,6 +16,7 @@ import { IconBuildingFactory2, IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 import { CompanyForm } from "./organization-forms";
+import { t } from "@/lib/i18n";
 
 export function CompaniesScreen() {
   const user = useWorkspace();
@@ -26,36 +27,36 @@ export function CompaniesScreen() {
   const columns: Column<RecordItem>[] = [
     {
       id: "name",
-      header: "Entreprise",
+      header: t("Entreprise"),
       sort: (record) => record.name,
       cell: (record) => <span className="font-medium">{record.name}</span>,
     },
     {
       id: "city",
-      header: "Ville",
+      header: t("Ville"),
       sort: (record) => String(field(record, "city") ?? ""),
       cell: (record) =>
         [field(record, "postalCode"), field(record, "city"), field(record, "country")]
           .filter(Boolean)
           .join(" ") || "—",
     },
-    { id: "vat", header: "TVA", cell: (record) => display(field(record, "vatNumber")) },
+    { id: "vat", header: t("TVA"), cell: (record) => display(field(record, "vatNumber")) },
     {
       id: "sites",
-      header: "Sites",
+      header: t("Sites"),
       cell: (record) => (
         <Link
           href={`/sites?companyId=${record.id}`}
           className="text-primary underline-offset-4 dark:text-sidebar-primary hover:underline"
           onClick={(event) => event.stopPropagation()}
         >
-          Voir les sites
+          {t("Voir les sites")}
         </Link>
       ),
     },
     {
       id: "updated",
-      header: "Mise à jour",
+      header: t("Mise à jour"),
       sort: (record) => record.updated_at,
       cell: (record) => <span className="text-muted-foreground">{date(record.updated_at)}</span>,
     },
@@ -63,31 +64,31 @@ export function CompaniesScreen() {
   return (
     <>
       <PageHeader
-        title="Entreprises"
-        description="Les sociétés propriétaires des sites de recharge."
+        title={t("Entreprises")}
+        description={t("Les sociétés propriétaires des sites de recharge.")}
         actions={
           admin && (
             <Button onClick={() => setEditing(null)}>
               <IconPlus data-icon="inline-start" />
-              Ajouter une entreprise
+              {t("Ajouter une entreprise")}
             </Button>
           )
         }
       />
       <RecordList
         kind="companies"
-        label="Entreprises"
+        label={t("Entreprises")}
         columns={columns}
         revision={revision}
         onSelect={admin ? setEditing : undefined}
         emptyIcon={<IconBuildingFactory2 />}
-        emptyTitle="Aucune entreprise"
-        emptyDescription="Créez une entreprise avant d’y rattacher des sites."
+        emptyTitle={t("Aucune entreprise")}
+        emptyDescription={t("Créez une entreprise avant d’y rattacher des sites.")}
       />
       <FormDialog
         open={editing !== undefined}
         onOpenChange={(open) => !open && setEditing(undefined)}
-        title={editing ? `Modifier ${editing.name}` : "Ajouter une entreprise"}
+        title={editing ? t("Modifier {name}", { name: editing.name }) : t("Ajouter une entreprise")}
         wide
       >
         <CompanyForm
@@ -100,12 +101,12 @@ export function CompaniesScreen() {
         {editing && (
           <div className="border-t pt-4">
             <ConfirmButton
-              title={`Supprimer ${editing.name} ?`}
-              description="Impossible tant que des sites sont rattachés à cette entreprise."
-              confirmLabel="Supprimer"
+              title={t("Supprimer {name} ?", { name: editing.name })}
+              description={t("Impossible tant que des sites sont rattachés à cette entreprise.")}
+              confirmLabel={t("Supprimer")}
               onConfirm={() =>
                 action.run("delete", () => deleteRecord("companies", editing.id), {
-                  success: "Entreprise supprimée.",
+                  success: t("Entreprise supprimée."),
                   onDone: () => {
                     setEditing(undefined);
                     refresh();
@@ -113,7 +114,7 @@ export function CompaniesScreen() {
                 })
               }
             >
-              Supprimer l’entreprise
+              {t("Supprimer l’entreprise")}
             </ConfirmButton>
           </div>
         )}

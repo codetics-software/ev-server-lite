@@ -11,6 +11,7 @@ import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.models.api.PageResponse
 import fr.codetics.ev_server.models.billing.CheckoutDetails
@@ -84,13 +85,13 @@ class CardOrderService(
     }
 
     fun updateSale(user: AppPrincipal, input: CardSaleInput): CardOfferResponse {
-        ensure(input.priceMinor in 100..100000) { "Le prix de la carte doit être compris entre 1 € et 1 000 €." }
+        ensure(input.priceMinor in 100..100000) { msg("cards.price_range") }
         ensure(input.description == null || input.description.length <= 500) {
-            "La description contient 500 caractères au plus."
+            msg("cards.description_too_long")
         }
         db.atomic {
             val current = db.lock<WorkspacePaymentSettings>(user.tenantId) ?: WorkspacePaymentSettings(tenantId = user.tenantId)
-            ensure(!input.enabled || current.stripeAccountId != null) { "Connectez d’abord le compte Stripe de l’espace." }
+            ensure(!input.enabled || current.stripeAccountId != null) { msg("billing.connect_stripe_first") }
             current.cardSaleEnabled = input.enabled
             current.cardPriceMinor = input.priceMinor
             current.cardDescription = input.description?.trim()?.ifBlank { null }
@@ -108,22 +109,22 @@ class CardOrderService(
         val price = current?.cardPriceMinor
         val account = current?.stripeAccountId
         if (!gateway.configured || current?.cardSaleEnabled != true || price == null || account == null || !gateway.accountReady(account)) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "La vente de cartes n’est pas disponible dans cet espace.")
+            throw ResponseStatusException(HttpStatus.CONFLICT, msg("cards.not_for_sale"))
         }
         if (current.cardShipping) {
             ensure(!input.recipientName.isNullOrBlank() && !input.address.isNullOrBlank() && !input.postalCode.isNullOrBlank() && !input.city.isNullOrBlank()) {
-                "Renseignez l’adresse de livraison complète."
+                msg("cards.shipping_required")
             }
         }
         listOf(input.recipientName, input.address, input.city).forEach { value ->
-            ensure(value == null || value.length <= 200) { "L’adresse de livraison est trop longue." }
+            ensure(value == null || value.length <= 200) { msg("cards.shipping_too_long") }
         }
-        ensure(input.postalCode == null || input.postalCode.length <= 20) { "Le code postal est trop long." }
+        ensure(input.postalCode == null || input.postalCode.length <= 20) { msg("cards.postal_code_too_long") }
         val orderId =
             db.atomic {
                 val existing = orders.findByTenantIdAndRequestId(user.tenantId, input.requestId)
                 if (existing != null) {
-                    ensure(existing.userId == user.id) { "Cette demande de commande a déjà été utilisée." }
+                    ensure(existing.userId == user.id) { msg("cards.request_used") }
                     return@atomic existing.id
                 }
                 val now = Instant.now(clock)
@@ -156,7 +157,7 @@ class CardOrderService(
             return CardCheckoutResponse(order.id, it)
         }
         if (order.state != CardOrderState.PENDING_PAYMENT || order.expiresAt.isBefore(Instant.now(clock))) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Cette commande a expiré.")
+            throw ResponseStatusException(HttpStatus.CONFLICT, msg("cards.order_expired"))
         }
         val returnUrl = "${properties.publicUrl.trimEnd('/')}/card-orders"
         val checkout =
@@ -166,7 +167,7 @@ class CardOrderService(
                     order.stripeAccountId,
                     order.amountMinor,
                     order.currency,
-                    "Carte de recharge",
+                    msg("cards.product_name"),
                     returnUrl,
                     returnUrl,
                     order.expiresAt,
@@ -209,20 +210,20 @@ class CardOrderService(
 
     fun assign(user: AppPrincipal, id: UUID, input: CardAssignmentInput): CardOrderResponse {
         val uid = input.uid.trim()
-        ensure(uid.matches(Regex("[A-Za-z0-9_-]{1,20}"))) { "L’identifiant de la carte doit contenir au plus 20 caractères." }
-        ensure(!VehicleIds.isVid(uid)) { "Un identifiant de véhicule ne peut pas être associé à une commande." }
+        ensure(uid.matches(Regex("[A-Za-z0-9_-]{1,20}"))) { msg("cards.uid_too_long") }
+        ensure(!VehicleIds.isVid(uid)) { msg("cards.vehicle_id") }
         val visual = input.visualId?.trim()?.ifBlank { null }
-        ensure(visual == null || visual.length <= 100) { "L’identifiant visible contient 100 caractères au plus." }
+        ensure(visual == null || visual.length <= 100) { msg("tokens.visual_id_too_long") }
         val owner =
             db.atomic {
-                val order = db.lock<CardOrderEntity>(id)?.takeIf { it.tenantId == user.tenantId } ?: throw NotFound("Commande introuvable.")
+                val order = db.lock<CardOrderEntity>(id)?.takeIf { it.tenantId == user.tenantId } ?: throw NotFound(msg("cards.order_not_found"))
                 ensure(order.state == CardOrderState.PAID || order.state == CardOrderState.SHIPPED) {
-                    "Seule une commande payée peut recevoir une carte."
+                    msg("cards.paid_only")
                 }
                 val key = ChargingTokenKey(user.tenantId, uid)
                 val token = tokens.findById(key).orElse(null)
                 if (token != null && token.userId != null) {
-                    throw ResponseStatusException(HttpStatus.CONFLICT, "Cette carte est déjà attribuée à un utilisateur.")
+                    throw ResponseStatusException(HttpStatus.CONFLICT, msg("cards.already_assigned"))
                 }
                 val card = token ?: ChargingTokenEntity(key)
                 card.enabled = false
@@ -243,8 +244,8 @@ class CardOrderService(
                 notifications.notify(
                     it,
                     NotificationType.CARD_READY,
-                    "Votre carte de recharge est prête",
-                    "Dès réception, activez-la dans l’application en la scannant ou en saisissant son numéro.",
+                    { msg("notification.card_ready.subject") },
+                    { msg("notification.card_ready.body") },
                     dedupeKey = "card-ready:$id",
                 )
             }
@@ -254,7 +255,7 @@ class CardOrderService(
 
     fun activate(user: AppPrincipal, input: CardActivationInput): ChargingTokenResponse {
         val number = normalize(input.number)
-        ensure(number.length in 1..100) { "Renseignez le numéro de la carte." }
+        ensure(number.length in 1..100) { msg("cards.number_required") }
         limiter.check("card-activation:${user.id}", 10)
         return db.atomic {
             val candidates = orders.findAllByTenantIdAndUserIdOrderByCreatedAtDesc(user.tenantId, user.id)
@@ -267,15 +268,15 @@ class CardOrderService(
             if (match == null) {
                 val message =
                     if (candidates.any { it.state == CardOrderState.PAID })
-                        "Votre carte n’est pas encore prête. Vous serez prévenu dès que l’exploitant l’aura préparée."
-                    else "Aucune carte commandée sur votre compte ne correspond à ce numéro."
+                        msg("cards.not_ready")
+                    else msg("cards.no_match")
                 throw NotFound(message)
             }
             val (found, token) = match
             val order = requireNotNull(db.lock<CardOrderEntity>(found.id))
-            ensure(order.state == CardOrderState.SHIPPED) { "Cette carte est déjà activée." }
+            ensure(order.state == CardOrderState.SHIPPED) { msg("cards.already_activated") }
             if (token.userId != null && token.userId != user.id) {
-                throw ResponseStatusException(HttpStatus.CONFLICT, "Cette carte est déjà attribuée à un autre utilisateur.")
+                throw ResponseStatusException(HttpStatus.CONFLICT, msg("cards.assigned_to_other"))
             }
             val hasDefault = tokens.findAllByKeyTenantIdAndUserId(user.tenantId, user.id).any { it.defaultToken }
             token.userId = user.id
@@ -292,15 +293,15 @@ class CardOrderService(
     }
 
     fun cancel(user: AppPrincipal, id: UUID): CardOrderResponse {
-        val order = orders.findByTenantIdAndId(user.tenantId, id) ?: throw NotFound("Commande introuvable.")
-        ensure(order.state in CANCELLABLE) { "Une carte activée ne peut plus être remboursée ici. Désactivez le badge si nécessaire." }
+        val order = orders.findByTenantIdAndId(user.tenantId, id) ?: throw NotFound(msg("cards.order_not_found"))
+        ensure(order.state in CANCELLABLE) { msg("cards.activated_no_refund") }
         val refund =
             order.stripePaymentIntentId?.let { intent ->
                 gateway.refund(order.stripeAccountId, intent, order.amountMinor, order.id)
             }
         db.atomic {
             val saved = requireNotNull(db.lock<CardOrderEntity>(id))
-            ensure(saved.state in CANCELLABLE) { "Cette commande a changé d’état." }
+            ensure(saved.state in CANCELLABLE) { msg("cards.state_changed") }
             saved.state = CardOrderState.CANCELLED
             saved.refundId = refund?.id
             saved.updatedAt = Instant.now(clock)
@@ -329,12 +330,12 @@ class CardOrderService(
         db.atomic {
             val order = db.lock<CardOrderEntity>(id) ?: return@atomic
             if (order.stripeAccountId != event.accountId) {
-                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Le compte Stripe ne correspond pas à la commande.")
+                throw ResponseStatusException(HttpStatus.BAD_REQUEST, msg("cards.stripe_account_mismatch"))
             }
             if (order.stripeCheckoutId == null) {
-                throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "La commande est en cours d’enregistrement. Réessayez.")
+                throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, msg("cards.order_pending"))
             }
-            ensure(order.stripeCheckoutId == event.data.path("id").asText()) { "La session Stripe ne correspond pas à la commande." }
+            ensure(order.stripeCheckoutId == event.data.path("id").asText()) { msg("cards.stripe_session_mismatch") }
             if (events.existsById(event.id)) return@atomic
             if (event.type in FAILED_EVENTS) {
                 if (order.state == CardOrderState.PENDING_PAYMENT) order.state = CardOrderState.CANCELLED
@@ -343,10 +344,10 @@ class CardOrderService(
                     event.data.path("amount_total").longValue() == order.amountMinor &&
                         event.data.path("currency").asText().equals(order.currency, true)
                 ) {
-                    "Le montant Stripe ne correspond pas à la commande."
+                    msg("cards.stripe_amount_mismatch")
                 }
                 val intent = event.data.path("payment_intent").asText()
-                ensure(intent.startsWith("pi_")) { "Le paiement Stripe est incomplet." }
+                ensure(intent.startsWith("pi_")) { msg("stripe.webhook.incomplete") }
                 if (order.state == CardOrderState.PENDING_PAYMENT) {
                     order.stripePaymentIntentId = intent
                     order.state = CardOrderState.PAID
@@ -363,8 +364,8 @@ class CardOrderService(
                 notifications.notifyAdmins(
                     order.tenantId,
                     NotificationType.CARD_ORDER_PAID,
-                    "Nouvelle commande de carte de recharge",
-                    "Une carte a été commandée et payée. Associez-en une à la commande dans le tableau de bord.",
+                    { msg("notification.card_paid.subject") },
+                    { msg("notification.card_paid.body") },
                     dedupeKey = "card-paid:${order.id}",
                 )
             }

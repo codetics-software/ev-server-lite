@@ -9,7 +9,7 @@ import Foundation
 
 nonisolated enum APIError: LocalizedError, Sendable, Equatable {
     case unauthorized
-    case server(status: Int, message: String?)
+    case server(status: Int, message: String?, code: String? = nil)
     case offline
     case invalidResponse
 
@@ -17,7 +17,7 @@ nonisolated enum APIError: LocalizedError, Sendable, Equatable {
         switch self {
         case .unauthorized:
             String(localized: "Your session has expired. Sign in again.")
-        case .server(_, let message):
+        case .server(_, let message, _):
             message ?? String(localized: "The server refused this request.")
         case .offline:
             String(localized: "The server cannot be reached. Check your connection and try again.")
@@ -27,7 +27,12 @@ nonisolated enum APIError: LocalizedError, Sendable, Equatable {
     }
 
     var status: Int? {
-        if case .server(let status, _) = self { return status }
+        if case .server(let status, _, _) = self { return status }
+        return nil
+    }
+
+    var code: String? {
+        if case .server(_, _, let code) = self { return code }
         return nil
     }
 }

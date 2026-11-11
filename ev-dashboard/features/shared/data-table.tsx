@@ -20,6 +20,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
+import { getLocale } from "@/lib/i18n";
 
 export type Column<T extends RowData> = {
   id: string;
@@ -46,7 +47,10 @@ function compare(left: unknown, right: unknown) {
   if (typeof left === "number" && typeof right === "number") {
     return left - right;
   }
-  return String(left).localeCompare(String(right), "fr", { numeric: true, sensitivity: "base" });
+  return String(left).localeCompare(String(right), getLocale(), {
+    numeric: true,
+    sensitivity: "base",
+  });
 }
 
 export function DataTable<T extends RowData>({

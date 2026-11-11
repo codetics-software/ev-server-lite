@@ -22,6 +22,7 @@ import { isInvalid } from "@/lib/form";
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { useId, type ComponentProps, type ReactNode } from "react";
 import { EntityPicker, type PickerSource } from "./entity-picker";
+import { t } from "@/lib/i18n";
 
 type Base = {
   field: AnyFieldApi;
@@ -112,7 +113,7 @@ export function OptionSelect({
   value,
   onChange,
   options,
-  placeholder = "Choisir…",
+  placeholder = t("Choisir…"),
   invalid,
   disabled,
   className = "w-full",

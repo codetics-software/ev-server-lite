@@ -20,22 +20,25 @@ import { useState } from "react";
 import { AutoChargeOffer } from "./autocharge-offer";
 import { AutoChargePanel } from "./autocharge-panel";
 import { CarForm } from "./car-forms";
+import { t } from "@/lib/i18n";
 
 function columns(users?: Map<string, string>): Column<RecordItem>[] {
   return [
     {
       id: "name",
-      header: "Véhicule",
+      header: t("Véhicule"),
       sort: (record) => record.name,
       cell: (record) => (
         <span className="flex flex-col">
           <span className="flex items-center gap-2 font-medium">
             {record.name}
-            {field(record, "default") === true && <ToneBadge tone="progress">Par défaut</ToneBadge>}
+            {field(record, "default") === true && (
+              <ToneBadge tone="progress">{t("Par défaut")}</ToneBadge>
+            )}
           </span>
           <span className="text-xs text-muted-foreground">
             {[field(record, "make"), field(record, "model")].filter(Boolean).join(" ") ||
-              "Modèle non renseigné"}
+              t("Modèle non renseigné")}
           </span>
         </span>
       ),
@@ -44,22 +47,22 @@ function columns(users?: Map<string, string>): Column<RecordItem>[] {
       ? [
           {
             id: "user",
-            header: "Conducteur",
+            header: t("Conducteur"),
             cell: (record: RecordItem) =>
               field(record, "userId")
-                ? (users.get(String(field(record, "userId"))) ?? "Conducteur")
+                ? (users.get(String(field(record, "userId"))) ?? t("Conducteur"))
                 : "—",
           },
         ]
       : []),
     {
       id: "plate",
-      header: "Immatriculation",
+      header: t("Immatriculation"),
       cell: (record) => display(field(record, "licensePlate")),
     },
     {
       id: "battery",
-      header: "Batterie",
+      header: t("Batterie"),
       align: "right",
       cell: (record) => kwh(field(record, "batteryKwh"), 0),
     },
@@ -83,11 +86,11 @@ export function MyCars() {
   const [editing, setEditing] = useState<RecordItem | null | undefined>();
   const action = useAction();
   return (
-    <section className="flex flex-col gap-4" aria-label="Mes véhicules">
+    <section className="flex flex-col gap-4" aria-label={t("Mes véhicules")}>
       <AutoChargeOffer revision={revision} onEnrolled={refresh} />
       <Button className="w-fit" onClick={() => setEditing(null)}>
         <IconPlus data-icon="inline-start" />
-        Ajouter un véhicule
+        {t("Ajouter un véhicule")}
       </Button>
       <ListState
         data={data}
@@ -98,13 +101,15 @@ export function MyCars() {
         empty={
           <EmptyState
             icon={<IconCar />}
-            title="Aucun véhicule"
-            description="Facultatif : enregistrer votre véhicule améliore l’estimation de la recharge."
+            title={t("Aucun véhicule")}
+            description={t(
+              "Facultatif : enregistrer votre véhicule améliore l’estimation de la recharge.",
+            )}
           />
         }
       >
         <DataTable
-          label="Mes véhicules"
+          label={t("Mes véhicules")}
           rows={items}
           columns={columns()}
           rowKey={(record) => record.id}
@@ -114,7 +119,7 @@ export function MyCars() {
       <FormDialog
         open={editing !== undefined}
         onOpenChange={(open) => !open && setEditing(undefined)}
-        title={editing ? `Modifier ${editing.name}` : "Ajouter un véhicule"}
+        title={editing ? t("Modifier {name}", { name: editing.name }) : t("Ajouter un véhicule")}
         wide
       >
         <CarForm
@@ -129,15 +134,15 @@ export function MyCars() {
         {editing && (
           <div className="border-t pt-4">
             <ConfirmButton
-              title="Supprimer ce véhicule ?"
-              description="Le véhicule est retiré de votre compte."
-              confirmLabel="Supprimer"
+              title={t("Supprimer ce véhicule ?")}
+              description={t("Le véhicule est retiré de votre compte.")}
+              confirmLabel={t("Supprimer")}
               onConfirm={() =>
                 action.run(
                   "delete",
                   () => api(`account/cars/${editing.id}`, { method: "DELETE" }),
                   {
-                    success: "Véhicule supprimé.",
+                    success: t("Véhicule supprimé."),
                     onDone: () => {
                       setEditing(undefined);
                       refresh();
@@ -146,7 +151,7 @@ export function MyCars() {
                 )
               }
             >
-              Supprimer le véhicule
+              {t("Supprimer le véhicule")}
             </ConfirmButton>
           </div>
         )}
@@ -166,19 +171,21 @@ export function CarsList({ userId }: { userId?: string }) {
     <>
       <RecordList
         kind="cars"
-        label="Véhicules"
+        label={t("Véhicules")}
         revision={revision}
         filters={{ userId }}
         columns={columns(userId ? undefined : users)}
         onSelect={admin ? setEditing : undefined}
         emptyIcon={<IconCar />}
-        emptyTitle="Aucun véhicule"
-        emptyDescription="Les véhicules sont facultatifs : leur enregistrement n’est pas nécessaire pour recharger."
+        emptyTitle={t("Aucun véhicule")}
+        emptyDescription={t(
+          "Les véhicules sont facultatifs : leur enregistrement n’est pas nécessaire pour recharger.",
+        )}
         toolbar={
           admin && (
             <Button variant="outline" onClick={() => setEditing(null)}>
               <IconPlus data-icon="inline-start" />
-              Ajouter un véhicule
+              {t("Ajouter un véhicule")}
             </Button>
           )
         }
@@ -186,7 +193,7 @@ export function CarsList({ userId }: { userId?: string }) {
       <FormDialog
         open={editing !== undefined}
         onOpenChange={(open) => !open && setEditing(undefined)}
-        title={editing ? `Modifier ${editing.name}` : "Ajouter un véhicule"}
+        title={editing ? t("Modifier {name}", { name: editing.name }) : t("Ajouter un véhicule")}
         wide
       >
         <CarForm
@@ -202,12 +209,12 @@ export function CarsList({ userId }: { userId?: string }) {
         {editing && (
           <div className="border-t pt-4">
             <ConfirmButton
-              title="Supprimer ce véhicule ?"
-              description="Le véhicule est supprimé définitivement."
-              confirmLabel="Supprimer"
+              title={t("Supprimer ce véhicule ?")}
+              description={t("Le véhicule est supprimé définitivement.")}
+              confirmLabel={t("Supprimer")}
               onConfirm={() =>
                 action.run("delete", () => deleteRecord("cars", editing.id), {
-                  success: "Véhicule supprimé.",
+                  success: t("Véhicule supprimé."),
                   onDone: () => {
                     setEditing(undefined);
                     refresh();
@@ -215,7 +222,7 @@ export function CarsList({ userId }: { userId?: string }) {
                 })
               }
             >
-              Supprimer le véhicule
+              {t("Supprimer le véhicule")}
             </ConfirmButton>
           </div>
         )}

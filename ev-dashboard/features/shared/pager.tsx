@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import { t } from "@/lib/i18n";
 
 export function Pager({
   offset,
@@ -20,11 +21,17 @@ export function Pager({
   const pages = Math.max(1, Math.ceil(total / pageSize));
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={t("Pagination")}
       className="flex flex-wrap items-center justify-between gap-3 border-t pt-4"
     >
       <span className="text-xs text-muted-foreground tabular-nums" aria-live="polite">
-        {total ? `${offset + 1}–${Math.min(offset + count, total)} sur ${total}` : "0 élément"}
+        {total
+          ? t("{start}–{end} sur {total}", {
+              start: offset + 1,
+              end: Math.min(offset + count, total),
+              total,
+            })
+          : t("0 élément")}
       </span>
       {pages > 1 && (
         <div className="flex items-center gap-2">
@@ -35,10 +42,10 @@ export function Pager({
             onClick={() => onChange(Math.max(0, offset - pageSize))}
           >
             <IconChevronLeft data-icon="inline-start" />
-            Précédent
+            {t("Précédent")}
           </Button>
           <span className="text-xs tabular-nums text-muted-foreground">
-            Page {page} sur {pages}
+            {t("Page {page} sur {pages}", { page, pages })}
           </span>
           <Button
             variant="outline"
@@ -46,7 +53,7 @@ export function Pager({
             disabled={offset + pageSize >= total || loading}
             onClick={() => onChange(offset + pageSize)}
           >
-            Suivant
+            {t("Suivant")}
             <IconChevronRight data-icon="inline-end" />
           </Button>
         </div>

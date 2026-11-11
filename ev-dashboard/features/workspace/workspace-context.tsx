@@ -3,6 +3,7 @@
 import type { ComponentKey, Components, User, Workspace } from "@/lib/api-types";
 import { componentKeys } from "@/lib/api-types";
 import { createContext, useContext } from "react";
+import { t } from "@/lib/i18n";
 
 export type WorkspaceSession = {
   user: User;
@@ -23,7 +24,7 @@ export function resolveComponents(workspace: Workspace | null): Components {
 export function useWorkspaceSession(): WorkspaceSession {
   const session = useContext(WorkspaceContext);
   if (!session) {
-    throw new Error("Le contenu de l’espace doit être affiché dans son cadre de navigation.");
+    throw new Error(t("Le contenu de l’espace doit être affiché dans son cadre de navigation."));
   }
   return session;
 }

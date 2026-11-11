@@ -11,4 +11,5 @@ nonisolated struct ProblemDetail: Decodable, Sendable {
     let status: Int?
     let title: String?
     let detail: String?
+    let code: String?
 }

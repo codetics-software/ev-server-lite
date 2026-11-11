@@ -23,16 +23,20 @@ class ApiErrors {
     fun malformed(): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
-            "Les paramètres de la demande sont invalides ou incomplets.",
+            msg("error.request.malformed"),
         )
 
     @ExceptionHandler(ResponseStatusException::class)
     fun status(error: ResponseStatusException): ProblemDetail {
         return ProblemDetail.forStatusAndDetail(
             error.statusCode,
-            error.reason ?: "Demande refusée.",
+            error.reason ?: msg("error.request.refused"),
         )
     }
+
+    @ExceptionHandler(CodedProblem::class)
+    fun coded(error: CodedProblem): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(error.status, error.message).apply { setProperty("code", error.code) }
 
     @ExceptionHandler(NotFound::class)
     fun notFound(error: NotFound): ProblemDetail {
@@ -47,7 +51,7 @@ class ApiErrors {
     @ExceptionHandler(IllegalArgumentException::class)
     fun malformedArgument(error: IllegalArgumentException): ProblemDetail {
         log.debug("Demande refusée", error)
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Demande invalide.")
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, msg("error.request.invalid"))
     }
 
     @ExceptionHandler(
@@ -57,7 +61,7 @@ class ApiErrors {
     fun conflict(): ProblemDetail {
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.CONFLICT,
-            "Cette opération entre en conflit avec un élément ou une relation existante.",
+            msg("error.conflict"),
         )
     }
 
@@ -65,14 +69,14 @@ class ApiErrors {
     fun stripe(): ProblemDetail =
         ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_GATEWAY,
-            "Stripe n’a pas pu traiter cette demande. Réessayez dans quelques instants.",
+            msg("error.stripe"),
         )
 
     @ExceptionHandler(AccessDeniedException::class)
     fun forbidden(): ProblemDetail {
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.FORBIDDEN,
-            "Vos droits ne permettent pas cette action.",
+            msg("error.forbidden"),
         )
     }
 }

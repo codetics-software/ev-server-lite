@@ -3,15 +3,16 @@ import { ToneBadge } from "@/features/shared/status-badge";
 import { date, display, duration, kw, kwh, money, percent } from "@/lib/format";
 import Link from "next/link";
 import { sessionDuration, type ChargingSession } from "./session-types";
+import { t } from "@/lib/i18n";
 
 export function SessionState({ session }: { session: ChargingSession }) {
   if (!session.stopped_at) {
-    return <ToneBadge tone="active">En cours</ToneBadge>;
+    return <ToneBadge tone="active">{t("En cours")}</ToneBadge>;
   }
   if (session.authorization_status && session.authorization_status !== "Accepted") {
     return <ToneBadge tone="danger">{display(session.authorization_status)}</ToneBadge>;
   }
-  return <ToneBadge tone="neutral">Terminée</ToneBadge>;
+  return <ToneBadge tone="neutral">{t("Terminée")}</ToneBadge>;
 }
 
 export function sessionColumns({
@@ -26,7 +27,7 @@ export function sessionColumns({
   return [
     {
       id: "id",
-      header: "Session",
+      header: t("Session"),
       sort: (session) => session.id,
       cell: (session) => (
         <Link
@@ -37,7 +38,7 @@ export function sessionColumns({
           <span className="font-medium tabular-nums">n° {session.id}</span>
           <span className="flex flex-wrap gap-1">
             <SessionState session={session} />
-            {session.auto_charge && <ToneBadge tone="progress">Automatique</ToneBadge>}
+            {session.auto_charge && <ToneBadge tone="progress">{t("Automatique")}</ToneBadge>}
           </span>
         </Link>
       ),
@@ -46,13 +47,13 @@ export function sessionColumns({
       ? [
           {
             id: "station",
-            header: "Borne",
+            header: t("Borne"),
             sort: (session: ChargingSession) => session.station_id,
             cell: (session: ChargingSession) => (
               <span className="flex flex-col">
                 <span>{session.station_id}</span>
                 <span className="text-xs text-muted-foreground">
-                  Connecteur {session.connector_id}
+                  {t("Connecteur {id}", { id: session.connector_id })}
                 </span>
               </span>
             ),
@@ -63,13 +64,15 @@ export function sessionColumns({
       ? [
           {
             id: "user",
-            header: "Utilisateur",
+            header: t("Utilisateur"),
             sort: (session: ChargingSession) => session.user_name ?? "",
             cell: (session: ChargingSession) => (
               <span className="flex flex-col">
-                <span>{session.user_name ?? (session.roaming_partner ? "Itinérance" : "—")}</span>
+                <span>
+                  {session.user_name ?? (session.roaming_partner ? t("Itinérance") : "—")}
+                </span>
                 <span className="text-xs text-muted-foreground">
-                  {session.token_uid ?? (session.public_payment ? "Paiement public" : "")}
+                  {session.token_uid ?? (session.public_payment ? t("Paiement public") : "")}
                 </span>
               </span>
             ),
@@ -78,27 +81,27 @@ export function sessionColumns({
       : []),
     {
       id: "start",
-      header: "Début",
+      header: t("Début"),
       sort: (session) => session.started_at,
       cell: (session) => <span className="whitespace-nowrap">{date(session.started_at)}</span>,
     },
     {
       id: "duration",
-      header: "Durée",
+      header: t("Durée"),
       align: "right",
       sort: (session) => sessionDuration(session),
       cell: (session) => duration(sessionDuration(session)),
     },
     {
       id: "inactivity",
-      header: "Inactivité",
+      header: t("Inactivité"),
       align: "right",
       sort: (session) => session.inactivity_seconds ?? null,
       cell: (session) => duration(session.inactivity_seconds),
     },
     {
       id: "energy",
-      header: "Énergie",
+      header: t("Énergie"),
       align: "right",
       sort: (session) => session.energy_kwh ?? null,
       cell: (session) => kwh(session.energy_kwh),
@@ -107,7 +110,7 @@ export function sessionColumns({
       ? [
           {
             id: "power",
-            header: "Puissance",
+            header: t("Puissance"),
             align: "right" as const,
             sort: (session: ChargingSession) => session.current_power_kw ?? null,
             cell: (session: ChargingSession) => kw(session.current_power_kw),
@@ -116,7 +119,7 @@ export function sessionColumns({
       : []),
     {
       id: "soc",
-      header: "Batterie",
+      header: t("Batterie"),
       align: "right",
       sort: (session) => session.state_of_charge ?? null,
       cell: (session) =>
@@ -126,7 +129,7 @@ export function sessionColumns({
     },
     {
       id: "price",
-      header: "Prix",
+      header: t("Prix"),
       align: "right",
       sort: (session) => session.price ?? null,
       cell: (session) => money(session.price, session.currency),

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useState, type ComponentProps, type ReactNode } from "react";
+import { t } from "@/lib/i18n";
 
 export function ConfirmButton({
   title,
@@ -70,7 +71,7 @@ export function ConfirmButton({
             <AlertDialogDescription>{description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{t("Annuler")}</AlertDialogCancel>
             <AlertDialogAction
               variant={destructive ? "destructive" : "default"}
               disabled={pending}
@@ -79,7 +80,7 @@ export function ConfirmButton({
                 void confirm();
               }}
             >
-              {pending ? "Veuillez patienter…" : confirmLabel}
+              {pending ? t("Veuillez patienter…") : confirmLabel}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

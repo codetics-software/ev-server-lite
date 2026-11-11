@@ -3,6 +3,12 @@
   "strings": {
     "%@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -13,6 +19,12 @@
     },
     "%@ %@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -23,6 +35,12 @@
     },
     "%@ has an invalid value.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ tiene un valor no válido."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -33,6 +51,12 @@
     },
     "%@ must use HTTPS.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ debe usar HTTPS."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -43,6 +67,12 @@
     },
     "%@ still contains a placeholder.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ todavía contiene un marcador de posición."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -53,6 +83,12 @@
     },
     "%@ · %@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -63,6 +99,12 @@
     },
     "%@ · no. %lld": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · n.º %2$lld"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -73,6 +115,12 @@
     },
     "%@ •••• %@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ •••• %2$@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -83,6 +131,24 @@
     },
     "%lld available": {
       "localizations": {
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld disponible"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld disponibles"
+                }
+              }
+            }
+          }
+        },
         "fr": {
           "variations": {
             "plural": {
@@ -105,6 +171,12 @@
     },
     "11 kW or more": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "11 kW o más"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -115,6 +187,12 @@
     },
     "150 kW or more": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "150 kW o más"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -125,6 +203,12 @@
     },
     "22 kW or more": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "22 kW o más"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -135,6 +219,12 @@
     },
     "50 kW or more": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "50 kW o más"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -145,6 +235,12 @@
     },
     "A link to choose a new password has been sent to your email address.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha enviado a su dirección de correo electrónico un enlace para elegir una nueva contraseña."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -155,6 +251,12 @@
     },
     "AC power": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Potencia CA"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -165,6 +267,12 @@
     },
     "AC power (kW)": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Potencia CA (kW)"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -175,6 +283,12 @@
     },
     "About": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerca de"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -185,6 +299,12 @@
     },
     "About this app": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerca de esta aplicación"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -195,6 +315,12 @@
     },
     "Accept and continue": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aceptar y continuar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -205,6 +331,12 @@
     },
     "Account": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuenta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -215,6 +347,12 @@
     },
     "Activate": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -225,6 +363,12 @@
     },
     "Activate a card": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activar una tarjeta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -235,6 +379,12 @@
     },
     "Activated": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -245,6 +395,12 @@
     },
     "Active": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -255,6 +411,12 @@
     },
     "Add a demo photo": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir una foto de demostración"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -265,6 +427,12 @@
     },
     "Add a payment method": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir un método de pago"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -275,6 +443,12 @@
     },
     "Add a vehicle": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir un vehículo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -285,6 +459,12 @@
     },
     "Add your vehicle to get better charging estimates and automatic charging.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añada su vehículo para obtener mejores estimaciones de carga y la carga automática."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -295,6 +475,12 @@
     },
     "All connectors": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos los conectores"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -305,6 +491,12 @@
     },
     "Any power": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cualquier potencia"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -315,6 +507,12 @@
     },
     "App not configured": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aplicación no configurada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -325,6 +523,12 @@
     },
     "AppConfiguration.plist is missing from the application.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falta AppConfiguration.plist en la aplicación."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -335,6 +539,12 @@
     },
     "Apple Wallet": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Wallet"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -345,6 +555,12 @@
     },
     "Apple Wallet is not available for this badge on this server or device.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Wallet no está disponible para esta tarjeta en este servidor o dispositivo."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -355,6 +571,12 @@
     },
     "Ask my operator to add it": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pedir a mi operador que la añada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -365,6 +587,12 @@
     },
     "Automatic charging": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carga automática"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -375,6 +603,12 @@
     },
     "Automatic charging when you plug in": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carga automática al conectar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -385,6 +619,12 @@
     },
     "Available": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disponible"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -395,6 +635,12 @@
     },
     "Available now": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disponible ahora"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -405,6 +651,12 @@
     },
     "Badge": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarjeta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -415,6 +667,12 @@
     },
     "Badge %@, held by %@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarjeta %1$@, a nombre de %2$@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -425,6 +683,12 @@
     },
     "Badge %@. Contact your operator to enable it again.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarjeta %@. Póngase en contacto con su operador para volver a activarla."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -435,6 +699,12 @@
     },
     "Badge %@. Contact your operator to renew it.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarjeta %@. Póngase en contacto con su operador para renovarla."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -445,6 +715,12 @@
     },
     "Badge QR code": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Código QR de la tarjeta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -455,6 +731,12 @@
     },
     "Badges": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarjetas"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -465,6 +747,12 @@
     },
     "Battery": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batería"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -475,6 +763,12 @@
     },
     "Battery %lld%%": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batería %lld %%"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -485,6 +779,12 @@
     },
     "Battery (kWh)": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batería (kWh)"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -495,6 +795,12 @@
     },
     "Before you continue, please accept the terms of use of this charging service.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antes de continuar, acepte las condiciones de uso de este servicio de carga."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -505,6 +811,12 @@
     },
     "Billing": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facturación"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -515,6 +827,12 @@
     },
     "By station": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por estación"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -525,6 +843,12 @@
     },
     "Calculating the balance": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calculando el saldo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -535,6 +859,12 @@
     },
     "Cancel": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -545,6 +875,12 @@
     },
     "Cancelled": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -555,6 +891,12 @@
     },
     "Card %@ can now start charging on this network.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La tarjeta %@ ya puede iniciar cargas en esta red."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -565,6 +907,12 @@
     },
     "Card number": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Número de tarjeta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -575,6 +923,12 @@
     },
     "Card number %@. It may be unknown to this network or belong to someone else.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarjeta número %@. Puede que esta red no la reconozca o que pertenezca a otra persona."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -585,6 +939,12 @@
     },
     "Card payment is not available on this charging point right now.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El pago con tarjeta no está disponible en este punto de carga en este momento."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -595,6 +955,12 @@
     },
     "Card read.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarjeta leída."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -605,6 +971,12 @@
     },
     "Change my password": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambiar mi contraseña"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -615,6 +987,12 @@
     },
     "Charge": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -625,6 +1003,12 @@
     },
     "Charging": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -635,6 +1019,12 @@
     },
     "Charging amount": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importe de carga"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -645,6 +1035,12 @@
     },
     "Charging card": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarjeta de carga"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -655,6 +1051,12 @@
     },
     "Charging point": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Punto de carga"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -665,6 +1067,12 @@
     },
     "Charging point link": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enlace del punto de carga"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -675,6 +1083,12 @@
     },
     "Charging power": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Potencia de carga"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -685,6 +1099,12 @@
     },
     "Charging stops when the credit runs out. The balance is refunded automatically, and in full if charging does not start within five minutes.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La carga se detiene cuando se agota el crédito. El saldo se reembolsa automáticamente, y en su totalidad si la carga no comienza en cinco minutos."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -695,6 +1115,12 @@
     },
     "Charging time": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiempo de carga"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -705,6 +1131,12 @@
     },
     "Check a card with NFC": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comprobar una tarjeta por NFC"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -715,6 +1147,12 @@
     },
     "Choose from library": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir de la fototeca"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -725,6 +1163,12 @@
     },
     "Choose from the catalog": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir del catálogo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -735,6 +1179,12 @@
     },
     "Close": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -745,6 +1195,12 @@
     },
     "Connecting to the server…": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectando con el servidor…"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -755,6 +1211,12 @@
     },
     "Connector": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conector"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -765,6 +1227,12 @@
     },
     "Connectors": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectores"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -775,6 +1243,12 @@
     },
     "Continue as a demo guest": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar como invitado de demostración"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -785,6 +1259,12 @@
     },
     "Continue with the demo account": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar con la cuenta de demostración"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -795,6 +1275,12 @@
     },
     "Create": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crear"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -805,6 +1291,12 @@
     },
     "Create an account": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crear una cuenta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -815,6 +1307,12 @@
     },
     "Credit": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédito"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -825,6 +1323,12 @@
     },
     "Credit paid": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédito pagado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -835,6 +1339,12 @@
     },
     "Credits": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créditos"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -843,18 +1353,14 @@
         }
       }
     },
-    "Czech": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tchèque"
-          }
-        }
-      }
-    },
     "DC power": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Potencia CC"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -865,6 +1371,12 @@
     },
     "DC power (kW)": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Potencia CC (kW)"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -875,6 +1387,12 @@
     },
     "Debug only": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo depuración"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -885,6 +1403,12 @@
     },
     "Default": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Predeterminado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -895,6 +1419,12 @@
     },
     "Delete": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -905,6 +1435,12 @@
     },
     "Delete my account": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminar mi cuenta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -915,6 +1451,12 @@
     },
     "Delete your account permanently?": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar su cuenta de forma definitiva?"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -925,6 +1467,12 @@
     },
     "Details": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detalles"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -935,6 +1483,12 @@
     },
     "Directions": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cómo llegar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -945,6 +1499,12 @@
     },
     "Disabled": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desactivada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -953,8 +1513,30 @@
         }
       }
     },
+    "Domestic": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doméstica"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domestique"
+          }
+        }
+      }
+    },
     "Done": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hecho"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -965,6 +1547,12 @@
     },
     "Draft": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrador"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -975,6 +1563,12 @@
     },
     "Draft invoice": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Factura en borrador"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -985,6 +1579,12 @@
     },
     "Driver": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conductor"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -995,6 +1595,12 @@
     },
     "Duration": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duración"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1005,6 +1611,12 @@
     },
     "Edit": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1015,6 +1627,12 @@
     },
     "Edit vehicle": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar vehículo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1025,6 +1643,12 @@
     },
     "Email": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correo electrónico"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1035,6 +1659,12 @@
     },
     "Emails": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correos electrónicos"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1045,6 +1675,12 @@
     },
     "Enable with the session on %@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activar con la sesión del %@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1055,6 +1691,12 @@
     },
     "End reading": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lectura final"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1065,6 +1707,12 @@
     },
     "Ended": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1075,6 +1723,12 @@
     },
     "Energy": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Energía"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1085,6 +1739,12 @@
     },
     "English": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inglés"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1095,6 +1755,12 @@
     },
     "Estimated price": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Precio estimado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1105,6 +1771,12 @@
     },
     "Expires": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caduca"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1115,6 +1787,12 @@
     },
     "Expires %lld/%@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caduca %1$lld/%2$@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1125,6 +1803,12 @@
     },
     "Failed": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fallida"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1135,6 +1819,12 @@
     },
     "Filter": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1145,6 +1835,12 @@
     },
     "Find a station": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar una estación"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1155,6 +1851,12 @@
     },
     "Finished": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1165,6 +1867,12 @@
     },
     "Finishing": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finalizando"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1175,6 +1883,12 @@
     },
     "Follow live": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seguir en directo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1185,6 +1899,12 @@
     },
     "Forgot password": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contraseña olvidada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1195,6 +1915,12 @@
     },
     "Forgot password?": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Ha olvidado su contraseña?"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1205,6 +1931,12 @@
     },
     "Format": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formato"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1215,6 +1947,12 @@
     },
     "French": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Francés"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1225,6 +1963,12 @@
     },
     "Full name": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre completo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1233,18 +1977,14 @@
         }
       }
     },
-    "German": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Allemand"
-          }
-        }
-      }
-    },
     "Get directions": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cómo llegar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1255,6 +1995,12 @@
     },
     "History": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historial"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1265,6 +2011,12 @@
     },
     "Hold the card near the top of the iPhone.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerque la tarjeta a la parte superior del iPhone."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1275,6 +2027,12 @@
     },
     "Hold your card near the top of the iPhone to see whether it is on your account.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerque su tarjeta a la parte superior del iPhone para comprobar si está asociada a su cuenta."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1285,6 +2043,12 @@
     },
     "Hold your charging card near the top of the iPhone.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acerque su tarjeta de carga a la parte superior del iPhone."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1295,6 +2059,12 @@
     },
     "I accept the terms of use and the privacy policy": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acepto las condiciones de uso y la política de privacidad"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1305,6 +2075,12 @@
     },
     "Idle time": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiempo de inactividad"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1315,6 +2091,12 @@
     },
     "If sign-up is available for this address, a verification link has been sent. Open it, then sign in.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si el registro está disponible para esta dirección, se ha enviado un enlace de verificación. Ábralo y, a continuación, inicie sesión."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1325,6 +2107,12 @@
     },
     "If this account exists, a link to choose a new password has been sent. It expires after 30 minutes.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si esta cuenta existe, se ha enviado un enlace para elegir una nueva contraseña. Caduca a los 30 minutos."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1335,6 +2123,12 @@
     },
     "If this address needs verifying, an email has been sent.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si esta dirección necesita verificación, se ha enviado un correo electrónico."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1345,6 +2139,12 @@
     },
     "If you closed the payment page, this request expires on its own and you are not charged.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si ha cerrado la página de pago, esta solicitud caducará por sí sola y no se le cobrará nada."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1355,6 +2155,12 @@
     },
     "In progress": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En curso"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1365,6 +2171,12 @@
     },
     "In use": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En uso"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1375,6 +2187,12 @@
     },
     "Inappropriate photo %@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foto inapropiada %@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1385,6 +2203,12 @@
     },
     "Indicator": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indicador"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1395,6 +2219,12 @@
     },
     "Invoiced": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facturada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1405,6 +2235,12 @@
     },
     "Invoices": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facturas"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1413,18 +2249,14 @@
         }
       }
     },
-    "Italian": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Italien"
-          }
-        }
-      }
-    },
     "Language": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idioma"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1435,6 +2267,12 @@
     },
     "Last used": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Último uso"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1445,6 +2283,12 @@
     },
     "Licence plate": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Matrícula"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1455,6 +2299,12 @@
     },
     "Make": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marca"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1465,6 +2315,12 @@
     },
     "Make or model": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marca o modelo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1475,6 +2331,12 @@
     },
     "Map": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mapa"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1485,6 +2347,12 @@
     },
     "Model": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modelo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1495,6 +2363,12 @@
     },
     "Month": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mes"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1505,6 +2379,12 @@
     },
     "My badges": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis tarjetas"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1515,6 +2395,12 @@
     },
     "My sites": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis sitios"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1525,6 +2411,12 @@
     },
     "My vehicles": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis vehículos"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1535,6 +2427,12 @@
     },
     "NFC": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NFC"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1545,6 +2443,12 @@
     },
     "Name (optional)": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre (opcional)"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1555,6 +2459,12 @@
     },
     "Name, site or city": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre, sitio o ciudad"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1565,6 +2475,12 @@
     },
     "Needs attention": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requiere atención"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1575,6 +2491,12 @@
     },
     "New vehicle": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuevo vehículo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1585,6 +2507,12 @@
     },
     "No account needed: pay by card and start charging.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin necesidad de cuenta: pague con tarjeta y empiece a cargar."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1595,6 +2523,12 @@
     },
     "No badge is registered on your account yet. Ask your charging operator to assign one.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todavía no hay ninguna tarjeta registrada en su cuenta. Pida a su operador de carga que le asigne una."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1605,6 +2539,12 @@
     },
     "No charging in progress": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ninguna carga en curso"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1615,6 +2555,12 @@
     },
     "No invoices": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin facturas"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1625,6 +2571,12 @@
     },
     "No notifications yet.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todavía no hay notificaciones."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1635,6 +2587,12 @@
     },
     "No private sites": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin sitios privados"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1645,6 +2603,12 @@
     },
     "No sessions yet": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todavía no hay sesiones"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1655,6 +2619,12 @@
     },
     "No stations found": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se han encontrado estaciones"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1665,6 +2635,12 @@
     },
     "No vehicle": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ningún vehículo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1675,6 +2651,12 @@
     },
     "Not billed": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No facturada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1685,6 +2667,12 @@
     },
     "Not signed in": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesión no iniciada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1695,6 +2683,12 @@
     },
     "Notifications": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificaciones"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1705,6 +2699,12 @@
     },
     "Notifications are turned off for this app in iOS Settings.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las notificaciones de esta aplicación están desactivadas en los Ajustes de iOS."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1715,6 +2715,12 @@
     },
     "Notify me about": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avisarme de"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1725,6 +2731,12 @@
     },
     "Number": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Número"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1735,6 +2747,12 @@
     },
     "OK": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aceptar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1745,6 +2763,12 @@
     },
     "Offline": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin conexión"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1755,6 +2779,12 @@
     },
     "On compatible stations, charging starts when you plug in, with no badge. Anyone using this vehicle can charge on your account.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En las estaciones compatibles, la carga empieza al conectar el vehículo, sin tarjeta. Cualquier persona que use este vehículo puede cargar con su cuenta."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1765,6 +2795,12 @@
     },
     "On your online account, for %@.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En su cuenta en línea, para %@."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1775,6 +2811,12 @@
     },
     "On your online account.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En su cuenta en línea."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1785,6 +2827,12 @@
     },
     "Open": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1795,6 +2843,12 @@
     },
     "Open iOS Settings": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir los Ajustes de iOS"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1805,6 +2859,12 @@
     },
     "Open my session": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir mi sesión"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1815,6 +2875,12 @@
     },
     "Operator information": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Información del operador"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1825,6 +2891,12 @@
     },
     "Or enter its number": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O introduzca su número"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1835,6 +2907,12 @@
     },
     "Order a card": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pedir una tarjeta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1845,6 +2923,12 @@
     },
     "Out of order": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fuera de servicio"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1855,6 +2939,12 @@
     },
     "Paid": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pagada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1865,6 +2955,12 @@
     },
     "Paid sessions on this device": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesiones pagadas en este dispositivo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1875,6 +2971,12 @@
     },
     "Paid, being prepared": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pagada, en preparación"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1885,6 +2987,12 @@
     },
     "Parking after charging": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estacionamiento tras la carga"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1895,6 +3003,12 @@
     },
     "Password": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contraseña"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1905,6 +3019,12 @@
     },
     "Paused": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En pausa"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1915,6 +3035,12 @@
     },
     "Pay %@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pagar %@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1925,6 +3051,12 @@
     },
     "Pay and charge": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pagar y cargar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1935,6 +3067,12 @@
     },
     "Pay by card without an account": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pagar con tarjeta sin cuenta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1943,8 +3081,30 @@
         }
       }
     },
+    "Payment confirmed. Waiting for the station to start. If it does not start within five minutes, your credit is refunded.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pago confirmado. Esperando a que la estación se inicie. Si no se inicia en cinco minutos, se le reembolsará el crédito."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paiement confirmé. En attente du démarrage de la borne. Si elle ne démarre pas sous cinq minutes, votre crédit est remboursé."
+          }
+        }
+      }
+    },
     "Payment disputed": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pago impugnado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1955,6 +3115,12 @@
     },
     "Payment failed": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pago fallido"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1965,6 +3131,12 @@
     },
     "Payment is handled by Stripe. Your card details are not shared with this app.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stripe gestiona el pago. Los datos de su tarjeta no se comparten con esta aplicación."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1975,6 +3147,12 @@
     },
     "Payment methods": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Métodos de pago"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1985,6 +3163,12 @@
     },
     "Pending": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pendiente"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -1995,6 +3179,12 @@
     },
     "Phone": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teléfono"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2005,6 +3195,12 @@
     },
     "Phone (optional)": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teléfono (opcional)"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2015,6 +3211,12 @@
     },
     "Photos": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotos"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2025,6 +3227,12 @@
     },
     "Photos are visible to the other drivers of this network. Do not show people or number plates.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las fotos son visibles para los demás conductores de esta red. No muestre personas ni matrículas."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2035,6 +3243,12 @@
     },
     "Please add my card %@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por favor, añadan mi tarjeta %@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2045,6 +3259,12 @@
     },
     "Plug in your vehicle before you pay.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conecte su vehículo antes de pagar."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2055,6 +3275,12 @@
     },
     "Plug in your vehicle before you start.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conecte su vehículo antes de empezar."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2065,6 +3291,12 @@
     },
     "Plug this vehicle into a compatible station and start a session once. You can then enable automatic charging here for 24 hours.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conecte este vehículo a una estación compatible e inicie una sesión una vez. Después podrá activar aquí la carga automática durante 24 horas."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2075,6 +3307,12 @@
     },
     "Plugged in": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conectado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2085,6 +3323,12 @@
     },
     "Point the camera at the code on the station.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apunte la cámara al código de la estación."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2093,18 +3337,14 @@
         }
       }
     },
-    "Portuguese": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Portugais"
-          }
-        }
-      }
-    },
     "Power": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Potencia"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2115,6 +3355,12 @@
     },
     "Preferences": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preferencias"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2125,6 +3371,12 @@
     },
     "Preparing your pass…": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparando su pase…"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2135,6 +3387,12 @@
     },
     "Price": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Precio"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2145,6 +3403,12 @@
     },
     "Printed number": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Número impreso"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2155,6 +3419,12 @@
     },
     "Privacy policy": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Política de privacidad"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2165,6 +3435,12 @@
     },
     "Profile": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perfil"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2175,6 +3451,12 @@
     },
     "Profile saved.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perfil guardado."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2185,6 +3467,12 @@
     },
     "Push notifications": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notificaciones push"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2195,6 +3483,12 @@
     },
     "Read the privacy policy": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leer la política de privacidad"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2205,6 +3499,12 @@
     },
     "Ready to activate": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lista para activar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2215,6 +3515,12 @@
     },
     "Reference: %@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Referencia: %@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2225,6 +3531,12 @@
     },
     "Refund in progress": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reembolso en curso"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2235,6 +3547,12 @@
     },
     "Refunded": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reembolsado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2245,6 +3563,12 @@
     },
     "Remove": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2255,6 +3579,12 @@
     },
     "Remove from this device": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar de este dispositivo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2265,6 +3595,12 @@
     },
     "Report a problem": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Informar de un problema"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2275,6 +3611,12 @@
     },
     "Report this photo": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Denunciar esta foto"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2285,6 +3627,12 @@
     },
     "Reserved": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reservado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2295,6 +3643,12 @@
     },
     "Result": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resultado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2305,6 +3659,12 @@
     },
     "Roaming partner": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Socio de itinerancia"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2315,6 +3675,12 @@
     },
     "Save": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2325,6 +3691,12 @@
     },
     "Scan a QR code": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escanear un código QR"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2335,6 +3707,12 @@
     },
     "Scan my card": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escanear mi tarjeta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2345,6 +3723,12 @@
     },
     "Scan your new card, or enter the number printed on it or given by your operator.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escanee su nueva tarjeta o introduzca el número impreso en ella o facilitado por su operador."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2355,6 +3739,12 @@
     },
     "See the stations around you on the map.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vea en el mapa las estaciones que tiene cerca."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2365,6 +3755,12 @@
     },
     "Send": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2375,6 +3771,12 @@
     },
     "Send the verification email again": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volver a enviar el correo de verificación"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2385,6 +3787,12 @@
     },
     "Sending photo…": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviando la foto…"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2395,6 +3803,12 @@
     },
     "Server unavailable": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servidor no disponible"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2405,6 +3819,12 @@
     },
     "Session %lld": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesión %lld"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2415,6 +3835,12 @@
     },
     "Session fee": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tarifa por sesión"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2425,6 +3851,12 @@
     },
     "Session finished": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesión terminada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2435,6 +3867,12 @@
     },
     "Sessions": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesiones"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2445,6 +3883,12 @@
     },
     "Set as default": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Establecer como predeterminado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2455,6 +3899,12 @@
     },
     "Show list": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver lista"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2465,6 +3915,12 @@
     },
     "Show map": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver mapa"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2475,6 +3931,12 @@
     },
     "Sign in": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iniciar sesión"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2485,6 +3947,12 @@
     },
     "Sign in on your iPhone to follow your charging sessions.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicie sesión en su iPhone para seguir sus sesiones de carga."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2495,6 +3963,12 @@
     },
     "Sign in to see your badges, sessions and vehicles. You can still find stations and pay at a charging point without an account.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicie sesión para ver sus tarjetas, sesiones y vehículos. Sin cuenta, puede seguir buscando estaciones y pagar en un punto de carga."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2505,6 +3979,12 @@
     },
     "Sign out": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar sesión"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2515,6 +3995,12 @@
     },
     "Sign out everywhere": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar sesión en todas partes"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2525,6 +4011,12 @@
     },
     "Sign out from all devices": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrar sesión en todos los dispositivos"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2535,6 +4027,12 @@
     },
     "Sign out from all your devices?": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Cerrar sesión en todos sus dispositivos?"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2545,6 +4043,12 @@
     },
     "Signed meter data": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datos de medición firmados"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2555,6 +4059,12 @@
     },
     "Simulate an unknown card": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simular una tarjeta desconocida"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2565,6 +4075,12 @@
     },
     "Simulate my ordered card": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simular mi tarjeta pedida"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2575,6 +4091,12 @@
     },
     "Simulate my registered card": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simular mi tarjeta registrada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2585,6 +4107,12 @@
     },
     "Simulate scanning the demo QR code": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simular el escaneo del código QR de demostración"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2595,6 +4123,12 @@
     },
     "Something went wrong": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha producido un error"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2605,6 +4139,12 @@
     },
     "Spanish": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Español"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2615,6 +4155,12 @@
     },
     "Specifications": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Características"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2625,6 +4171,12 @@
     },
     "Spending": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gasto"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2635,6 +4187,12 @@
     },
     "Start": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iniciar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2645,6 +4203,12 @@
     },
     "Start reading": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lectura inicial"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2655,6 +4219,12 @@
     },
     "Start with my badge": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iniciar con mi tarjeta"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2665,6 +4235,12 @@
     },
     "Started": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicio"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2675,6 +4251,12 @@
     },
     "Starting": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iniciando"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2685,6 +4267,12 @@
     },
     "Station": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estación"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2695,6 +4283,12 @@
     },
     "Station photo": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foto de la estación"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2705,6 +4299,12 @@
     },
     "Stations": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estaciones"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2715,6 +4315,12 @@
     },
     "Statistics": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estadísticas"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2725,6 +4331,12 @@
     },
     "Status": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2735,6 +4347,12 @@
     },
     "Stop charging": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener la carga"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2745,6 +4363,12 @@
     },
     "Stop this charging session?": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Detener esta sesión de carga?"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2755,6 +4379,12 @@
     },
     "Stopping": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deteniendo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2765,6 +4395,12 @@
     },
     "Stopping…": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deteniendo…"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2775,6 +4411,12 @@
     },
     "Subject": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asunto"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2785,6 +4427,12 @@
     },
     "Support": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asistencia"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2795,6 +4443,12 @@
     },
     "Take a photo": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hacer una foto"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2805,6 +4459,12 @@
     },
     "Terms": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condiciones"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2815,6 +4475,12 @@
     },
     "Terms of use": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condiciones de uso"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2825,6 +4491,12 @@
     },
     "Thank you. The operator has been told about this problem.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gracias. Se ha informado al operador de este problema."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2835,6 +4507,12 @@
     },
     "The camera is not available on this device. Paste the charging point link instead.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cámara no está disponible en este dispositivo. Pegue en su lugar el enlace del punto de carga."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2845,6 +4523,12 @@
     },
     "The demo uses simulated data and is not included in release builds.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La demostración utiliza datos simulados y no se incluye en las versiones de producción."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2853,8 +4537,30 @@
         }
       }
     },
+    "The operator has been told and will take care of it.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha informado al operador, que se encargará de ello."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’exploitant a été prévenu et va s’en occuper."
+          }
+        }
+      }
+    },
     "The pass is sent over NFC only to readers compatible with Apple Wallet. Other stations still need your physical card or the app.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El pase se transmite por NFC solo a los lectores compatibles con Apple Wallet. Las demás estaciones siguen necesitando su tarjeta física o la aplicación."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2865,6 +4571,12 @@
     },
     "The refund has been sent to Stripe. How quickly it appears on your account depends on your bank.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El reembolso se ha enviado a Stripe. El tiempo que tarde en aparecer en su cuenta depende de su banco."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2875,6 +4587,12 @@
     },
     "The server cannot be reached. Check your connection and try again.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se puede contactar con el servidor. Compruebe su conexión y vuelva a intentarlo."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2885,6 +4603,12 @@
     },
     "The server refused this request.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servidor ha rechazado esta solicitud."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2895,6 +4619,12 @@
     },
     "The server returned an unexpected response.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servidor ha devuelto una respuesta inesperada."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2905,6 +4635,12 @@
     },
     "The session is billed to your account according to your operator's terms.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sesión se factura a su cuenta según las condiciones de su operador."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2915,6 +4651,12 @@
     },
     "The station has not confirmed the start. Check that your vehicle is plugged in and that the station accepted your badge, then try again.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La estación no ha confirmado el inicio. Compruebe que su vehículo está conectado y que la estación ha aceptado su tarjeta, y vuelva a intentarlo."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2925,6 +4667,12 @@
     },
     "The stop request has been sent. If the station does not respond, stop charging from your vehicle or at the station.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se ha enviado la solicitud de parada. Si la estación no responde, detenga la carga desde su vehículo o en la estación."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2935,6 +4683,12 @@
     },
     "These signed readings let you check the metered energy with a transparency tool.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estas lecturas firmadas le permiten comprobar la energía medida con una herramienta de transparencia."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2945,6 +4699,12 @@
     },
     "This QR code does not belong to this charging network. For your safety, it was not opened.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este código QR no pertenece a esta red de carga. Por su seguridad, no se ha abierto."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2955,6 +4715,12 @@
     },
     "This QR code is not a charging point link.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este código QR no es un enlace de punto de carga."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2965,6 +4731,12 @@
     },
     "This card is not registered on your account.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta tarjeta no está registrada en su cuenta."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2975,6 +4747,12 @@
     },
     "This card is on your account but disabled.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta tarjeta está en su cuenta, pero desactivada."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2985,6 +4763,12 @@
     },
     "This card is on your account but has expired.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta tarjeta está en su cuenta, pero ha caducado."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -2995,6 +4779,12 @@
     },
     "This card is registered on your account.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta tarjeta está registrada en su cuenta."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3005,6 +4795,12 @@
     },
     "This copy of the app has not been configured for a deployed server yet. Edit AppConfiguration.plist, replace every value below, then rebuild.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta copia de la aplicación aún no se ha configurado para un servidor desplegado. Edite AppConfiguration.plist, sustituya todos los valores siguientes y vuelva a compilar."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3015,6 +4811,12 @@
     },
     "This device cannot read NFC cards.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este dispositivo no puede leer tarjetas NFC."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3025,6 +4827,12 @@
     },
     "This device cannot read NFC cards. Use an iPhone 7 or later.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este dispositivo no puede leer tarjetas NFC. Use un iPhone 7 o posterior."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3035,6 +4843,12 @@
     },
     "This image could not be prepared.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha podido preparar esta imagen."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3045,6 +4859,12 @@
     },
     "This image could not be read.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha podido leer esta imagen."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3055,6 +4875,12 @@
     },
     "This link does not point to a charging point.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este enlace no apunta a un punto de carga."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3065,6 +4891,12 @@
     },
     "This pass shows your badge as a QR code. Contact your operator to find out which stations accept it.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este pase muestra su tarjeta como un código QR. Póngase en contacto con su operador para saber qué estaciones lo aceptan."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3075,6 +4907,12 @@
     },
     "This server does not send push notifications yet.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este servidor todavía no envía notificaciones push."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3085,6 +4923,12 @@
     },
     "This server is not compatible with this version of the app.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este servidor no es compatible con esta versión de la aplicación."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3095,6 +4939,12 @@
     },
     "This station has not declared any connector yet.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta estación todavía no ha declarado ningún conector."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3105,6 +4955,12 @@
     },
     "This type of card is not supported.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este tipo de tarjeta no es compatible."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3115,6 +4971,12 @@
     },
     "Time": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hora"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3125,6 +4987,12 @@
     },
     "To fix": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Por resolver"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3135,6 +5003,12 @@
     },
     "To pay": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A pagar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3145,6 +5019,12 @@
     },
     "To start a charge, sign in or scan the QR code on the station.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para iniciar una carga, inicie sesión o escanee el código QR de la estación."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3155,6 +5035,12 @@
     },
     "Try again": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentar"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3165,6 +5051,12 @@
     },
     "Try removing a filter or searching for another place.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pruebe a quitar un filtro o a buscar otro lugar."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3175,6 +5067,12 @@
     },
     "Unavailable": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No disponible"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3185,6 +5083,12 @@
     },
     "Unknown": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desconocido"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3195,6 +5099,12 @@
     },
     "Unpaid": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impagada"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3205,6 +5115,12 @@
     },
     "Use as my default vehicle": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar como mi vehículo predeterminado"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3215,6 +5131,12 @@
     },
     "Use between 16 and 128 characters. A sentence works well.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use entre 16 y 128 caracteres. Una frase funciona bien."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3225,6 +5147,12 @@
     },
     "Use the number printed on the card or given by your operator. Only a card you ordered on this account can be activated.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use el número impreso en la tarjeta o facilitado por su operador. Solo se puede activar una tarjeta pedida con esta cuenta."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3235,6 +5163,12 @@
     },
     "VIN": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VIN"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3245,6 +5179,12 @@
     },
     "VIN (17 characters)": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VIN (17 caracteres)"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3255,6 +5195,12 @@
     },
     "Value": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valor"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3265,6 +5211,12 @@
     },
     "Vehicle": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vehículo"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3275,6 +5227,12 @@
     },
     "Vehicle catalog": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Catálogo de vehículos"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3285,6 +5243,12 @@
     },
     "Version": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versión"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3295,6 +5259,12 @@
     },
     "Version %@": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versión %@"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3305,6 +5275,12 @@
     },
     "View": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3315,6 +5291,12 @@
     },
     "Waiting for payment": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esperando el pago"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3325,6 +5307,12 @@
     },
     "Waiting for the station to confirm…": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esperando la confirmación de la estación…"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3335,6 +5323,12 @@
     },
     "What happened?": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Qué ha pasado?"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3345,6 +5339,12 @@
     },
     "Workspace": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Espacio de cliente"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3355,6 +5355,12 @@
     },
     "Year": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Año"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3365,6 +5371,12 @@
     },
     "You can use every station open to all drivers on this network.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puede usar todas las estaciones abiertas a todos los conductores de esta red."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3375,6 +5387,12 @@
     },
     "You have no active badge. Ask your charging operator to assign one to your account, or scan the QR code on the station to pay by card.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No tiene ninguna tarjeta activa. Pida a su operador de carga que asigne una a su cuenta o escanee el código QR de la estación para pagar con tarjeta."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3385,6 +5403,12 @@
     },
     "You pay a credit in advance. Whatever you do not use is refunded automatically.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usted paga un crédito por adelantado. Lo que no utilice se le reembolsa automáticamente."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3395,6 +5419,12 @@
     },
     "Your card is active.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su tarjeta está activa."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3405,6 +5435,12 @@
     },
     "Your card is entered on Stripe's secure page and is never shared with this app.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su tarjeta se introduce en la página segura de Stripe y nunca se comparte con esta aplicación."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3415,6 +5451,12 @@
     },
     "Your card is ready. Activate it when you receive it.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su tarjeta está lista. Actívela cuando la reciba."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3425,6 +5467,12 @@
     },
     "Your charging sessions will appear here.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sus sesiones de carga aparecerán aquí."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3435,6 +5483,12 @@
     },
     "Your invoices will appear here.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sus facturas aparecerán aquí."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3445,6 +5499,12 @@
     },
     "Your profile, vehicles, photos and device registrations are removed and your badges are disabled. Sessions and invoices kept for legal reasons no longer identify you.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se eliminan su perfil, sus vehículos, sus fotos y los registros de sus dispositivos, y se desactivan sus tarjetas. Las sesiones y facturas conservadas por motivos legales dejan de identificarle."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3455,6 +5515,12 @@
     },
     "Your session": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su sesión"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3465,6 +5531,12 @@
     },
     "Your session appears here once it starts.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su sesión aparecerá aquí en cuanto comience."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3475,6 +5547,12 @@
     },
     "Your session has expired. Sign in again.": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su sesión ha caducado. Vuelva a iniciar sesión."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -3485,6 +5563,12 @@
     },
     "kW": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kW"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",

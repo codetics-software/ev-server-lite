@@ -7,7 +7,9 @@ package fr.codetics.evapp.core
 
 import fr.codetics.evapp.models.CsrfResponse
 import fr.codetics.evapp.models.ProblemDetail
+import android.os.LocaleList
 import java.io.IOException
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -36,7 +38,7 @@ sealed class ApiError : Exception() {
         private fun readResolve(): Any = Unauthorized
     }
 
-    data class Server(val status: Int, val detail: String?) : ApiError()
+    data class Server(val status: Int, val detail: String?, val code: String? = null) : ApiError()
 
     data object Offline : ApiError() {
         private fun readResolve(): Any = Offline
@@ -63,7 +65,16 @@ private class MemoryCookieJar : CookieJar {
     }
 }
 
-class ApiClient(baseUrl: String, interceptor: Interceptor? = null) {
+object AppLanguage {
+    private val supported = arrayOf("en", "fr", "es")
+
+    fun current(): String {
+        val locale = runCatching { LocaleList.getDefault().getFirstMatch(supported) }.getOrNull() ?: Locale.getDefault()
+        return locale.language.takeIf { it in supported } ?: "en"
+    }
+}
+
+class ApiClient(baseUrl: String, interceptor: Interceptor? = null, private val language: () -> String = AppLanguage::current) {
     private val base: HttpUrl = baseUrl.toHttpUrl()
     private val client: OkHttpClient =
         OkHttpClient.Builder()
@@ -120,7 +131,7 @@ class ApiClient(baseUrl: String, interceptor: Interceptor? = null) {
         body: RequestBody?,
         retried: Boolean = false,
     ): ByteArray {
-        val builder = Request.Builder().url(url(path, query)).header("Accept", "application/json")
+        val builder = Request.Builder().url(url(path, query)).header("Accept", "application/json").header("Accept-Language", language())
         bearerToken?.let { builder.header("Authorization", "Bearer $it") }
         headers.forEach { (key, value) -> builder.header(key, value) }
         if (method != "GET") {
@@ -150,13 +161,13 @@ class ApiClient(baseUrl: String, interceptor: Interceptor? = null) {
                     send(method, path, query, headers, body, retried = true)
                 }
                 it.code == 401 && bearerToken != null -> throw ApiError.Unauthorized
-                else -> throw ApiError.Server(it.code, problem(data))
+                else -> problem(data).let { detail -> throw ApiError.Server(it.code, detail?.detail, detail?.code) }
             }
         }
     }
 
-    private fun problem(data: ByteArray): String? =
-        runCatching { JsonCoding.decode(ProblemDetail.serializer(), data.decodeToString()).detail }.getOrNull()
+    private fun problem(data: ByteArray): ProblemDetail? =
+        runCatching { JsonCoding.decode(ProblemDetail.serializer(), data.decodeToString()) }.getOrNull()
 
     private suspend fun csrfToken(): CsrfResponse {
         csrf?.let { return it }

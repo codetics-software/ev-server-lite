@@ -40,7 +40,7 @@ ev-dashboard/
   app/             Routes et mises en page Next.js
   features/        Écrans, composants et logique par fonctionnalité
   components/ui/   Composants d’interface partagés
-  lib/             Client HTTP, formats et libellés français
+  lib/             Client HTTP, formats, libellés et traductions (lib/i18n)
 ```
 
 ## Démarrage local

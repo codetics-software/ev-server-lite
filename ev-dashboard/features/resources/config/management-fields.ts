@@ -1,7 +1,8 @@
+import { translated } from "@/lib/i18n";
 import { userRoles } from "@/lib/api-types";
 import type { FormField } from "../types";
 
-export const managementFields: Record<string, FormField[]> = {
+export const managementFields: Record<string, FormField[]> = translated({
   stations: [
     {
       key: "id",
@@ -69,4 +70,4 @@ export const managementFields: Record<string, FormField[]> = {
       required: true,
     },
   ],
-};
+});

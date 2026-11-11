@@ -1,5 +1,6 @@
 import { date, display, type Row } from "@/lib/api";
 import type { FormField } from "./types";
+import { getIntlLocale } from "@/lib/i18n";
 
 export function asRow(value: unknown): Row {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -23,7 +24,7 @@ export function formatCell(row: Row, key: string): string {
   }
 
   if (key === "energy_kwh" && value !== null) {
-    return Number(value).toLocaleString("fr-FR", { maximumFractionDigits: 3 });
+    return Number(value).toLocaleString(getIntlLocale(), { maximumFractionDigits: 3 });
   }
 
   return display(value);

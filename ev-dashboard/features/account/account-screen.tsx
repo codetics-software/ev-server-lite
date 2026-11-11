@@ -28,6 +28,7 @@ import { revalidateLogic, useForm } from "@tanstack/react-form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 type Provider = { id: string; name: string; url: string };
 type AccountSite = { site_id: string; name: string; site_admin: boolean; site_owner: boolean };
@@ -52,10 +53,10 @@ function ProfileForm({ account, onSaved }: { account: ManagedUser; onSaved: () =
             locale: value.locale,
           }),
         });
-        notify("Profil enregistré.");
+        notify(t("Profil enregistré."));
         onSaved();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer le profil."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer le profil.")));
       }
     },
   });
@@ -70,17 +71,21 @@ function ProfileForm({ account, onSaved }: { account: ManagedUser; onSaved: () =
       <FieldGroup>
         <form.Field
           name="name"
-          validators={{ onDynamic: rules(required("Renseignez votre nom."), maxLength(200)) }}
+          validators={{ onDynamic: rules(required(t("Renseignez votre nom.")), maxLength(200)) }}
         >
-          {(field) => <FormText field={field} label="Nom complet" autoComplete="name" required />}
+          {(field) => (
+            <FormText field={field} label={t("Nom complet")} autoComplete="name" required />
+          )}
         </form.Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <form.Field name="phone" validators={{ onDynamic: rules(maxLength(40)) }}>
-            {(field) => <FormText field={field} label="Téléphone" type="tel" autoComplete="tel" />}
+            {(field) => (
+              <FormText field={field} label={t("Téléphone")} type="tel" autoComplete="tel" />
+            )}
           </form.Field>
           <form.Field name="locale">
             {(field) => (
-              <FormSelect field={field} label="Langue des courriels" options={localeOptions} />
+              <FormSelect field={field} label={t("Langue des courriels")} options={localeOptions} />
             )}
           </form.Field>
         </div>
@@ -98,13 +103,13 @@ function MyBadges() {
   const columns: Column<Badge>[] = [
     {
       id: "badge",
-      header: "Badge",
+      header: t("Badge"),
       cell: (badge) =>
         badge.vehicle_id ? (
           <span className="flex flex-col items-start gap-1">
             <span className="font-mono text-xs font-medium">{badge.uid}</span>
             <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <ToneBadge tone="progress">Véhicule</ToneBadge>
+              <ToneBadge tone="progress">{t("Véhicule")}</ToneBadge>
               {badge.vehicle_name ?? badge.description}
             </span>
           </span>
@@ -117,19 +122,19 @@ function MyBadges() {
     },
     {
       id: "state",
-      header: "État",
+      header: t("État"),
       cell: (badge) => (
         <ToneBadge tone={badge.enabled ? "success" : "neutral"}>
-          {badge.enabled ? "Actif" : "Bloqué"}
+          {badge.enabled ? t("Actif") : t("Bloqué")}
         </ToneBadge>
       ),
     },
     {
       id: "used",
-      header: "Dernière utilisation",
+      header: t("Dernière utilisation"),
       cell: (badge) => (badge.last_used_at ? relative(badge.last_used_at) : "Jamais"),
     },
-    { id: "expires", header: "Expiration", cell: (badge) => date(badge.expires_at) },
+    { id: "expires", header: t("Expiration"), cell: (badge) => date(badge.expires_at) },
   ];
   return (
     <ListState
@@ -140,12 +145,17 @@ function MyBadges() {
       empty={
         <EmptyState
           icon={<IconTag />}
-          title="Aucun badge"
-          description="Demandez un badge de recharge à l’exploitant du réseau."
+          title={t("Aucun badge")}
+          description={t("Demandez un badge de recharge à l’exploitant du réseau.")}
         />
       }
     >
-      <DataTable label="Mes badges" rows={items} columns={columns} rowKey={(badge) => badge.uid} />
+      <DataTable
+        label={t("Mes badges")}
+        rows={items}
+        columns={columns}
+        rowKey={(badge) => badge.uid}
+      />
     </ListState>
   );
 }
@@ -162,24 +172,24 @@ function MySites() {
       empty={
         <EmptyState
           icon={<IconMapPin />}
-          title="Aucun site affecté"
-          description="Vous pouvez recharger sur tous les sites en accès ouvert."
+          title={t("Aucun site affecté")}
+          description={t("Vous pouvez recharger sur tous les sites en accès ouvert.")}
         />
       }
     >
       <DataTable
-        label="Mes sites"
+        label={t("Mes sites")}
         rows={items}
         rowKey={(site) => site.site_id}
         columns={[
           {
             id: "name",
-            header: "Site",
+            header: t("Site"),
             cell: (site) => <span className="font-medium">{site.name}</span>,
           },
           {
             id: "role",
-            header: "Rôle",
+            header: t("Rôle"),
             cell: (site) =>
               site.site_owner
                 ? "Propriétaire"
@@ -204,7 +214,7 @@ function Security() {
       const result = await api<{ url: string }>(`auth/link/${provider}`, { method: "POST" });
       window.location.assign(result.url);
     } catch (failure) {
-      setError(errorMessage(failure, "Impossible d’associer ce compte."));
+      setError(errorMessage(failure, t("Impossible d’associer ce compte.")));
     }
   }
 
@@ -222,42 +232,42 @@ function Security() {
     <div className="grid max-w-3xl gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Comptes associés</CardTitle>
+          <CardTitle>{t("Comptes associés")}</CardTitle>
           <CardDescription>
-            Associez un compte externe pour vous connecter sans mot de passe.
+            {t("Associez un compte externe pour vous connecter sans mot de passe.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           {providers?.length ? (
             providers.map((provider) => (
               <Button key={provider.id} variant="outline" onClick={() => link(provider.id)}>
-                Associer {provider.name}
+                {t("Associer {provider}", { provider: provider.name })}
               </Button>
             ))
           ) : (
             <p className="text-sm text-muted-foreground">
-              Aucun fournisseur de connexion supplémentaire n’est activé.
+              {t("Aucun fournisseur de connexion supplémentaire n’est activé.")}
             </p>
           )}
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Sessions et conditions</CardTitle>
+          <CardTitle>{t("Sessions et conditions")}</CardTitle>
           <CardDescription>
-            Consultez les{" "}
+            {t("Consultez les")}{" "}
             <Link
               href="/auth/eula"
               className="text-primary underline-offset-4 dark:text-sidebar-primary hover:underline"
             >
-              conditions d’utilisation
+              {t("conditions d’utilisation")}
             </Link>{" "}
-            ou déconnectez tous vos appareils.
+            {t("ou déconnectez tous vos appareils.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button variant="destructive" onClick={revoke}>
-            Déconnecter tous les appareils
+            {t("Déconnecter tous les appareils")}
           </Button>
         </CardContent>
       </Card>
@@ -277,23 +287,25 @@ export function AccountScreen() {
   return (
     <>
       <PageHeader
-        title="Mon compte"
+        title={t("Mon compte")}
         description={`${user.email} · ${roleLabels[user.role]}`}
         meta={
           account && !account.email_verified ? (
-            <ToneBadge tone="warning">Adresse à vérifier</ToneBadge>
+            <ToneBadge tone="warning">{t("Adresse à vérifier")}</ToneBadge>
           ) : undefined
         }
       />
       <Tabs defaultValue="profile">
         <div className="overflow-x-auto">
           <TabsList variant="line">
-            <TabsTrigger value="profile">Profil</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            {components.billing && <TabsTrigger value="payment">Moyens de paiement</TabsTrigger>}
-            <TabsTrigger value="badges">Mes badges</TabsTrigger>
-            {components.organization && <TabsTrigger value="sites">Mes sites</TabsTrigger>}
-            <TabsTrigger value="security">Sécurité</TabsTrigger>
+            <TabsTrigger value="profile">{t("Profil")}</TabsTrigger>
+            <TabsTrigger value="notifications">{t("Notifications")}</TabsTrigger>
+            {components.billing && (
+              <TabsTrigger value="payment">{t("Moyens de paiement")}</TabsTrigger>
+            )}
+            <TabsTrigger value="badges">{t("Mes badges")}</TabsTrigger>
+            {components.organization && <TabsTrigger value="sites">{t("Mes sites")}</TabsTrigger>}
+            <TabsTrigger value="security">{t("Sécurité")}</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="profile" className="max-w-2xl pt-4">
@@ -309,8 +321,10 @@ export function AccountScreen() {
                 onSaved={refresh}
               />
               <p className="text-xs text-muted-foreground">
-                Compte créé le {date(account.created_at)} · dernière connexion{" "}
-                {display(relative(account.last_login_at))}
+                {t("Compte créé le {created} · dernière connexion {last}", {
+                  created: date(account.created_at),
+                  last: display(relative(account.last_login_at)),
+                })}
               </p>
             </div>
           ) : null}

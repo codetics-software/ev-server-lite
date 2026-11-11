@@ -21,8 +21,9 @@ import { maxLength, required, rules } from "@/lib/form";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useRef, useState } from "react";
 import { cardStateLabels, cardStateTones, type CardOffer, type CardOrder } from "./card-types";
+import { t, translated } from "@/lib/i18n";
 
-const columns: Column<CardOrder>[] = [
+const columns: Column<CardOrder>[] = translated([
   { id: "date", header: "Commande", cell: (order) => date(order.created_at) },
   { id: "amount", header: "Montant", cell: (order) => money(order.amount_minor, order.currency) },
   {
@@ -30,11 +31,11 @@ const columns: Column<CardOrder>[] = [
     header: "État",
     cell: (order) => (
       <ToneBadge tone={cardStateTones[order.state]}>
-        {order.refunded ? "Annulée et remboursée" : cardStateLabels[order.state]}
+        {order.refunded ? t("Annulée et remboursée") : cardStateLabels[order.state]}
       </ToneBadge>
     ),
   },
-];
+]);
 
 function OrderForm({ offer }: { offer: CardOffer }) {
   const [error, setError] = useState("");
@@ -65,7 +66,7 @@ function OrderForm({ offer }: { offer: CardOffer }) {
         );
         window.location.assign(result.checkout_url);
       } catch (failure) {
-        setError(errorMessage(failure, "La commande n’a pas pu être créée."));
+        setError(errorMessage(failure, t("La commande n’a pas pu être créée.")));
       }
     },
   });
@@ -83,12 +84,17 @@ function OrderForm({ offer }: { offer: CardOffer }) {
           <>
             <form.Field name="recipientName" validators={validators}>
               {(field) => (
-                <FormText field={field} label="Destinataire" autoComplete="name" required />
+                <FormText field={field} label={t("Destinataire")} autoComplete="name" required />
               )}
             </form.Field>
             <form.Field name="address" validators={validators}>
               {(field) => (
-                <FormText field={field} label="Adresse" autoComplete="street-address" required />
+                <FormText
+                  field={field}
+                  label={t("Adresse")}
+                  autoComplete="street-address"
+                  required
+                />
               )}
             </form.Field>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -97,12 +103,22 @@ function OrderForm({ offer }: { offer: CardOffer }) {
                 validators={{ onDynamic: rules(required(), maxLength(20)) }}
               >
                 {(field) => (
-                  <FormText field={field} label="Code postal" autoComplete="postal-code" required />
+                  <FormText
+                    field={field}
+                    label={t("Code postal")}
+                    autoComplete="postal-code"
+                    required
+                  />
                 )}
               </form.Field>
               <form.Field name="city" validators={validators}>
                 {(field) => (
-                  <FormText field={field} label="Ville" autoComplete="address-level2" required />
+                  <FormText
+                    field={field}
+                    label={t("Ville")}
+                    autoComplete="address-level2"
+                    required
+                  />
                 )}
               </form.Field>
             </div>
@@ -138,23 +154,26 @@ export function DriverCardScreen() {
     <div className="flex max-w-3xl flex-col gap-6">
       {awaitingActivation && (
         <Alert>
-          <AlertTitle>Votre carte est prête</AlertTitle>
+          <AlertTitle>{t("Votre carte est prête")}</AlertTitle>
           <AlertDescription>
-            À réception, ouvrez l’application mobile, onglet Badges, puis activez-la en la scannant
-            ou en saisissant le numéro imprimé dessus.
+            {t(
+              "À réception, ouvrez l’application mobile, onglet Badges, puis activez-la en la scannant ou en saisissant le numéro imprimé dessus.",
+            )}
           </AlertDescription>
         </Alert>
       )}
       {offer.data.available ? (
         <Card>
           <CardHeader>
-            <CardTitle>Commander une carte de recharge</CardTitle>
+            <CardTitle>{t("Commander une carte de recharge")}</CardTitle>
             <CardDescription>
               {offer.data.description ??
-                "Une carte RFID à présenter aux bornes de ce réseau pour démarrer vos recharges."}{" "}
+                t(
+                  "Une carte RFID à présenter aux bornes de ce réseau pour démarrer vos recharges.",
+                )}{" "}
               {offer.data.shipping
-                ? "Elle est envoyée à l’adresse de votre choix."
-                : "Elle vous est remise par l’exploitant."}
+                ? t("Elle est envoyée à l’adresse de votre choix.")
+                : t("Elle vous est remise par l’exploitant.")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -163,13 +182,13 @@ export function DriverCardScreen() {
         </Card>
       ) : (
         <EmptyState
-          title="Vente de cartes indisponible"
-          description="Cet espace ne propose pas de carte à la vente pour le moment."
+          title={t("Vente de cartes indisponible")}
+          description={t("Cet espace ne propose pas de carte à la vente pour le moment.")}
         />
       )}
       {list.length > 0 && (
         <DataTable
-          label="Mes commandes de carte"
+          label={t("Mes commandes de carte")}
           rows={list}
           columns={columns}
           rowKey={(order) => order.id}

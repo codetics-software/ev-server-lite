@@ -71,7 +71,6 @@
     <string name="credit">Crédit</string>
     <string name="credit_paid">Crédit payé</string>
     <string name="credits">Crédits</string>
-    <string name="czech">Tchèque</string>
     <string name="dc_power">Puissance DC</string>
     <string name="dc_power_kw">Puissance DC (kW)</string>
     <string name="debug_only">Mode debug uniquement</string>
@@ -112,7 +111,6 @@
     <string name="format">Format</string>
     <string name="french">Français</string>
     <string name="full_name">Nom complet</string>
-    <string name="german">Allemand</string>
     <string name="get_directions">Itinéraire</string>
     <string name="google_wallet_could_not_save_this_pass">Google Wallet n’a pas pu enregistrer ce passe.</string>
     <string name="google_wallet_is_not_available_for_this_badge_on">Google Wallet n’est pas disponible pour ce badge sur ce serveur ou cet appareil.</string>
@@ -132,7 +130,6 @@
     <string name="indicator">Indicateur</string>
     <string name="invoiced">Facturée</string>
     <string name="invoices">Factures</string>
-    <string name="italian">Italien</string>
     <string name="language">Langue</string>
     <string name="last_used">Dernière utilisation</string>
     <string name="licence_plate">Immatriculation</string>
@@ -201,7 +198,6 @@
     <string name="plug_this_vehicle_into_a_compatible_station_and">Branchez ce véhicule sur une borne compatible et démarrez une session. Vous pourrez ensuite activer ici la recharge automatique pendant 24 heures.</string>
     <string name="plugged_in">Branché</string>
     <string name="point_the_camera_at_the_code_on_the_station">Visez le code sur la borne avec l’appareil photo.</string>
-    <string name="portuguese">Portugais</string>
     <string name="power">Puissance</string>
     <string name="preferences">Préférences</string>
     <string name="price">Prix</string>

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StationConnection } from "./stations-list";
 import type { StationInError } from "./station-types";
+import { t } from "@/lib/i18n";
 
 export function StationsInError({ revision }: { revision: number }) {
   const router = useRouter();
@@ -17,7 +18,7 @@ export function StationsInError({ revision }: { revision: number }) {
   const columns: Column<StationInError>[] = [
     {
       id: "name",
-      header: "Borne",
+      header: t("Borne"),
       sort: (item) => item.station.name,
       cell: ({ station }) => (
         <Link
@@ -32,12 +33,12 @@ export function StationsInError({ revision }: { revision: number }) {
     },
     {
       id: "state",
-      header: "Connexion",
+      header: t("Connexion"),
       cell: ({ station }) => <StationConnection station={station} />,
     },
     {
       id: "errors",
-      header: "Anomalies",
+      header: t("Anomalies"),
       sort: (item) => item.errors.length,
       cell: (item) => <ErrorBadges errors={item.errors} />,
     },
@@ -51,13 +52,15 @@ export function StationsInError({ revision }: { revision: number }) {
       empty={
         <EmptyState
           icon={<IconCircleCheck />}
-          title="Aucune borne en erreur"
-          description="Toutes les bornes sont connectées, rattachées à une zone et sans défaut signalé."
+          title={t("Aucune borne en erreur")}
+          description={t(
+            "Toutes les bornes sont connectées, rattachées à une zone et sans défaut signalé.",
+          )}
         />
       }
     >
       <DataTable
-        label="Bornes en erreur"
+        label={t("Bornes en erreur")}
         rows={items}
         columns={columns}
         rowKey={(item) => item.station.id}

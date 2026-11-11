@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { IconDownload, IconRefresh, IconSearch } from "@tabler/icons-react";
+import { t } from "@/lib/i18n";
 
 type Props = {
   search: string;
@@ -23,8 +24,8 @@ export function ResourceToolbar({
     <div className="flex flex-wrap items-center gap-2">
       <InputGroup className="w-full sm:w-64">
         <InputGroupInput
-          aria-label="Rechercher dans cette page"
-          placeholder="Rechercher dans cette page…"
+          aria-label={t("Rechercher dans cette page")}
+          placeholder={t("Rechercher dans cette page…")}
           value={search}
           onChange={(event) => onSearch(event.target.value)}
         />
@@ -35,7 +36,7 @@ export function ResourceToolbar({
       <Button
         variant="outline"
         size="icon"
-        aria-label="Actualiser"
+        aria-label={t("Actualiser")}
         onClick={onRefresh}
         disabled={loading}
       >
@@ -43,7 +44,7 @@ export function ResourceToolbar({
       </Button>
       <Button variant="outline" onClick={onExport} disabled={exportDisabled}>
         <IconDownload data-icon="inline-start" />
-        Exporter cette page
+        {t("Exporter cette page")}
       </Button>
     </div>
   );

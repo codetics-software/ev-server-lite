@@ -23,6 +23,7 @@ import fr.codetics.evapp.EvApp
 import fr.codetics.evapp.core.ApiClient
 import fr.codetics.evapp.core.ApiError
 import fr.codetics.evapp.core.AppConfiguration
+import fr.codetics.evapp.core.AppLanguage
 import fr.codetics.evapp.core.ConfigurationIssue
 import fr.codetics.evapp.core.ConfigurationOutcome
 import fr.codetics.evapp.core.ConfigurationValidator
@@ -33,7 +34,6 @@ import fr.codetics.evapp.core.SecureStore
 import fr.codetics.evapp.demo.DemoSupport
 import fr.codetics.evapp.models.*
 import java.time.Instant
-import java.util.Locale
 import java.util.Properties
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
@@ -468,7 +468,7 @@ class PushCoordinator(private val model: AppModel, private val context: Context)
         val api = model.api ?: return
         if (!model.isSignedIn) return
         try {
-            api.registerDevice(PushDeviceInput(token, "ANDROID", environment, Locale.getDefault().language))
+            api.registerDevice(PushDeviceInput(token, "ANDROID", environment, AppLanguage.current()))
             lastError = null
         } catch (error: CancellationException) {
             throw error

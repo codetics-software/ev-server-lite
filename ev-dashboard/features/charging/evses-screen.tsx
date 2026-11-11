@@ -17,6 +17,7 @@ import { useApi } from "@/hooks/use-api";
 import { useState } from "react";
 import { EvseEditor } from "./evse-editor";
 import type { Evse } from "./portal-types";
+import { t } from "@/lib/i18n";
 
 export function EvsesScreen() {
   const user = useWorkspace();
@@ -27,11 +28,11 @@ export function EvsesScreen() {
     <>
       <div className="page-heading">
         <div>
-          <h1>Points de charge publics</h1>
-          <p>Un portail de paiement et un QR code pour chaque connecteur.</p>
+          <h1>{t("Points de charge publics")}</h1>
+          <p>{t("Un portail de paiement et un QR code pour chaque connecteur.")}</p>
         </div>
         {user.role === "ADMIN" && (
-          <Button onClick={() => setEditing(null)}>Ajouter un point de charge</Button>
+          <Button onClick={() => setEditing(null)}>{t("Ajouter un point de charge")}</Button>
         )}
       </div>
       {error && (
@@ -43,7 +44,7 @@ export function EvsesScreen() {
         <Table>
           <TableHeader>
             <TableRow>
-              {["Point de charge", "Connecteur", "Publication", "Accès"].map((label) => (
+              {[t("Point de charge"), "Connecteur", "Publication", t("Accès")].map((label) => (
                 <TableHead key={label}>{label}</TableHead>
               ))}
             </TableRow>
@@ -56,7 +57,7 @@ export function EvsesScreen() {
                   {evse.stationId} · {evse.connectorId}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline">{evse.published ? "Publié" : "Brouillon"}</Badge>
+                  <Badge variant="outline">{evse.published ? t("Publié") : t("Brouillon")}</Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-2">
@@ -67,7 +68,7 @@ export function EvsesScreen() {
                       data-slot="button"
                       className={buttonVariants({ size: "sm", variant: "outline" })}
                     >
-                      Ouvrir le portail
+                      {t("Ouvrir le portail")}
                     </a>
                     <a
                       href={`/api/backend/api/v1/evses/${evse.id}/qr`}
@@ -75,11 +76,11 @@ export function EvsesScreen() {
                       data-slot="button"
                       className={buttonVariants({ size: "sm", variant: "outline" })}
                     >
-                      Télécharger le QR code
+                      {t("Télécharger le QR code")}
                     </a>
                     {user.role === "ADMIN" && (
                       <Button size="sm" variant="ghost" onClick={() => setEditing(evse)}>
-                        Modifier
+                        {t("Modifier")}
                       </Button>
                     )}
                   </div>
@@ -92,9 +93,11 @@ export function EvsesScreen() {
         data && (
           <Empty className="border">
             <EmptyHeader>
-              <EmptyTitle>Aucun point de charge public</EmptyTitle>
+              <EmptyTitle>{t("Aucun point de charge public")}</EmptyTitle>
               <EmptyDescription>
-                Ajoutez un connecteur et son tarif, puis connectez Stripe dans la page Paiements.
+                {t(
+                  "Ajoutez un connecteur et son tarif, puis connectez Stripe dans la page Paiements.",
+                )}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

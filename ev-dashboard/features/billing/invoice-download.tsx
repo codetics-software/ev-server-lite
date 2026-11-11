@@ -5,6 +5,7 @@ import { notifyError } from "@/features/shared/use-action";
 import { api, errorMessage } from "@/lib/api";
 import { IconDownload } from "@tabler/icons-react";
 import { useState, type ComponentProps } from "react";
+import { t } from "@/lib/i18n";
 
 export function InvoiceDownload({
   id,
@@ -29,8 +30,8 @@ export function InvoiceDownload({
     } catch (error) {
       target?.close();
       notifyError(
-        "La facture n’a pas pu être ouverte",
-        errorMessage(error, "Réessayez plus tard."),
+        t("La facture n’a pas pu être ouverte"),
+        errorMessage(error, t("Réessayez plus tard.")),
       );
     } finally {
       setPending(false);

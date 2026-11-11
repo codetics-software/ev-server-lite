@@ -4,10 +4,12 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Csv
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.I18n
 import fr.codetics.ev_server.core.ImportError
 import fr.codetics.ev_server.core.ImportResult
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.api.PageResponse
@@ -89,7 +91,7 @@ class UserService(
     }
 
     private fun conditions(tenant: UUID, filter: UserFilter): List<Condition> {
-        ensure(filter.search.length <= 200) { "La recherche est trop longue." }
+        ensure(filter.search.length <= 200) { msg("validation.search_too_long") }
         val conditions = mutableListOf<Condition>(eq("tenantId", tenant), eq("deletedAt", null))
         if (filter.search.isNotBlank()) {
             conditions += anyOf(contains("email", filter.search.trim()), contains("displayName", filter.search.trim()))
@@ -100,7 +102,7 @@ class UserService(
             "disabled" -> conditions += eq("enabled", false)
             "unverified" -> conditions += eq("emailVerified", false)
             null, "" -> Unit
-            else -> throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Filtre d’état inconnu.")
+            else -> throw ResponseStatusException(HttpStatus.BAD_REQUEST, msg("validation.unknown_status_filter"))
         }
         return conditions
     }
@@ -113,7 +115,7 @@ class UserService(
     fun find(user: AppPrincipal, id: UUID): UserResponse = responses(user.tenantId, listOf(account(user.tenantId, id))).first()
 
     fun account(tenant: UUID, id: UUID): UserEntity =
-        users.findByTenantIdAndId(tenant, id)?.takeIf { it.deletedAt == null } ?: throw NotFound("Utilisateur introuvable.")
+        users.findByTenantIdAndId(tenant, id)?.takeIf { it.deletedAt == null } ?: throw NotFound(msg("users.not_found"))
 
     fun create(body: UserInput, user: AppPrincipal): CreatedUser {
         validateUser(body.email, body.name, body.phone, body.locale)
@@ -121,7 +123,7 @@ class UserService(
         val created =
             db.atomic {
                 if (users.findByTenantIdAndEmail(user.tenantId, body.email.trim().lowercase()) != null) {
-                    throw ResponseStatusException(HttpStatus.CONFLICT, "Cette adresse électronique existe déjà.")
+                    throw ResponseStatusException(HttpStatus.CONFLICT, msg("users.email_exists"))
                 }
                 val account =
                     users.save(
@@ -132,7 +134,7 @@ class UserService(
                             role = body.role,
                             enabled = body.enabled,
                             phone = body.phone?.trim()?.ifBlank { null },
-                            locale = body.locale ?: "fr",
+                            locale = body.locale ?: I18n.locale().language,
                         )
                     ).also { db.flush() }
                 assignAutomaticSites(account)
@@ -161,7 +163,7 @@ class UserService(
     fun update(id: UUID, body: UserInput, user: AppPrincipal): MutationResponse {
         validateUser(body.email, body.name, body.phone, body.locale)
         ensure(id != user.id || (body.enabled && body.role == UserRole.ADMIN)) {
-            "Vous ne pouvez pas désactiver votre propre compte administrateur ni réduire ses droits."
+            msg("users.cannot_demote_self")
         }
 
         return db.atomic {
@@ -181,14 +183,14 @@ class UserService(
     }
 
     fun delete(id: UUID, user: AppPrincipal): MutationResponse {
-        ensure(id != user.id) { "Vous ne pouvez pas supprimer votre propre compte." }
+        ensure(id != user.id) { msg("users.cannot_delete_self") }
         return erase(id, user)
     }
 
     fun deleteOwn(user: AppPrincipal): MutationResponse {
-        ensure(user.role != UserRole.ADMIN) { "Un administrateur ne peut pas supprimer son propre compte." }
+        ensure(user.role != UserRole.ADMIN) { msg("users.admin_cannot_delete_self") }
         if (transactions.findAllByTenantIdAndStoppedAtIsNull(user.tenantId).any { it.userId == user.id }) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Terminez votre session de recharge avant de supprimer votre compte.")
+            throw ResponseStatusException(HttpStatus.CONFLICT, msg("users.finish_session_first"))
         }
         return erase(user.id, user)
     }
@@ -286,8 +288,8 @@ class UserService(
                 validateUser(email, name, null, null)
                 val parsedRole =
                     runCatching { UserRole.valueOf(role) }.getOrNull()
-                        ?: throw fr.codetics.ev_server.core.InvalidRequest("Rôle inconnu : $role.")
-                ensure(badge.isEmpty() || badge.matches(Regex("[A-Za-z0-9_-]{1,20}"))) { "Badge invalide : $badge." }
+                        ?: throw fr.codetics.ev_server.core.InvalidRequest(msg("users.import.unknown_role", role))
+                ensure(badge.isEmpty() || badge.matches(Regex("[A-Za-z0-9_-]{1,20}"))) { msg("users.import.invalid_badge", badge) }
                 db.atomic {
                     if (users.findByTenantIdAndEmail(user.tenantId, email) != null) {
                         skipped += 1
@@ -300,7 +302,7 @@ class UserService(
                     if (badge.isNotEmpty()) {
                         val key = ChargingTokenKey(user.tenantId, badge)
                         val token = chargingTokens.findById(key).orElse(null)
-                        ensure(token == null || token.userId == null) { "Le badge $badge est déjà attribué." }
+                        ensure(token == null || token.userId == null) { msg("users.import.badge_taken", badge) }
                         chargingTokens.save((token ?: ChargingTokenEntity(key)).apply { userId = account.id })
                     }
                     assignAutomaticSites(account)
@@ -308,9 +310,9 @@ class UserService(
                     created += 1
                 }
             } catch (error: IllegalArgumentException) {
-                errors += ImportError(line, error.message ?: "Ligne invalide.")
+                errors += ImportError(line, error.message ?: msg("csv.invalid_line"))
             } catch (error: ResponseStatusException) {
-                errors += ImportError(line, error.reason ?: "Ligne invalide.")
+                errors += ImportError(line, error.reason ?: msg("csv.invalid_line"))
             }
         }
         db.audit(user.tenantId, user.id.toString(), "USERS_IMPORT", "$created")
@@ -331,7 +333,7 @@ class UserService(
     fun assignSites(user: AppPrincipal, id: UUID, input: List<SiteAssignmentInput>): List<UserSiteResponse> {
         account(user.tenantId, id)
         val sites = organization.sites(user.tenantId).map { it.id }.toSet()
-        ensure(input.all { it.siteId != null && it.siteId in sites }) { "Un des sites sélectionnés n’existe pas." }
+        ensure(input.all { it.siteId != null && it.siteId in sites }) { msg("users.site_missing") }
         db.atomic {
             siteUsers.deleteAll(siteUsers.findAllByKeyTenantIdAndKeyUserId(user.tenantId, id))
             db.flush()
@@ -344,7 +346,7 @@ class UserService(
     }
 
     fun siteUsers(user: AppPrincipal, siteId: UUID): List<SiteUserResponse> {
-        ensure(organization.site(user.tenantId, siteId) != null) { "Site introuvable." }
+        ensure(organization.site(user.tenantId, siteId) != null) { msg("sites.not_found") }
         val assignments = siteUsers.findAllByKeyTenantIdAndKeySiteId(user.tenantId, siteId)
         val accounts = users.findAllByTenantIdAndIdIn(user.tenantId, assignments.map { it.key.userId }).associateBy { it.id }
         return assignments.mapNotNull { assignment ->
@@ -355,11 +357,11 @@ class UserService(
     }
 
     fun assignUsers(user: AppPrincipal, siteId: UUID, input: List<SiteAssignmentInput>): List<SiteUserResponse> {
-        ensure(organization.site(user.tenantId, siteId) != null) { "Site introuvable." }
+        ensure(organization.site(user.tenantId, siteId) != null) { msg("sites.not_found") }
         val ids = input.mapNotNull { it.userId }.toSet()
-        ensure(ids.size == input.size) { "Chaque utilisateur ne peut apparaître qu’une fois." }
+        ensure(ids.size == input.size) { msg("sites.user_once") }
         val known = users.findAllByTenantIdAndIdIn(user.tenantId, ids).filter { it.deletedAt == null }.map { it.id }.toSet()
-        ensure(known.size == ids.size) { "Un des utilisateurs sélectionnés n’existe pas." }
+        ensure(known.size == ids.size) { msg("sites.user_missing") }
         db.atomic {
             siteUsers.deleteAll(siteUsers.findAllByKeyTenantIdAndKeySiteId(user.tenantId, siteId))
             db.flush()
@@ -394,7 +396,7 @@ class UserService(
             val account = account(user.tenantId, user.id)
             account.displayName = input.name.trim()
             account.phone = input.phone?.trim()?.ifBlank { null }
-            input.locale?.let { account.locale = it }
+            (input.locale ?: I18n.requested())?.let { account.locale = it }
             users.save(account)
             db.audit(user.tenantId, user.id.toString(), "PROFILE_UPDATE", user.id.toString())
         }
@@ -403,12 +405,12 @@ class UserService(
 
     private fun validateUser(email: String, name: String, phone: String?, locale: String?) {
         validateEmail(email)
-        ensure(name.isNotBlank() && name.length <= 200) { "Le nom doit contenir entre 1 et 200 caractères." }
-        ensure(phone == null || phone.isBlank() || phone.matches(Regex("[+0-9 ().-]{4,40}"))) { "Numéro de téléphone invalide." }
-        ensure(locale == null || locale in LOCALES) { "Langue non prise en charge." }
+        ensure(name.isNotBlank() && name.length <= 200) { msg("validation.name_length") }
+        ensure(phone == null || phone.isBlank() || phone.matches(Regex("[+0-9 ().-]{4,40}"))) { msg("validation.phone") }
+        ensure(locale == null || locale in LOCALES) { msg("users.unsupported_language") }
     }
 
     private companion object {
-        val LOCALES = setOf("fr", "en", "de", "es", "it", "pt", "cs")
+        val LOCALES = I18n.LANGUAGES
     }
 }

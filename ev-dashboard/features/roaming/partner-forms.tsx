@@ -8,9 +8,10 @@ import { api, errorMessage } from "@/lib/api";
 import { matches, maxLength, required, rules } from "@/lib/form";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 import type { Partner } from "./roaming-types";
 
-const https = matches(/^https:\/\//, "Adresse HTTPS requise.");
+const https = (value: string) => matches(/^https:\/\//, t("Adresse HTTPS requise."))(value);
 
 export function PartnerCreateForm({
   onCreated,
@@ -35,7 +36,7 @@ export function PartnerCreateForm({
           }),
         );
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible de créer le partenaire."));
+        setError(errorMessage(failure, t("Impossible de créer le partenaire.")));
       }
     },
   });
@@ -50,36 +51,38 @@ export function PartnerCreateForm({
       <FieldGroup>
         <form.Field
           name="name"
-          validators={{ onDynamic: rules(required("Renseignez le nom."), maxLength(200)) }}
+          validators={{ onDynamic: rules(required(t("Renseignez le nom.")), maxLength(200)) }}
         >
-          {(field) => <FormText field={field} label="Nom du partenaire" required />}
+          {(field) => <FormText field={field} label={t("Nom du partenaire")} required />}
         </form.Field>
         <div className="grid gap-4 sm:grid-cols-3">
           <form.Field
             name="countryCode"
-            validators={{ onDynamic: rules(matches(/^[A-Z]{2}$/, "Deux lettres majuscules.")) }}
+            validators={{ onDynamic: rules(matches(/^[A-Z]{2}$/, t("Deux lettres majuscules."))) }}
           >
-            {(field) => <FormText field={field} label="Code pays" maxLength={2} />}
+            {(field) => <FormText field={field} label={t("Code pays")} maxLength={2} />}
           </form.Field>
           <form.Field
             name="partyId"
             validators={{
               onDynamic: rules(
-                required("Requis."),
-                matches(/^[A-Z0-9]{3}$/, "Trois lettres majuscules ou chiffres."),
+                required(t("Requis.")),
+                matches(/^[A-Z0-9]{3}$/, t("Trois lettres majuscules ou chiffres.")),
               ),
             }}
           >
-            {(field) => <FormText field={field} label="Identifiant de l’opérateur" maxLength={3} />}
+            {(field) => (
+              <FormText field={field} label={t("Identifiant de l’opérateur")} maxLength={3} />
+            )}
           </form.Field>
           <form.Field name="localRole">
             {(field) => (
               <FormSelect
                 field={field}
-                label="Notre rôle"
+                label={t("Notre rôle")}
                 options={[
-                  { value: "cpo", label: "Exploitant de bornes" },
-                  { value: "emsp", label: "Opérateur de mobilité" },
+                  { value: "cpo", label: t("Exploitant de bornes") },
+                  { value: "emsp", label: t("Opérateur de mobilité") },
                 ]}
               />
             )}
@@ -87,12 +90,12 @@ export function PartnerCreateForm({
         </div>
         <form.Field
           name="remoteUrl"
-          validators={{ onDynamic: rules(required("Renseignez l’adresse."), https) }}
+          validators={{ onDynamic: rules(required(t("Renseignez l’adresse.")), https) }}
         >
           {(field) => (
             <FormText
               field={field}
-              label="Adresse de découverte du partenaire (versions)"
+              label={t("Adresse de découverte du partenaire (versions)")}
               type="url"
               placeholder="https://partenaire.exemple/ocpi/versions"
             />
@@ -100,7 +103,7 @@ export function PartnerCreateForm({
         </form.Field>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
-            <FormFooter error={error} submitting={submitting} label="Créer le partenaire" />
+            <FormFooter error={error} submitting={submitting} label={t("Créer le partenaire")} />
           )}
         </form.Subscribe>
       </FieldGroup>
@@ -117,10 +120,10 @@ export function PartnerEditForm({ partner, onSaved }: { partner: Partner; onSave
       setError("");
       try {
         await api(`ocpi/partners/${partner.id}`, { method: "PUT", body: JSON.stringify(value) });
-        notify("Partenaire enregistré.");
+        notify(t("Partenaire enregistré."));
         onSaved();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer le partenaire."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer le partenaire.")));
       }
     },
   });
@@ -135,18 +138,18 @@ export function PartnerEditForm({ partner, onSaved }: { partner: Partner; onSave
       <FieldGroup>
         <form.Field
           name="name"
-          validators={{ onDynamic: rules(required("Renseignez le nom."), maxLength(200)) }}
+          validators={{ onDynamic: rules(required(t("Renseignez le nom.")), maxLength(200)) }}
         >
-          {(field) => <FormText field={field} label="Nom du partenaire" required />}
+          {(field) => <FormText field={field} label={t("Nom du partenaire")} required />}
         </form.Field>
         <form.Field
           name="remoteUrl"
-          validators={{ onDynamic: rules(required("Renseignez l’adresse."), https) }}
+          validators={{ onDynamic: rules(required(t("Renseignez l’adresse.")), https) }}
         >
-          {(field) => <FormText field={field} label="Adresse de découverte" type="url" />}
+          {(field) => <FormText field={field} label={t("Adresse de découverte")} type="url" />}
         </form.Field>
         <form.Field name="enabled">
-          {(field) => <FormSwitch field={field} label="Échanges activés" />}
+          {(field) => <FormSwitch field={field} label={t("Échanges activés")} />}
         </form.Field>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => <FormFooter error={error} submitting={submitting} />}
@@ -168,10 +171,10 @@ export function RegisterForm({ partner, onDone }: { partner: Partner; onDone: ()
           method: "POST",
           body: JSON.stringify({ token: value.token.trim() }),
         });
-        notify("Échange des identifiants réussi.");
+        notify(t("Échange des identifiants réussi."));
         onDone();
       } catch (failure) {
-        setError(errorMessage(failure, "L’enregistrement auprès du partenaire a échoué."));
+        setError(errorMessage(failure, t("L’enregistrement auprès du partenaire a échoué.")));
       }
     },
   });
@@ -186,13 +189,17 @@ export function RegisterForm({ partner, onDone }: { partner: Partner; onDone: ()
       <FieldGroup>
         <form.Field
           name="token"
-          validators={{ onDynamic: rules(required("Collez le jeton transmis par le partenaire.")) }}
+          validators={{
+            onDynamic: rules(required(t("Collez le jeton transmis par le partenaire."))),
+          }}
         >
           {(field) => (
             <FormText
               field={field}
-              label="Jeton du partenaire"
-              description="Jeton initial (token A) fourni par le partenaire pour l’échange des identifiants."
+              label={t("Jeton du partenaire")}
+              description={t(
+                "Jeton initial (token A) fourni par le partenaire pour l’échange des identifiants.",
+              )}
               autoComplete="off"
             />
           )}
@@ -202,7 +209,7 @@ export function RegisterForm({ partner, onDone }: { partner: Partner; onDone: ()
             <FormFooter
               error={error}
               submitting={submitting}
-              label="S’enregistrer auprès du partenaire"
+              label={t("S’enregistrer auprès du partenaire")}
             />
           )}
         </form.Subscribe>

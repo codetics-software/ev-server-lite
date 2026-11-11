@@ -7,6 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "check:i18n": "node tools/check-i18n.mjs",
     "test:browser": "node tools/capture-dashboard.mjs",
     "format": "prettier --write app features lib hooks tools components/codetics-mark.tsx",
     "format:check": "prettier --check app features lib hooks tools components/codetics-mark.tsx"

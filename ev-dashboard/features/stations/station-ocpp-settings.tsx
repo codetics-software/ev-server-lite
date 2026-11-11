@@ -13,6 +13,7 @@ import { IconHistory, IconPlus, IconX } from "@tabler/icons-react";
 import { useId, useState } from "react";
 import type { SecurityCapabilities, SecurityChange } from "./station-security";
 import type { Station, StationEvent } from "./station-types";
+import { t } from "@/lib/i18n";
 
 const MAX_VENDORS = 20;
 
@@ -23,7 +24,7 @@ function heartbeatError(value: string) {
   const number = Number(value);
   return Number.isInteger(number) && number >= 10 && number <= 300
     ? null
-    : "Intervalle entre 10 et 300 secondes.";
+    : t("Intervalle entre 10 et 300 secondes.");
 }
 
 function vendorError(value: string, vendors: string[]) {
@@ -32,13 +33,13 @@ function vendorError(value: string, vendors: string[]) {
     return null;
   }
   if (vendor.length > 255) {
-    return "Un identifiant de fournisseur contient 255 caractères au plus.";
+    return t("Un identifiant de fournisseur contient 255 caractères au plus.");
   }
   if (vendor.includes(",")) {
-    return "Un identifiant de fournisseur ne peut pas contenir de virgule.";
+    return t("Un identifiant de fournisseur ne peut pas contenir de virgule.");
   }
   if (vendors.length >= MAX_VENDORS) {
-    return `${MAX_VENDORS} fournisseurs au plus.`;
+    return t("{count} fournisseurs au plus.", { count: MAX_VENDORS });
   }
   return null;
 }
@@ -96,9 +97,9 @@ export function StationOcppSettings({
   return (
     <Card className="max-w-3xl">
       <CardHeader>
-        <CardTitle>Échanges OCPP</CardTitle>
+        <CardTitle>{t("Échanges OCPP")}</CardTitle>
         <CardDescription>
-          Signal de vie et messages DataTransfer propres au fabricant.
+          {t("Signal de vie et messages DataTransfer propres au fabricant.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -121,13 +122,15 @@ export function StationOcppSettings({
                 }),
               {
                 success: (result) => result.message,
-                failure: "Les paramètres OCPP n’ont pas été enregistrés",
+                failure: t("Les paramètres OCPP n’ont pas été enregistrés"),
                 onDone: (result) => {
                   setQueued(
                     result.command_id
                       ? station.connected
-                        ? "Le nouvel intervalle du signal de vie est envoyé à la borne."
-                        : "Le nouvel intervalle est envoyé à la reconnexion de la borne et appliqué au prochain démarrage de la borne."
+                        ? t("Le nouvel intervalle du signal de vie est envoyé à la borne.")
+                        : t(
+                            "Le nouvel intervalle est envoyé à la reconnexion de la borne et appliqué au prochain démarrage de la borne.",
+                          )
                       : null,
                   );
                   onChanged();
@@ -140,7 +143,7 @@ export function StationOcppSettings({
             <FieldGroup>
               <Field data-invalid={Boolean(heartbeatIssue)}>
                 <FieldLabel htmlFor={heartbeatId}>
-                  Intervalle du signal de vie (secondes)
+                  {t("Intervalle du signal de vie (secondes)")}
                 </FieldLabel>
                 <Input
                   id={heartbeatId}
@@ -149,20 +152,22 @@ export function StationOcppSettings({
                   max={300}
                   step={1}
                   value={heartbeat}
-                  placeholder={`Valeur du serveur (${fallback} s)`}
+                  placeholder={t("Valeur du serveur ({value} s)", { value: fallback })}
                   aria-invalid={Boolean(heartbeatIssue)}
                   onChange={(event) => setHeartbeat(event.target.value)}
                 />
                 <FieldDescription>
-                  Laissez vide pour utiliser la valeur du serveur.
-                  {!station.connected && " Appliqué au prochain démarrage de la borne."}
+                  {t("Laissez vide pour utiliser la valeur du serveur.")}
+                  {!station.connected && ` ${t("Appliqué au prochain démarrage de la borne.")}`}
                 </FieldDescription>
                 {heartbeatIssue && <FieldError>{heartbeatIssue}</FieldError>}
               </Field>
               <Field data-invalid={Boolean(draftIssue)}>
-                <FieldLabel htmlFor={vendorId}>Fournisseurs DataTransfer acceptés</FieldLabel>
+                <FieldLabel htmlFor={vendorId}>
+                  {t("Fournisseurs DataTransfer acceptés")}
+                </FieldLabel>
                 {vendors.length > 0 && (
-                  <ul className="flex flex-wrap gap-1.5" aria-label="Fournisseurs acceptés">
+                  <ul className="flex flex-wrap gap-1.5" aria-label={t("Fournisseurs acceptés")}>
                     {vendors.map((vendor) => (
                       <li
                         key={vendor}
@@ -208,18 +213,19 @@ export function StationOcppSettings({
                       onClick={() => add(draft)}
                     >
                       <IconPlus data-icon="inline-start" />
-                      Ajouter
+                      {t("Ajouter")}
                     </Button>
                   </div>
                 )}
                 <FieldDescription>
-                  Le serveur répond Accepted sans traiter le contenu : n’ajoutez un fournisseur que
-                  si la borne l’exige.
+                  {t(
+                    "Le serveur répond Accepted sans traiter le contenu : n’ajoutez un fournisseur que si la borne l’exige.",
+                  )}
                 </FieldDescription>
                 {draftIssue && <FieldError>{draftIssue}</FieldError>}
                 {canEdit && suggestions.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                    Vus récemment :
+                    {t("Vus récemment :")}
                     {suggestions.map((vendor) => (
                       <Button
                         key={vendor}
@@ -239,18 +245,18 @@ export function StationOcppSettings({
               {queued && (
                 <Alert>
                   <IconHistory />
-                  <AlertTitle>Commande en file d’attente</AlertTitle>
+                  <AlertTitle>{t("Commande en file d’attente")}</AlertTitle>
                   <AlertDescription>{queued}</AlertDescription>
                   <AlertAction>
                     <Button type="button" size="sm" variant="outline" onClick={onShowCommands}>
-                      Voir les commandes
+                      {t("Voir les commandes")}
                     </Button>
                   </AlertAction>
                 </Alert>
               )}
               {canEdit && (
                 <Button type="submit" className="w-fit" disabled={action.busy}>
-                  {action.busy ? "Veuillez patienter…" : "Enregistrer les échanges OCPP"}
+                  {action.busy ? t("Veuillez patienter…") : t("Enregistrer les échanges OCPP")}
                 </Button>
               )}
             </FieldGroup>

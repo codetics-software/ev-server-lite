@@ -12,6 +12,7 @@ import { isInvalid, matches, required, rules } from "@/lib/form";
 import { revalidateLogic, useForm, useStore } from "@tanstack/react-form";
 import { useState } from "react";
 import type { PaymentSettings } from "./payment-types";
+import { t } from "@/lib/i18n";
 
 export function StripeSettings() {
   const [revision, setRevision] = useState(0);
@@ -26,27 +27,28 @@ export function StripeSettings() {
       const response = await api<{ url: string }>("billing/onboarding", { method: "POST" });
       window.location.assign(response.url);
     } catch (error) {
-      setFailure(error instanceof Error ? error.message : "Impossible d’ouvrir Stripe.");
+      setFailure(error instanceof Error ? error.message : t("Impossible d’ouvrir Stripe."));
       setPending(false);
     }
   }
   return (
     <section className="operational-panel max-w-2xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2>Compte Stripe de l’espace</h2>
+        <h2>{t("Compte Stripe de l’espace")}</h2>
         {data && (
           <Badge variant="outline">
             {data.ready
-              ? "Prêt à encaisser"
+              ? t("Prêt à encaisser")
               : data.accountId
-                ? "Informations à compléter"
-                : "À connecter"}
+                ? t("Informations à compléter")
+                : t("À connecter")}
           </Badge>
         )}
       </div>
       <p className="text-sm text-muted-foreground">
-        Les paiements de recharge sont encaissés directement sur le compte Stripe de votre espace
-        client.
+        {t(
+          "Les paiements de recharge sont encaissés directement sur le compte Stripe de votre espace client.",
+        )}
       </p>
       {(error || failure) && (
         <Alert variant="destructive">
@@ -63,8 +65,9 @@ export function StripeSettings() {
           {!data.configured && (
             <Alert>
               <AlertDescription>
-                Le paiement Stripe n’est pas encore configuré sur cette installation. Contactez son
-                administrateur technique.
+                {t(
+                  "Le paiement Stripe n’est pas encore configuré sur cette installation. Contactez son administrateur technique.",
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -73,7 +76,7 @@ export function StripeSettings() {
             settings={data}
             pending={pending}
             onSaved={() => {
-              setMessage("Les paramètres de paiement ont été enregistrés.");
+              setMessage(t("Les paramètres de paiement ont été enregistrés."));
               setRevision((value) => value + 1);
             }}
             onReset={() => {
@@ -122,7 +125,7 @@ function StripeSettingsForm({
         onSaved();
       } catch (error) {
         onFailure(
-          error instanceof Error ? error.message : "Impossible d’enregistrer les paramètres.",
+          error instanceof Error ? error.message : t("Impossible d’enregistrer les paramètres."),
         );
       }
     },
@@ -149,7 +152,7 @@ function StripeSettingsForm({
             const invalid = isInvalid(field);
             return (
               <Field data-invalid={invalid}>
-                <FieldLabel htmlFor="country">Pays du compte</FieldLabel>
+                <FieldLabel htmlFor="country">{t("Pays du compte")}</FieldLabel>
                 <Input
                   id="country"
                   name={field.name}
@@ -163,8 +166,9 @@ function StripeSettingsForm({
                   required
                 />
                 <FieldDescription>
-                  Code pays à deux lettres, par exemple FR. Il ne peut plus changer après la
-                  création du compte.
+                  {t(
+                    "Code pays à deux lettres, par exemple FR. Il ne peut plus changer après la création du compte.",
+                  )}
                 </FieldDescription>
                 {invalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
@@ -180,21 +184,23 @@ function StripeSettingsForm({
                 checked={field.state.value}
                 onCheckedChange={(checked) => field.handleChange(checked === true)}
               />
-              <FieldLabel htmlFor="payments-enabled">Autoriser les paiements publics</FieldLabel>
+              <FieldLabel htmlFor="payments-enabled">
+                {t("Autoriser les paiements publics")}
+              </FieldLabel>
             </Field>
           )}
         </form.Field>
         <div className="flex flex-wrap gap-3">
           <Button type="submit" variant="outline" disabled={busy}>
-            Enregistrer
+            {t("Enregistrer")}
           </Button>
           <Button type="button" disabled={busy || !settings.configured} onClick={onConnect}>
             {settings.accountId
-              ? "Compléter les informations Stripe"
-              : "Connecter mon compte Stripe"}
+              ? t("Compléter les informations Stripe")
+              : t("Connecter mon compte Stripe")}
           </Button>
           <Button type="button" variant="ghost" disabled={busy} onClick={onRefresh}>
-            Vérifier l’état
+            {t("Vérifier l’état")}
           </Button>
         </div>
       </FieldGroup>

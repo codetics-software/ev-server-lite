@@ -6,6 +6,7 @@ import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.core.stationSecret
 import fr.codetics.ev_server.models.api.MutationResponse
@@ -77,7 +78,7 @@ class StationService(
     private val db: Database,
 ) {
     fun list(tenantId: UUID, offset: Int, limit: Int, filter: StationFilter = StationFilter()): PageResponse<StationResponse> {
-        ensure(filter.search.length <= 200) { "La recherche est trop longue." }
+        ensure(filter.search.length <= 200) { msg("validation.search_too_long") }
         val conditions = mutableListOf<Condition>(eq("key.tenantId", tenantId), eq("deleted", false))
         if (filter.search.isNotBlank()) {
             conditions += anyOf(contains("name", filter.search.trim()), contains("key.stationId", filter.search.trim()))
@@ -95,7 +96,7 @@ class StationService(
                 conditions += within("key.stationId", failing)
             }
             null, "" -> Unit
-            else -> throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Filtre d’état inconnu.")
+            else -> throw ResponseStatusException(HttpStatus.BAD_REQUEST, msg("validation.unknown_status_filter"))
         }
         val page = queries.page<StationEntity>(conditions, pageRequest(offset, limit, Sort.by("name", "key.stationId")))
         return PageResponse(views(tenantId, page.content), page.totalElements)
@@ -108,7 +109,7 @@ class StationService(
 
     fun station(tenantId: UUID, stationId: String): StationEntity =
         stations.findById(StationKey(tenantId, stationId)).orElse(null)?.takeUnless { it.deleted }
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Borne introuvable.")
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, msg("stations.not_found"))
 
     fun views(tenantId: UUID, page: List<StationEntity>): List<StationResponse> {
         if (page.isEmpty()) return emptyList()
@@ -138,9 +139,9 @@ class StationService(
     }
 
     fun provision(user: AppPrincipal, input: StationInput): ProvisionedStation {
-        ensure(input.id.matches(STATION_ID) && input.id != "." && input.id != "..") { "Identifiant de borne invalide." }
+        ensure(input.id.matches(STATION_ID) && input.id != "." && input.id != "..") { msg("stations.invalid_id") }
         ensure(input.name.isNotBlank() && input.name.length <= 200) {
-            "Le nom de la borne doit contenir entre 1 et 200 caractères."
+            msg("stations.name_length")
         }
         input.siteAreaId?.let { requireArea(user.tenantId, it) }
 
@@ -148,7 +149,7 @@ class StationService(
             val key = StationKey(user.tenantId, input.id)
             val existing = stations.findById(key).orElse(null)
             if (existing != null && !existing.deleted) {
-                throw ResponseStatusException(HttpStatus.CONFLICT, "Cet identifiant de borne existe déjà.")
+                throw ResponseStatusException(HttpStatus.CONFLICT, msg("stations.id_exists"))
             }
             val secret = stationSecret()
             val station =
@@ -172,32 +173,32 @@ class StationService(
 
     fun update(user: AppPrincipal, stationId: String, input: StationUpdate): StationResponse {
         ensure(input.name.isNotBlank() && input.name.length <= 200) {
-            "Le nom de la borne doit contenir entre 1 et 200 caractères."
+            msg("stations.name_length")
         }
         input.siteAreaId?.let { requireArea(user.tenantId, it) }
         ensure((input.latitude == null) == (input.longitude == null)) {
-            "Renseignez la latitude et la longitude ensemble."
+            msg("records.coordinates_together")
         }
-        ensure(input.latitude == null || input.latitude.abs() <= BigDecimal(90)) { "Latitude invalide." }
-        ensure(input.longitude == null || input.longitude.abs() <= BigDecimal(180)) { "Longitude invalide." }
+        ensure(input.latitude == null || input.latitude.abs() <= BigDecimal(90)) { msg("records.latitude") }
+        ensure(input.longitude == null || input.longitude.abs() <= BigDecimal(180)) { msg("records.longitude") }
         ensure(input.maximumPowerKw == null || input.maximumPowerKw.signum() > 0) {
-            "La puissance maximale doit être positive."
+            msg("stations.max_power_positive")
         }
         input.connectors?.forEach { connector ->
-            ensure(connector.connectorId in 1..100) { "Numéro de connecteur invalide." }
+            ensure(connector.connectorId in 1..100) { msg("connector.invalid_number") }
             ensure(connector.maximumPowerKw == null || connector.maximumPowerKw.signum() > 0) {
-                "La puissance d’un connecteur doit être positive."
+                msg("connector.power_positive")
             }
             ensure(connector.phases == null || connector.phases in setOf(1, 3)) {
-                "Un connecteur est monophasé ou triphasé."
+                msg("connector.phases")
             }
-            ensure(connector.type == null || connector.type.length <= 30) { "Type de connecteur invalide." }
+            ensure(connector.type == null || connector.type.length <= 30) { msg("connector.invalid_type") }
         }
 
         db.atomic {
             val station =
                 db.lock<StationEntity>(StationKey(user.tenantId, stationId))?.takeUnless { it.deleted }
-                    ?: throw NotFound("Borne introuvable.")
+                    ?: throw NotFound(msg("stations.not_found"))
             val disabled = station.enabled && !input.enabled
             station.name = input.name.trim()
             station.siteAreaId = input.siteAreaId
@@ -226,9 +227,9 @@ class StationService(
         db.atomic {
             val station =
                 db.lock<StationEntity>(StationKey(user.tenantId, stationId))?.takeUnless { it.deleted }
-                    ?: throw NotFound("Borne introuvable.")
+                    ?: throw NotFound(msg("stations.not_found"))
             if (transactions.existsByTenantIdAndStationIdAndStoppedAtIsNull(user.tenantId, stationId)) {
-                throw ResponseStatusException(HttpStatus.CONFLICT, "Une session est en cours sur cette borne.")
+                throw ResponseStatusException(HttpStatus.CONFLICT, msg("stations.session_in_progress"))
             }
             station.deleted = true
             station.enabled = false
@@ -250,7 +251,7 @@ class StationService(
         db.atomic {
             val station =
                 db.lock<StationEntity>(StationKey(user.tenantId, stationId))?.takeUnless { it.deleted }
-                    ?: throw NotFound("Borne introuvable.")
+                    ?: throw NotFound(msg("stations.not_found"))
             station.secretHash = requireNotNull(passwords.encode(secret))
             station.pendingSecretHash = null
             stations.save(station)
@@ -304,14 +305,14 @@ class StationService(
 
     fun changeParameter(user: AppPrincipal, stationId: String, input: ParameterInput): CommandReceipt {
         station(user.tenantId, stationId)
-        ensure(input.key.matches(Regex("[A-Za-z0-9_.:-]{1,100}"))) { "Nom de paramètre OCPP invalide." }
-        ensure(input.value.length <= 500) { "La valeur contient 500 caractères au plus." }
+        ensure(input.key.matches(Regex("[A-Za-z0-9_.:-]{1,100}"))) { msg("ocpp.parameter.invalid_name") }
+        ensure(input.value.length <= 500) { msg("stations.parameter_value_too_long") }
         val existing =
             parameters.findAllByKeyTenantIdAndKeyStationIdOrderByKeyKey(user.tenantId, stationId)
                 .firstOrNull { it.key.key == input.key }
-        ensure(existing?.readonly != true) { "Ce paramètre est en lecture seule." }
+        ensure(existing?.readonly != true) { msg("stations.parameter_read_only") }
         ensure(!StationSecurityService.protectedKey(input.key)) {
-            "Ce paramètre de sécurité se modifie depuis la section Sécurité de la borne."
+            msg("commands.security_parameter")
         }
         val id =
             queue.command(
@@ -328,7 +329,7 @@ class StationService(
         db.atomic {
             val station =
                 db.lock<StationEntity>(StationKey(user.tenantId, stationId))?.takeUnless { it.deleted }
-                    ?: throw NotFound("Borne introuvable.")
+                    ?: throw NotFound(msg("stations.not_found"))
             station.autoCharge = input.enabled
             stations.save(station)
             if (!input.enabled) {
@@ -346,7 +347,7 @@ class StationService(
         db.atomic {
             val station =
                 db.lock<StationEntity>(StationKey(user.tenantId, stationId))?.takeUnless { it.deleted }
-                    ?: throw NotFound("Borne introuvable.")
+                    ?: throw NotFound(msg("stations.not_found"))
             val result = configuration.apply(station)
             db.audit(user.tenantId, user.id.toString(), "STATION_TEMPLATE_APPLY", stationId)
             result
@@ -390,7 +391,7 @@ class StationService(
         )
 
     private fun requireArea(tenant: UUID, area: UUID) {
-        ensure(organization.siteArea(tenant, area) != null) { "La zone sélectionnée n’existe pas dans cet espace." }
+        ensure(organization.siteArea(tenant, area) != null) { msg("areas.not_in_workspace") }
     }
 
     fun activeTransaction(tenantId: UUID, stationId: String, connectorId: Int): TransactionEntity? =

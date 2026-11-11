@@ -4,6 +4,7 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.TenantEntity
 import fr.codetics.ev_server.models.entities.UserEntity
 import fr.codetics.ev_server.models.people.ChallengeKind
@@ -72,10 +73,10 @@ class WorkspaceService(
 
     fun uploadLogo(user: AppPrincipal, contentType: String?, content: ByteArray): WorkspaceResponse {
         val type = contentType?.substringBefore(';')?.trim()?.lowercase()
-        ensure(type in LOGO_TYPES) { "Le logo doit être une image PNG, JPEG ou WebP." }
-        ensure(content.size in 1..LOGO_LIMIT) { "Le logo doit peser au plus 256 Ko." }
+        ensure(type in LOGO_TYPES) { msg("workspaces.logo_format") }
+        ensure(content.size in 1..LOGO_LIMIT) { msg("workspaces.logo_size") }
         ensure(matchesSignature(requireNotNull(type), content)) {
-            "Le contenu du fichier ne correspond pas à son format."
+            msg("files.content_mismatch")
         }
 
         return db.atomic {
@@ -120,7 +121,7 @@ class WorkspaceService(
     fun rename(user: AppPrincipal, name: String): WorkspaceResponse =
         db.atomic {
             ensure(name.isNotBlank() && name.length <= 200) {
-                "Le nom de l’espace doit contenir entre 1 et 200 caractères."
+                msg("workspaces.name_length")
             }
             val tenant = tenants.findById(user.tenantId).orElseThrow()
             tenant.name = name.trim()
@@ -133,19 +134,19 @@ class WorkspaceService(
         if (!registrationAvailable())
             throw ResponseStatusException(
                 HttpStatus.FORBIDDEN,
-                "La création publique d’espaces n’est pas activée.",
+                msg("workspaces.signup_disabled"),
             )
         ensure(input.slug.matches(Regex("[a-z0-9][a-z0-9-]{1,61}[a-z0-9]"))) {
-            "L’identifiant doit contenir de 3 à 63 lettres minuscules, chiffres ou tirets."
+            msg("workspaces.slug_format")
         }
         ensure(input.name.isNotBlank() && input.name.length <= 200) {
-            "Le nom de l’espace est requis."
+            msg("workspaces.name_required")
         }
         ensure(input.administratorName.isNotBlank() && input.administratorName.length <= 200) {
-            "Le nom de l’administrateur est requis."
+            msg("workspaces.admin_name_required")
         }
         ensure(input.password.length in 16..128) {
-            "Le mot de passe doit contenir entre 16 et 128 caractères."
+            msg("auth.password_length")
         }
         validateEmail(input.email)
         val workspace =
@@ -153,7 +154,7 @@ class WorkspaceService(
                 if (tenants.findBySlugAndActiveTrue(input.slug) != null)
                     throw ResponseStatusException(
                         HttpStatus.CONFLICT,
-                        "Cet identifiant d’espace est déjà utilisé.",
+                        msg("workspaces.slug_taken"),
                     )
                 val tenant =
                     tenants.save(TenantEntity(slug = input.slug, name = input.name.trim())).also {

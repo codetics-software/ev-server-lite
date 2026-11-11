@@ -18,6 +18,7 @@ import { integerBetween, maxLength, required, rules } from "@/lib/form";
 import { IconMessageReport } from "@tabler/icons-react";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 export function ReportErrorButton({
   user,
@@ -38,7 +39,7 @@ export function ReportErrorButton({
       <Button
         variant={variant}
         size={label ? "default" : "icon"}
-        aria-label={label ? undefined : "Signaler un problème"}
+        aria-label={label ? undefined : t("Signaler un problème")}
         onClick={() => setOpen(true)}
       >
         <IconMessageReport data-icon={label ? "inline-start" : undefined} />
@@ -96,8 +97,8 @@ function ReportForm({
             }),
           }),
         {
-          success: "Votre signalement a été transmis à l’exploitant.",
-          failure: "Le signalement n’a pas pu être envoyé",
+          success: t("Votre signalement a été transmis à l’exploitant."),
+          failure: t("Le signalement n’a pas pu être envoyé"),
           onDone,
         },
       );
@@ -114,30 +115,30 @@ function ReportForm({
       className="flex flex-col gap-5"
     >
       <DialogHeader>
-        <DialogTitle>Signaler un problème</DialogTitle>
+        <DialogTitle>{t("Signaler un problème")}</DialogTitle>
         <DialogDescription>
-          Décrivez ce qui ne fonctionne pas. L’exploitant du réseau est prévenu par courriel.
+          {t("Décrivez ce qui ne fonctionne pas. L’exploitant du réseau est prévenu par courriel.")}
         </DialogDescription>
       </DialogHeader>
       <FieldGroup>
         <form.Field
           name="subject"
           validators={{
-            onDynamic: rules(required("Indiquez l’objet du signalement."), maxLength(200)),
+            onDynamic: rules(required(t("Indiquez l’objet du signalement.")), maxLength(200)),
           }}
         >
-          {(field) => <FormText field={field} label="Objet" maxLength={200} required />}
+          {(field) => <FormText field={field} label={t("Objet")} maxLength={200} required />}
         </form.Field>
         <form.Field
           name="description"
           validators={{
-            onDynamic: rules(required("Décrivez le problème rencontré."), maxLength(4000)),
+            onDynamic: rules(required(t("Décrivez le problème rencontré.")), maxLength(4000)),
           }}
         >
           {(field) => (
             <FormTextarea
               field={field}
-              label="Description"
+              label={t("Description")}
               className="min-h-28"
               maxLength={4000}
               required
@@ -148,9 +149,13 @@ function ReportForm({
           <form.Field name="stationId">
             {(field) =>
               user.role === "DRIVER" ? (
-                <FormText field={field} label="Borne concernée (facultatif)" maxLength={100} />
+                <FormText field={field} label={t("Borne concernée (facultatif)")} maxLength={100} />
               ) : (
-                <FormPicker field={field} source="stations" label="Borne concernée (facultatif)" />
+                <FormPicker
+                  field={field}
+                  source="stations"
+                  label={t("Borne concernée (facultatif)")}
+                />
               )
             }
           </form.Field>
@@ -160,19 +165,19 @@ function ReportForm({
               onDynamic: ({ value }) =>
                 value
                   ? integerBetween(1, 99, "Connecteur invalide.")(value)
-                    ? { message: "Connecteur invalide." }
+                    ? { message: t("Connecteur invalide.") }
                     : undefined
                   : undefined,
             }}
           >
-            {(field) => <FormText field={field} label="Connecteur" type="number" min={1} />}
+            {(field) => <FormText field={field} label={t("Connecteur")} type="number" min={1} />}
           </form.Field>
         </div>
         <form.Field name="phone" validators={{ onDynamic: rules(maxLength(40)) }}>
           {(field) => (
             <FormText
               field={field}
-              label="Téléphone pour vous rappeler (facultatif)"
+              label={t("Téléphone pour vous rappeler (facultatif)")}
               type="tel"
               autoComplete="tel"
               maxLength={40}
@@ -184,7 +189,7 @@ function ReportForm({
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Envoi…" : "Envoyer le signalement"}
+              {submitting ? t("Envoi…") : t("Envoyer le signalement")}
             </Button>
           )}
         </form.Subscribe>

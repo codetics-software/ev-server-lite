@@ -2,7 +2,9 @@ package fr.codetics.ev_server.services.supervision
 
 import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.I18n
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.AssetConsumptionEntity
 import fr.codetics.ev_server.models.entities.AuditEntity
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
@@ -33,6 +35,9 @@ import fr.codetics.ev_server.services.notifications.NotificationService
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -95,8 +100,18 @@ class SupervisionTasks(
                 notifications.notifyAdmins(
                     station.key.tenantId,
                     NotificationType.STATION_OFFLINE,
-                    "La borne ${station.name} ne communique plus",
-                    "Aucun message de la borne ${station.name} (${station.key.stationId}) depuis le ${lastSeen.truncatedTo(ChronoUnit.MINUTES)}.",
+                    { msg("notification.station_offline.subject", station.name) },
+                    {
+                        msg(
+                            "notification.station_offline.body",
+                            station.name,
+                            station.key.stationId,
+                            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG, FormatStyle.SHORT)
+                                .withLocale(I18n.locale())
+                                .withZone(ZoneId.of("Europe/Paris"))
+                                .format(lastSeen.truncatedTo(ChronoUnit.MINUTES)),
+                        )
+                    },
                     dedupeKey = "offline:${station.key.stationId}:${lastSeen.toEpochMilli()}",
                     siteId = null,
                     window = Duration.ofDays(30),
@@ -131,8 +146,8 @@ class SupervisionTasks(
                     notifications.notify(
                         owner,
                         NotificationType.SESSION_NOT_STARTED_AFTER_AUTHORIZE,
-                        "Votre session n’a pas démarré",
-                        "Votre badge a été accepté sur la borne ${station.name}, mais aucune recharge n’a commencé. Vérifiez le branchement du câble.",
+                        { msg("notification.authorize_not_started.subject") },
+                        { msg("notification.authorize_not_started.body", station.name) },
                         dedupeKey = "authorize:${event.id}",
                         window = Duration.ofDays(1),
                     )
@@ -163,8 +178,8 @@ class SupervisionTasks(
                 notifications.notify(
                     owner,
                     NotificationType.PREPARING_SESSION_NOT_STARTED,
-                    "Votre véhicule est branché mais ne charge pas",
-                    "Le connecteur ${key.connectorId} de la borne ${station.name} est en attente depuis plus de ${supervision.preparingMinutes} minutes sans session de recharge.",
+                    { msg("notification.preparing.subject") },
+                    { msg("notification.preparing.body", key.connectorId, station.name, supervision.preparingMinutes) },
                     dedupeKey = "preparing:${key.stationId}:${key.connectorId}:${connector.statusAt.toEpochMilli()}",
                     window = Duration.ofDays(1),
                 )
@@ -204,8 +219,8 @@ class SupervisionTasks(
                     notifications.notify(
                         user,
                         NotificationType.ACCOUNT_INACTIVITY,
-                        "Votre compte est inactif",
-                        "Vous ne vous êtes pas connecté depuis plus de ${supervision.inactivityMonths} mois. Connectez-vous pour conserver l’accès à votre compte.",
+                        { msg("notification.inactivity.subject") },
+                        { msg("notification.inactivity.body", supervision.inactivityMonths) },
                     )
                 }
             }

@@ -3,6 +3,7 @@
 import { toast } from "@/components/ui/toast";
 import { errorMessage } from "@/lib/api";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 export function notify(title: string, description?: string) {
   toast.add({ title, description, type: "success" });
@@ -34,7 +35,7 @@ export function useAction() {
       return result;
     } catch (error) {
       notifyError(
-        options.failure ?? "L’opération n’a pas abouti",
+        options.failure ?? t("L’opération n’a pas abouti"),
         errorMessage(error, "Réessayez dans quelques instants."),
       );
       return undefined;

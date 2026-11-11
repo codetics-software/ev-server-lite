@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import fr.codetics.evapp.R
 import fr.codetics.evapp.app.Route
+import fr.codetics.evapp.core.ApiError
 import fr.codetics.evapp.features.LocalModel
 import fr.codetics.evapp.models.ChallengeRequest
 import fr.codetics.evapp.models.EulaResponse
@@ -118,9 +119,8 @@ fun SignInEntryScreen() {
                                 } catch (error: CancellationException) {
                                     throw error
                                 } catch (error: Exception) {
-                                    val message = model.message(error)
-                                    errorMessage = message
-                                    canResend = message.contains("Vérifiez")
+                                    errorMessage = model.message(error)
+                                    canResend = (error as? ApiError.Server)?.code == "email_not_verified"
                                 } finally {
                                     working = false
                                 }

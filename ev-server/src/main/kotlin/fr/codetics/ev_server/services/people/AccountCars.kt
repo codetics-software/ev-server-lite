@@ -4,6 +4,7 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.api.RecordInput
 import fr.codetics.ev_server.models.api.RecordResponse
@@ -53,14 +54,14 @@ class AccountCars(
 
     private fun owned(user: AppPrincipal, input: RecordInput): RecordInput {
         ensure(input.data["userId"] == null || input.data["userId"] == user.id.toString()) {
-            "Un véhicule personnel ne peut pas être attribué à un autre utilisateur."
+            msg("cars.personal_vehicle_owner")
         }
         return input.copy(data = input.data + ("userId" to user.id.toString()))
     }
 
     private fun requireOwned(user: AppPrincipal, id: UUID) {
         val car = organization.find(user.tenantId, "cars", id, CarData::class.java)
-        if (car == null || car.data.userId != user.id) throw NotFound("Véhicule introuvable.")
+        if (car == null || car.data.userId != user.id) throw NotFound(msg("cars.not_found"))
     }
 
     private fun setDefault(user: AppPrincipal, id: UUID) {

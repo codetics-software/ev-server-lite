@@ -9,6 +9,7 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.entities.PushDeviceEntity
 import fr.codetics.ev_server.models.entities.PushMessageEntity
@@ -45,10 +46,10 @@ class PushService(
 
     fun register(user: AppPrincipal, input: PushDeviceInput): MutationResponse {
         val format = TOKENS[input.platform]
-        ensure(format != null) { "Plateforme non prise en charge." }
-        ensure(input.token.matches(format!!)) { "Identifiant d’appareil invalide." }
-        ensure(input.environment in ENVIRONMENTS) { "Environnement de notification inconnu." }
-        ensure(input.locale == null || input.locale.length <= 20) { "Langue invalide." }
+        ensure(format != null) { msg("push.unsupported_platform") }
+        ensure(input.token.matches(format!!)) { msg("push.invalid_device") }
+        ensure(input.environment in ENVIRONMENTS) { msg("push.unknown_environment") }
+        ensure(input.locale == null || input.locale.length <= 20) { msg("push.invalid_language") }
         val token = normalize(input.token, input.platform)
         return db.atomic {
             val now = Instant.now(clock)

@@ -3,6 +3,7 @@ package fr.codetics.ev_server.stripe
 import com.stripe.exception.SignatureVerificationException
 import com.stripe.net.Webhook
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.billing.CheckoutDetails
 import java.util.UUID
 import org.springframework.http.HttpStatus
@@ -45,17 +46,17 @@ class StripePaymentGateway(
         if (stripe.webhookSecret.isBlank())
             throw ResponseStatusException(
                 HttpStatus.SERVICE_UNAVAILABLE,
-                "Le paiement n’est pas configuré.",
+                msg("payment.not_configured"),
             )
         val event =
             try {
                 Webhook.constructEvent(payload, signature, stripe.webhookSecret)
             } catch (_: SignatureVerificationException) {
-                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Signature Stripe invalide.")
+                throw ResponseStatusException(HttpStatus.BAD_REQUEST, msg("stripe.invalid_signature"))
             } catch (_: RuntimeException) {
                 throw ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Notification Stripe invalide.",
+                    msg("stripe.invalid_event"),
                 )
             }
         return SignedPaymentEvent(

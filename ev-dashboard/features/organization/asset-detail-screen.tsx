@@ -35,6 +35,7 @@ import { api, errorMessage, query } from "@/lib/api";
 import type { Row } from "@/lib/api-types";
 import { date, display, kw, number, time } from "@/lib/format";
 import { IconChartLine, IconKey, IconPlugConnected, IconRefresh } from "@tabler/icons-react";
+import { t, translated } from "@/lib/i18n";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -45,10 +46,10 @@ import { useRecord } from "./use-record";
 
 type Point = { at: string; power_kw: number | null; energy_kwh: number | null; soc: number | null };
 
-const config = {
+const config = translated({
   power_kw: { label: "Puissance (kW)", color: "var(--chart-3)" },
   soc: { label: "Charge (%)", color: "var(--chart-5)" },
-} satisfies ChartConfig;
+} satisfies ChartConfig);
 
 function AssetConsumption({ id, revision }: { id: string; revision: number }) {
   const [hours, setHours] = useState("24");
@@ -62,18 +63,18 @@ function AssetConsumption({ id, revision }: { id: string; revision: number }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Mesures</CardTitle>
-        <CardDescription>Puissance relevée sur l’équipement.</CardDescription>
+        <CardTitle>{t("Mesures")}</CardTitle>
+        <CardDescription>{t("Puissance relevée sur l’équipement.")}</CardDescription>
         <CardAction>
           <OptionSelect
             value={hours}
             onChange={setHours}
             className="w-48"
-            label="Période"
+            label={t("Période")}
             options={[
-              { value: "6", label: "6 dernières heures" },
-              { value: "24", label: "24 dernières heures" },
-              { value: "168", label: "7 derniers jours" },
+              { value: "6", label: t("6 dernières heures") },
+              { value: "24", label: t("24 dernières heures") },
+              { value: "168", label: t("7 derniers jours") },
             ]}
           />
         </CardAction>
@@ -84,7 +85,7 @@ function AssetConsumption({ id, revision }: { id: string; revision: number }) {
         ) : loading && !data ? (
           <LoadingState rows={3} />
         ) : !points.length ? (
-          <EmptyState icon={<IconChartLine />} title="Aucune mesure sur cette période" />
+          <EmptyState icon={<IconChartLine />} title={t("Aucune mesure sur cette période")} />
         ) : (
           <ChartContainer config={config} className="aspect-auto h-72 w-full">
             <ComposedChart data={points} margin={{ left: 4, right: 4, top: 8 }}>
@@ -171,23 +172,23 @@ function StatusLine({ status }: { status: ConnectionStatus | null }) {
     return null;
   }
   const secrets = [
-    status.has_password ? "mot de passe" : null,
-    status.has_api_key ? "clé d’API" : null,
-    status.has_client_secret ? "secret client" : null,
-    status.has_push_token ? "jeton d’envoi" : null,
+    status.has_password ? t("mot de passe") : null,
+    status.has_api_key ? t("clé d’API") : null,
+    status.has_client_secret ? t("secret client") : null,
+    status.has_push_token ? t("jeton d’envoi") : null,
   ].filter(Boolean);
   return (
     <dl className="grid gap-3 rounded-lg border p-3 text-sm sm:grid-cols-3">
       <div>
-        <dt className="text-xs text-muted-foreground">Secrets enregistrés</dt>
-        <dd>{secrets.length ? secrets.join(", ") : "Aucun"}</dd>
+        <dt className="text-xs text-muted-foreground">{t("Secrets enregistrés")}</dt>
+        <dd>{secrets.length ? secrets.join(", ") : t("Aucun")}</dd>
       </div>
       <div>
-        <dt className="text-xs text-muted-foreground">Dernier relevé réussi</dt>
+        <dt className="text-xs text-muted-foreground">{t("Dernier relevé réussi")}</dt>
         <dd>{date(status.last_success_at)}</dd>
       </div>
       <div>
-        <dt className="text-xs text-muted-foreground">Dernière tentative</dt>
+        <dt className="text-xs text-muted-foreground">{t("Dernière tentative")}</dt>
         <dd>{date(status.last_attempt_at)}</dd>
       </div>
       {status.last_error && <p className="text-destructive sm:col-span-3">{status.last_error}</p>}
@@ -225,12 +226,12 @@ function ConnectionSecrets({ id }: { id: string }) {
           {
             success: (result) =>
               result?.ok
-                ? "Secrets enregistrés, connexion réussie."
-                : `Secrets enregistrés. ${result?.message ?? ""}`,
+                ? t("Secrets enregistrés, connexion réussie.")
+                : t("Secrets enregistrés. {message}", { message: result?.message ?? "" }),
           },
         );
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer les secrets."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer les secrets.")));
       }
     },
   });
@@ -245,15 +246,16 @@ function ConnectionSecrets({ id }: { id: string }) {
       <FieldGroup>
         <StatusLine status={status.data} />
         <p className="text-sm text-muted-foreground">
-          Les secrets sont chiffrés par le serveur et ne sont jamais réaffichés. Laissez vide pour
-          conserver la valeur actuelle.
+          {t(
+            "Les secrets sont chiffrés par le serveur et ne sont jamais réaffichés. Laissez vide pour conserver la valeur actuelle.",
+          )}
         </p>
         <div className="grid gap-4 sm:grid-cols-3">
           <form.Field name="password">
             {(field) => (
               <FormText
                 field={field}
-                label="Mot de passe"
+                label={t("Mot de passe")}
                 type="password"
                 autoComplete="new-password"
               />
@@ -261,18 +263,23 @@ function ConnectionSecrets({ id }: { id: string }) {
           </form.Field>
           <form.Field name="apiKey">
             {(field) => (
-              <FormText field={field} label="Clé d’API" type="password" autoComplete="off" />
+              <FormText field={field} label={t("Clé d’API")} type="password" autoComplete="off" />
             )}
           </form.Field>
           <form.Field name="clientSecret">
             {(field) => (
-              <FormText field={field} label="Secret client" type="password" autoComplete="off" />
+              <FormText
+                field={field}
+                label={t("Secret client")}
+                type="password"
+                autoComplete="off"
+              />
             )}
           </form.Field>
         </div>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
-            <FormFooter error={error} submitting={submitting} label="Enregistrer et tester" />
+            <FormFooter error={error} submitting={submitting} label={t("Enregistrer et tester")} />
           )}
         </form.Subscribe>
       </FieldGroup>
@@ -293,7 +300,7 @@ export function AssetDetailScreen({ id }: { id: string }) {
   if (error && !asset) {
     return (
       <>
-        <PageHeader title="Équipement" back={{ href: "/assets", label: "Équipements" }} />
+        <PageHeader title={t("Équipement")} back={{ href: "/assets", label: t("Équipements") }} />
         <ErrorState error={error} onRetry={refresh} />
       </>
     );
@@ -310,10 +317,12 @@ export function AssetDetailScreen({ id }: { id: string }) {
   return (
     <>
       <PageHeader
-        back={{ href: "/assets", label: "Équipements" }}
+        back={{ href: "/assets", label: t("Équipements") }}
         title={asset.name}
         description={[
-          field(asset, "siteAreaId") ? areas.get(String(field(asset, "siteAreaId"))) : "Sans zone",
+          field(asset, "siteAreaId")
+            ? areas.get(String(field(asset, "siteAreaId")))
+            : t("Sans zone"),
           kw(field(asset, "maximumPowerKw")),
           connectionTypes.find((item) => item.value === connectionType)?.label,
         ]
@@ -330,14 +339,14 @@ export function AssetDetailScreen({ id }: { id: string }) {
                     "refresh",
                     () => api(`assets/${id}/consumptions/refresh`, { method: "POST" }),
                     {
-                      success: "Dernière mesure récupérée.",
+                      success: t("Dernière mesure récupérée."),
                       onDone: refreshPoints,
                     },
                   )
                 }
               >
                 <IconRefresh data-icon="inline-start" />
-                Relever maintenant
+                {t("Relever maintenant")}
               </Button>
             )}
             {admin && connectionType !== "NONE" && connectionType !== "PUSH" && (
@@ -353,13 +362,13 @@ export function AssetDetailScreen({ id }: { id: string }) {
                       }),
                     {
                       success: (result) =>
-                        result?.ok ? "Connexion réussie." : display(result?.message),
+                        result?.ok ? t("Connexion réussie.") : display(result?.message),
                     },
                   )
                 }
               >
                 <IconPlugConnected data-icon="inline-start" />
-                Tester la connexion
+                {t("Tester la connexion")}
               </Button>
             )}
             {admin && connectionType === "PUSH" && (
@@ -380,22 +389,22 @@ export function AssetDetailScreen({ id }: { id: string }) {
                 }
               >
                 <IconKey data-icon="inline-start" />
-                Générer un jeton d’envoi
+                {t("Générer un jeton d’envoi")}
               </Button>
             )}
             {admin && (
               <ConfirmButton
-                title={`Supprimer ${asset.name} ?`}
-                description="L’équipement et ses mesures sont supprimés."
-                confirmLabel="Supprimer"
+                title={t("Supprimer {name} ?", { name: asset.name })}
+                description={t("L’équipement et ses mesures sont supprimés.")}
+                confirmLabel={t("Supprimer")}
                 onConfirm={() =>
                   action.run("delete", () => deleteRecord("assets", asset.id), {
-                    success: "Équipement supprimé.",
+                    success: t("Équipement supprimé."),
                     onDone: () => router.replace("/assets"),
                   })
                 }
               >
-                Supprimer
+                {t("Supprimer")}
               </ConfirmButton>
             )}
           </>
@@ -403,10 +412,10 @@ export function AssetDetailScreen({ id }: { id: string }) {
       />
       <Tabs defaultValue="measures">
         <TabsList variant="line">
-          <TabsTrigger value="measures">Mesures</TabsTrigger>
-          {admin && <TabsTrigger value="properties">Propriétés</TabsTrigger>}
+          <TabsTrigger value="measures">{t("Mesures")}</TabsTrigger>
+          {admin && <TabsTrigger value="properties">{t("Propriétés")}</TabsTrigger>}
           {admin && connectionType !== "NONE" && connectionType !== "PUSH" && (
-            <TabsTrigger value="secrets">Identifiants de connexion</TabsTrigger>
+            <TabsTrigger value="secrets">{t("Identifiants de connexion")}</TabsTrigger>
           )}
         </TabsList>
         <TabsContent value="measures" className="pt-4">
@@ -426,16 +435,18 @@ export function AssetDetailScreen({ id }: { id: string }) {
       <FormDialog
         open={token !== null}
         onOpenChange={(open) => !open && setToken(null)}
-        title="Jeton d’envoi des mesures"
+        title={t("Jeton d’envoi des mesures")}
       >
         {token && (
           <SecretReveal
-            title="Jeton de l’équipement"
-            message="L’équipement envoie ses mesures avec l’en-tête Authorization: Asset <jeton>. Il n’est affiché qu’une fois."
+            title={t("Jeton de l’équipement")}
+            message={t(
+              "L’équipement envoie ses mesures avec l’en-tête Authorization: Asset <jeton>. Il n’est affiché qu’une fois.",
+            )}
             secret={token.token}
             extra={[
               {
-                label: "Adresse d’envoi",
+                label: t("Adresse d’envoi"),
                 value:
                   token.url ??
                   `${window.location.origin}/api/v1/public/assets/${asset.id}/consumptions`,

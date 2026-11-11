@@ -2,6 +2,7 @@ package fr.codetics.ev_server.security
 
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.AuthAttemptEntity
 import fr.codetics.ev_server.repositories.AuthAttemptRepository
@@ -66,7 +67,7 @@ class RateLimiter(
     private fun reject(): Nothing {
         throw ResponseStatusException(
             HttpStatus.TOO_MANY_REQUESTS,
-            "Trop de tentatives. Réessayez plus tard.",
+            msg("auth.rate_limited"),
         )
     }
 }

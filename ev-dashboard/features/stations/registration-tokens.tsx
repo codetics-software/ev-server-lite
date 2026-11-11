@@ -28,15 +28,16 @@ import { IconKey, IconPlus } from "@tabler/icons-react";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import type { RegistrationToken } from "./station-types";
+import { t } from "@/lib/i18n";
 
 function tokenState(token: RegistrationToken) {
   if (token.revoked_at) {
-    return <ToneBadge tone="neutral">Révoqué</ToneBadge>;
+    return <ToneBadge tone="neutral">{t("Révoqué")}</ToneBadge>;
   }
   if (token.expires_at && new Date(token.expires_at) < new Date()) {
-    return <ToneBadge tone="warning">Expiré</ToneBadge>;
+    return <ToneBadge tone="warning">{t("Expiré")}</ToneBadge>;
   }
-  return <ToneBadge tone="success">Actif</ToneBadge>;
+  return <ToneBadge tone="success">{t("Actif")}</ToneBadge>;
 }
 
 export function RegistrationTokens() {
@@ -52,16 +53,16 @@ export function RegistrationTokens() {
   const columns: Column<RegistrationToken>[] = [
     {
       id: "description",
-      header: "Description",
+      header: t("Description"),
       sort: (token) => token.description,
       cell: (token) => <span className="font-medium">{token.description}</span>,
     },
-    { id: "state", header: "État", cell: tokenState },
+    { id: "state", header: t("État"), cell: tokenState },
     ...(components.organization
       ? [
           {
             id: "area",
-            header: "Zone",
+            header: t("Zone"),
             cell: (token: RegistrationToken) =>
               token.site_area_id ? (areas.get(token.site_area_id) ?? token.site_area_id) : "—",
           },
@@ -69,18 +70,18 @@ export function RegistrationTokens() {
       : []),
     {
       id: "expires",
-      header: "Expiration",
+      header: t("Expiration"),
       sort: (token) => token.expires_at ?? "",
       cell: (token) => date(token.expires_at),
     },
     {
       id: "url",
-      header: "Adresse OCPP",
+      header: t("Adresse OCPP"),
       cell: (token) => <code className="break-all text-xs">{token.ocpp_url}</code>,
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("Actions"),
       srOnlyHeader: true,
       align: "right",
       cell: (token) =>
@@ -88,37 +89,37 @@ export function RegistrationTokens() {
           <div className="flex justify-end gap-1">
             {!token.revoked_at && (
               <ConfirmButton
-                title="Révoquer ce jeton ?"
-                description="Les bornes ne pourront plus s’enregistrer avec ce jeton."
-                confirmLabel="Révoquer"
+                title={t("Révoquer ce jeton ?")}
+                description={t("Les bornes ne pourront plus s’enregistrer avec ce jeton.")}
+                confirmLabel={t("Révoquer")}
                 variant="ghost"
                 size="sm"
                 onConfirm={() =>
                   action.run(
                     `revoke-${token.id}`,
                     () => api(`registration-tokens/${token.id}/revoke`, { method: "POST" }),
-                    { success: "Jeton révoqué.", onDone: refresh },
+                    { success: t("Jeton révoqué."), onDone: refresh },
                   )
                 }
               >
-                Révoquer
+                {t("Révoquer")}
               </ConfirmButton>
             )}
             <ConfirmButton
-              title="Supprimer ce jeton ?"
-              description="Le jeton est supprimé définitivement."
-              confirmLabel="Supprimer"
+              title={t("Supprimer ce jeton ?")}
+              description={t("Le jeton est supprimé définitivement.")}
+              confirmLabel={t("Supprimer")}
               variant="ghost"
               size="sm"
               onConfirm={() =>
                 action.run(
                   `delete-${token.id}`,
                   () => api(`registration-tokens/${token.id}`, { method: "DELETE" }),
-                  { success: "Jeton supprimé.", onDone: refresh },
+                  { success: t("Jeton supprimé."), onDone: refresh },
                 )
               }
             >
-              Supprimer
+              {t("Supprimer")}
             </ConfirmButton>
           </div>
         ),
@@ -126,16 +127,17 @@ export function RegistrationTokens() {
   ];
 
   return (
-    <section className="flex flex-col gap-4" aria-label="Jetons d’enregistrement">
+    <section className="flex flex-col gap-4" aria-label={t("Jetons d’enregistrement")}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Une borne qui se connecte avec un jeton valide comme mot de passe est créée
-          automatiquement dans la zone choisie.
+          {t(
+            "Une borne qui se connecte avec un jeton valide comme mot de passe est créée automatiquement dans la zone choisie.",
+          )}
         </p>
         {admin && (
           <Button onClick={() => setCreating(true)}>
             <IconPlus data-icon="inline-start" />
-            Nouveau jeton
+            {t("Nouveau jeton")}
           </Button>
         )}
       </div>
@@ -148,12 +150,17 @@ export function RegistrationTokens() {
         empty={
           <EmptyState
             icon={<IconKey />}
-            title="Aucun jeton d’enregistrement"
-            description="Créez un jeton pour laisser vos bornes s’enregistrer elles-mêmes."
+            title={t("Aucun jeton d’enregistrement")}
+            description={t("Créez un jeton pour laisser vos bornes s’enregistrer elles-mêmes.")}
           />
         }
       >
-        <DataTable label="Jetons" rows={items} columns={columns} rowKey={(token) => token.id} />
+        <DataTable
+          label={t("Jetons")}
+          rows={items}
+          columns={columns}
+          rowKey={(token) => token.id}
+        />
       </ListState>
       <Dialog
         open={creating}
@@ -166,20 +173,22 @@ export function RegistrationTokens() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{created ? "Jeton créé" : "Nouveau jeton d’enregistrement"}</DialogTitle>
+            <DialogTitle>
+              {created ? t("Jeton créé") : t("Nouveau jeton d’enregistrement")}
+            </DialogTitle>
             <DialogDescription>
-              Utilisé comme mot de passe OCPP lors de la première connexion de la borne.
+              {t("Utilisé comme mot de passe OCPP lors de la première connexion de la borne.")}
             </DialogDescription>
           </DialogHeader>
           {created?.token ? (
             <>
               <SecretReveal
-                title="Jeton d’enregistrement"
+                title={t("Jeton d’enregistrement")}
                 secret={created.token}
-                extra={[{ label: "Adresse OCPP", value: created.ocpp_url }]}
+                extra={[{ label: t("Adresse OCPP"), value: created.ocpp_url }]}
               />
               <DialogFooter>
-                <Button onClick={() => setCreating(false)}>Terminer</Button>
+                <Button onClick={() => setCreating(false)}>{t("Terminer")}</Button>
               </DialogFooter>
             </>
           ) : (
@@ -224,7 +233,7 @@ function TokenForm({
           }),
         );
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible de créer le jeton."));
+        setError(errorMessage(failure, t("Impossible de créer le jeton.")));
       }
     },
   });
@@ -239,20 +248,26 @@ function TokenForm({
       <FieldGroup>
         <form.Field
           name="description"
-          validators={{ onDynamic: rules(required("Décrivez l’usage du jeton."), maxLength(200)) }}
+          validators={{
+            onDynamic: rules(required(t("Décrivez l’usage du jeton.")), maxLength(200)),
+          }}
         >
-          {(field) => <FormText field={field} label="Description" maxLength={200} required />}
+          {(field) => <FormText field={field} label={t("Description")} maxLength={200} required />}
         </form.Field>
         {organization && (
           <form.Field name="siteAreaId">
             {(field) => (
-              <FormPicker field={field} source="site-areas" label="Zone des nouvelles bornes" />
+              <FormPicker
+                field={field}
+                source="site-areas"
+                label={t("Zone des nouvelles bornes")}
+              />
             )}
           </form.Field>
         )}
         <form.Field name="expiresAt">
           {(field) => (
-            <FormText field={field} type="datetime-local" label="Expiration (facultative)" />
+            <FormText field={field} type="datetime-local" label={t("Expiration (facultative)")} />
           )}
         </form.Field>
         {error && (
@@ -263,7 +278,7 @@ function TokenForm({
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Création…" : "Créer le jeton"}
+              {submitting ? t("Création…") : t("Créer le jeton")}
             </Button>
           )}
         </form.Subscribe>

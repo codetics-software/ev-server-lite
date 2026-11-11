@@ -5,6 +5,7 @@ import { PageHeader } from "@/features/shared/page-header";
 import { isAdmin, useWorkspace } from "@/features/workspace/workspace-context";
 import { useRevision } from "@/hooks/use-api";
 import { BadgesList } from "./badges-list";
+import { t } from "@/lib/i18n";
 
 export function BadgesScreen() {
   const user = useWorkspace();
@@ -12,8 +13,8 @@ export function BadgesScreen() {
   return (
     <>
       <PageHeader
-        title="Badges"
-        description="Badges RFID autorisés à recharger et utilisateurs associés."
+        title={t("Badges")}
+        description={t("Badges RFID autorisés à recharger et utilisateurs associés.")}
       />
       <BadgesList
         revision={revision}
@@ -22,7 +23,7 @@ export function BadgesScreen() {
             {isAdmin(user) && (
               <ImportButton
                 path="tokens/import"
-                title="Importer des badges"
+                title={t("Importer des badges")}
                 columns="uid;visualId;description;userEmail"
                 onImported={refresh}
               />

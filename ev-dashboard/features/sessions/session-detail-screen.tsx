@@ -21,6 +21,7 @@ import { ConsumptionChart } from "./consumption-chart";
 import { SessionState } from "./session-columns";
 import { sessionDuration, type ChargingSession, type Consumption } from "./session-types";
 import { SignedMeterDataCard } from "./signed-meter-data";
+import { t } from "@/lib/i18n";
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -61,8 +62,8 @@ export function SessionDetailScreen({ id }: { id: string }) {
     return (
       <>
         <PageHeader
-          title={`Session n° ${id}`}
-          back={{ href: "/transactions", label: "Sessions" }}
+          title={t("Session n° {id}", { id })}
+          back={{ href: "/transactions", label: t("Sessions") }}
         />
         <ErrorState error={error} onRetry={refresh} />
       </>
@@ -80,13 +81,19 @@ export function SessionDetailScreen({ id }: { id: string }) {
   return (
     <>
       <PageHeader
-        back={{ href: "/transactions", label: "Sessions" }}
-        title={`Session n° ${session.id}`}
-        description={`${session.station_id} · connecteur ${session.connector_id} · ${date(session.started_at)}`}
+        back={{ href: "/transactions", label: t("Sessions") }}
+        title={t("Session n° {id}", { id: session.id })}
+        description={t("{station} · connecteur {connector} · {date}", {
+          station: session.station_id,
+          connector: session.connector_id,
+          date: date(session.started_at),
+        })}
         meta={
           <>
             <SessionState session={session} />
-            {session.auto_charge && <ToneBadge tone="progress">Recharge automatique</ToneBadge>}
+            {session.auto_charge && (
+              <ToneBadge tone="progress">{t("Recharge automatique")}</ToneBadge>
+            )}
             {session.billing_status && session.billing_status !== "NONE" && (
               <StateBadge state={session.billing_status} />
             )}
@@ -94,92 +101,94 @@ export function SessionDetailScreen({ id }: { id: string }) {
         }
         actions={
           <>
-            <Button variant="outline" size="icon" aria-label="Actualiser" onClick={refresh}>
+            <Button variant="outline" size="icon" aria-label={t("Actualiser")} onClick={refresh}>
               <IconRefresh />
             </Button>
             {active && (
               <ConfirmButton
-                title="Arrêter la recharge ?"
-                description="La borne reçoit une demande d’arrêt de la session."
-                confirmLabel="Arrêter"
+                title={t("Arrêter la recharge ?")}
+                description={t("La borne reçoit une demande d’arrêt de la session.")}
+                confirmLabel={t("Arrêter")}
                 onConfirm={() =>
                   action.run(
                     "stop",
                     () => api(`transactions/${session.id}/stop`, { method: "POST" }),
                     {
-                      success: "Demande d’arrêt envoyée à la borne.",
+                      success: t("Demande d’arrêt envoyée à la borne."),
                       onDone: () => setTimeout(refresh, 3000),
                     },
                   )
                 }
               >
                 <IconPlayerStop data-icon="inline-start" />
-                Arrêter
+                {t("Arrêter")}
               </ConfirmButton>
             )}
             {active && canWrite(user) && (
               <ConfirmButton
-                title="Clôturer la session localement ?"
-                description="La session est terminée dans la supervision à partir du dernier relevé, sans attendre la borne. À utiliser si la borne ne répond plus."
-                confirmLabel="Clôturer"
+                title={t("Clôturer la session localement ?")}
+                description={t(
+                  "La session est terminée dans la supervision à partir du dernier relevé, sans attendre la borne. À utiliser si la borne ne répond plus.",
+                )}
+                confirmLabel={t("Clôturer")}
                 variant="outline"
                 onConfirm={() =>
                   action.run(
                     "soft-stop",
                     () => api(`transactions/${session.id}/soft-stop`, { method: "POST" }),
-                    { success: "Session clôturée.", onDone: refresh },
+                    { success: t("Session clôturée."), onDone: refresh },
                   )
                 }
               >
-                Clôturer localement
+                {t("Clôturer localement")}
               </ConfirmButton>
             )}
             {deletable && (
               <ConfirmButton
-                title="Supprimer cette session ?"
-                description="La session et ses mesures sont supprimées définitivement."
-                confirmLabel="Supprimer"
+                title={t("Supprimer cette session ?")}
+                description={t("La session et ses mesures sont supprimées définitivement.")}
+                confirmLabel={t("Supprimer")}
                 onConfirm={() =>
                   action.run(
                     "delete",
                     () => api(`transactions/${session.id}`, { method: "DELETE" }),
                     {
-                      success: "Session supprimée.",
+                      success: t("Session supprimée."),
                       onDone: () => router.replace("/transactions"),
                     },
                   )
                 }
               >
-                Supprimer
+                {t("Supprimer")}
               </ConfirmButton>
             )}
           </>
         }
       />
       <dl className="grid grid-cols-2 gap-6 border-y py-5 md:grid-cols-4">
-        <Metric label="Énergie" value={kwh(session.energy_kwh)} />
-        <Metric label="Durée" value={duration(sessionDuration(session))} />
+        <Metric label={t("Énergie")} value={kwh(session.energy_kwh)} />
+        <Metric label={t("Durée")} value={duration(sessionDuration(session))} />
         <Metric
-          label={active ? "Puissance actuelle" : "Inactivité"}
+          label={active ? t("Puissance actuelle") : t("Inactivité")}
           value={active ? kw(session.current_power_kw) : duration(session.inactivity_seconds)}
         />
-        <Metric label="Prix" value={money(session.price, session.currency)} />
+        <Metric label={t("Prix")} value={money(session.price, session.currency)} />
       </dl>
       {session.vid && !session.auto_charge && session.user_id === user.id && (
         <AutoChargeOffer vid={session.vid} />
       )}
       {session.errors && session.errors.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Anomalies :</span>
+          <span className="text-muted-foreground">{t("Anomalies :")}</span>
           <ErrorBadges errors={session.errors} />
         </div>
       )}
       <div className="grid items-start gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Consommation</CardTitle>
+            <CardTitle>{t("Consommation")}</CardTitle>
             <CardDescription>
-              Puissance, énergie cumulée et niveau de batterie relevés.
+              {t("Puissance, énergie cumulée et niveau de batterie relevés.")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -192,19 +201,19 @@ export function SessionDetailScreen({ id }: { id: string }) {
             ) : (
               <EmptyState
                 icon={<IconChartLine />}
-                title="Aucune mesure"
-                description="La borne n’a pas encore envoyé de relevé pour cette session."
+                title={t("Aucune mesure")}
+                description={t("La borne n’a pas encore envoyé de relevé pour cette session.")}
               />
             )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Détails</CardTitle>
+            <CardTitle>{t("Détails")}</CardTitle>
           </CardHeader>
           <CardContent>
             <dl>
-              <Detail label="Borne">
+              <Detail label={t("Borne")}>
                 {staff ? (
                   <Link
                     className="text-primary underline-offset-4 dark:text-sidebar-primary hover:underline"
@@ -215,10 +224,10 @@ export function SessionDetailScreen({ id }: { id: string }) {
                 ) : (
                   session.station_id
                 )}{" "}
-                · connecteur {session.connector_id}
+                {t("· connecteur {id}", { id: session.connector_id })}
               </Detail>
               {staff && (
-                <Detail label="Utilisateur">
+                <Detail label={t("Utilisateur")}>
                   {session.user_id && isAdmin(user) ? (
                     <Link
                       className="text-primary underline-offset-4 dark:text-sidebar-primary hover:underline"
@@ -231,7 +240,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
                   )}
                 </Detail>
               )}
-              <Detail label={session.auto_charge ? "Identifiant" : "Badge"}>
+              <Detail label={session.auto_charge ? t("Identifiant") : t("Badge")}>
                 {session.auto_charge ? (
                   <span className="font-mono">{display(session.token_uid)}</span>
                 ) : (
@@ -239,33 +248,33 @@ export function SessionDetailScreen({ id }: { id: string }) {
                 )}
               </Detail>
               {session.vid && (
-                <Detail label="Véhicule identifié">
+                <Detail label={t("Véhicule identifié")}>
                   <span className="font-mono">{session.vid}</span>
                 </Detail>
               )}
-              <Detail label="Début">{date(session.started_at)}</Detail>
-              <Detail label="Fin">{active ? "En cours" : date(session.stopped_at)}</Detail>
-              <Detail label="Batterie">
+              <Detail label={t("Début")}>{date(session.started_at)}</Detail>
+              <Detail label={t("Fin")}>{active ? t("En cours") : date(session.stopped_at)}</Detail>
+              <Detail label={t("Batterie")}>
                 {session.state_of_charge != null
                   ? `${percent(session.state_of_charge_start)} → ${percent(session.state_of_charge)}`
                   : "—"}
               </Detail>
-              <Detail label="Autorisation">
+              <Detail label={t("Autorisation")}>
                 {display(session.authorization_status)}
                 {session.auto_charge && " · recharge automatique"}
               </Detail>
-              <Detail label="Motif d’arrêt">{display(session.stop_reason)}</Detail>
+              <Detail label={t("Motif d’arrêt")}>{display(session.stop_reason)}</Detail>
               {session.roaming_partner && (
-                <Detail label="Partenaire d’itinérance">{session.roaming_partner}</Detail>
+                <Detail label={t("Partenaire d’itinérance")}>{session.roaming_partner}</Detail>
               )}
               {session.public_payment && (
-                <Detail label="Paiement">Paiement public par QR code</Detail>
+                <Detail label={t("Paiement")}>{t("Paiement public par QR code")}</Detail>
               )}
               {session.invoice_id && (
-                <Detail label="Facture">
+                <Detail label={t("Facture")}>
                   <InvoiceDownload
                     id={session.invoice_id}
-                    label="Télécharger la facture"
+                    label={t("Télécharger la facture")}
                     variant="link"
                   />
                 </Detail>

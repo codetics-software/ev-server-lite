@@ -33,10 +33,11 @@ import { revalidateLogic, useForm, useStore } from "@tanstack/react-form";
 import { useState } from "react";
 import { ProfileChart } from "./profile-chart";
 import type { ChargingProfile, OcppChargingProfile, Station } from "./station-types";
+import { t } from "@/lib/i18n";
 
 function targets(station: Station): Option[] {
   return [
-    { value: "0", label: "Toute la borne" },
+    { value: "0", label: t("Toute la borne") },
     ...(station.connectors ?? []).map((connector) => ({
       value: String(connector.connector_id),
       label: `Connecteur ${connector.connector_id}`,
@@ -61,16 +62,16 @@ export function StationCharging({ station, canEdit }: { station: Station; canEdi
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 id="profiles-heading" className="text-base font-semibold">
-              Profils de recharge
+              {t("Profils de recharge")}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Programmes de puissance envoyés à la borne (SetChargingProfile).
+              {t("Programmes de puissance envoyés à la borne (SetChargingProfile).")}
             </p>
           </div>
           {canEdit && (
             <Button variant="outline" onClick={() => setCreating(true)}>
               <IconPlus data-icon="inline-start" />
-              Nouveau profil
+              {t("Nouveau profil")}
             </Button>
           )}
         </div>
@@ -81,8 +82,8 @@ export function StationCharging({ station, canEdit }: { station: Station; canEdi
         ) : !profiles.length ? (
           <EmptyState
             icon={<IconChartLine />}
-            title="Aucun profil de recharge"
-            description="Sans profil, la borne délivre sa puissance maximale."
+            title={t("Aucun profil de recharge")}
+            description={t("Sans profil, la borne délivre sa puissance maximale.")}
           />
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
@@ -90,28 +91,35 @@ export function StationCharging({ station, canEdit }: { station: Station; canEdi
               <Card key={profile.id}>
                 <CardHeader>
                   <CardTitle>
-                    Profil {profile.profile_id} ·{" "}
-                    {profile.connector_id ? `connecteur ${profile.connector_id}` : "toute la borne"}
+                    {profile.connector_id
+                      ? t("Profil {id} · connecteur {connector}", {
+                          id: profile.profile_id,
+                          connector: profile.connector_id,
+                        })
+                      : t("Profil {id} · toute la borne", { id: profile.profile_id })}
                   </CardTitle>
                   <CardDescription>
-                    {display(profile.purpose)} · niveau {profile.stack_level} ·{" "}
-                    {date(profile.created_at)}
+                    {t("{purpose} · niveau {level} · {date}", {
+                      purpose: display(profile.purpose),
+                      level: profile.stack_level,
+                      date: date(profile.created_at),
+                    })}
                   </CardDescription>
                   <CardAction className="flex items-center gap-2">
                     {profile.command_state && <StateBadge state={profile.command_state} />}
                     {canEdit && (
                       <ConfirmButton
-                        title="Supprimer ce profil ?"
-                        description="La borne reçoit une demande de suppression du profil."
-                        confirmLabel="Supprimer"
+                        title={t("Supprimer ce profil ?")}
+                        description={t("La borne reçoit une demande de suppression du profil.")}
+                        confirmLabel={t("Supprimer")}
                         variant="ghost"
                         size="icon-sm"
-                        ariaLabel="Supprimer le profil"
+                        ariaLabel={t("Supprimer le profil")}
                         onConfirm={() =>
                           action.run(
                             profile.id,
                             () => api(`charging-profiles/${profile.id}`, { method: "DELETE" }),
-                            { success: "Profil supprimé.", onDone: refresh },
+                            { success: t("Profil supprimé."), onDone: refresh },
                           )
                         }
                       >
@@ -161,16 +169,19 @@ function PowerLimit({ station }: { station: Station }) {
               limitKw: Number(value.limitKw),
             }),
           }),
-        { success: "Limitation de puissance envoyée à la borne.", failure: "Limitation refusée" },
+        {
+          success: t("Limitation de puissance envoyée à la borne."),
+          failure: t("Limitation refusée"),
+        },
       );
     },
   });
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Limiter la puissance</CardTitle>
+        <CardTitle>{t("Limiter la puissance")}</CardTitle>
         <CardDescription>
-          Applique immédiatement un plafond de puissance à la borne ou à un connecteur.
+          {t("Applique immédiatement un plafond de puissance à la borne ou à un connecteur.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -183,23 +194,25 @@ function PowerLimit({ station }: { station: Station }) {
           className="grid items-end gap-4 sm:grid-cols-[1fr_12rem_auto]"
         >
           <form.Field name="connectorId">
-            {(field) => <FormSelect field={field} label="Cible" options={targets(station)} />}
+            {(field) => <FormSelect field={field} label={t("Cible")} options={targets(station)} />}
           </form.Field>
           <form.Field
             name="limitKw"
             validators={{
               onDynamic: rules(
-                required("Indiquez une puissance."),
-                optionalNumber(0, 10000, "Puissance invalide."),
+                required(t("Indiquez une puissance.")),
+                optionalNumber(0, 10000, t("Puissance invalide.")),
               ),
             }}
           >
-            {(field) => <FormText field={field} label="Puissance (kW)" type="number" min={0} />}
+            {(field) => (
+              <FormText field={field} label={t("Puissance (kW)")} type="number" min={0} />
+            )}
           </form.Field>
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(submitting) => (
               <Button type="submit" disabled={submitting}>
-                {submitting ? "Envoi…" : "Appliquer"}
+                {submitting ? t("Envoi…") : t("Appliquer")}
               </Button>
             )}
           </form.Subscribe>
@@ -284,12 +297,12 @@ function ProfileForm({ station, onDone }: { station: Station; onDone: () => void
         });
         onDone();
       } catch (failure) {
-        setError(errorMessage(failure, "Le profil n’a pas pu être envoyé."));
+        setError(errorMessage(failure, t("Le profil n’a pas pu être envoyé.")));
       }
     },
   });
   const values = useStore(form.store, (state) => state.values);
-  const unitLabel = values.unit === "A" ? "Intensité (A)" : "Puissance (kW)";
+  const unitLabel = values.unit === "A" ? t("Intensité (A)") : t("Puissance (kW)");
 
   return (
     <form
@@ -301,40 +314,44 @@ function ProfileForm({ station, onDone }: { station: Station; onDone: () => void
       }}
     >
       <DialogHeader>
-        <DialogTitle>Nouveau profil de recharge</DialogTitle>
-        <DialogDescription>{station.name} · programme de puissance OCPP 1.6</DialogDescription>
+        <DialogTitle>{t("Nouveau profil de recharge")}</DialogTitle>
+        <DialogDescription>
+          {t("{station} · programme de puissance OCPP 1.6", { station: station.name })}
+        </DialogDescription>
       </DialogHeader>
       <FieldGroup>
         <div className="grid gap-4 sm:grid-cols-3">
           <form.Field name="connectorId">
-            {(field) => <FormSelect field={field} label="Cible" options={targets(station)} />}
+            {(field) => <FormSelect field={field} label={t("Cible")} options={targets(station)} />}
           </form.Field>
           <form.Field name="purpose">
             {(field) => (
               <FormSelect
                 field={field}
-                label="Usage"
+                label={t("Usage")}
                 options={[
-                  { value: "TxDefaultProfile", label: "Profil par défaut" },
-                  { value: "ChargePointMaxProfile", label: "Limite de la borne" },
+                  { value: "TxDefaultProfile", label: t("Profil par défaut") },
+                  { value: "ChargePointMaxProfile", label: t("Limite de la borne") },
                 ]}
               />
             )}
           </form.Field>
           <form.Field
             name="stackLevel"
-            validators={{ onDynamic: rules(integerBetween(0, 99, "Niveau entre 0 et 99.")) }}
+            validators={{ onDynamic: rules(integerBetween(0, 99, t("Niveau entre 0 et 99."))) }}
           >
-            {(field) => <FormText field={field} label="Niveau de priorité" type="number" min={0} />}
+            {(field) => (
+              <FormText field={field} label={t("Niveau de priorité")} type="number" min={0} />
+            )}
           </form.Field>
           <form.Field name="kind">
             {(field) => (
               <FormSelect
                 field={field}
-                label="Répétition"
+                label={t("Répétition")}
                 options={[
-                  { value: "Recurring", label: "Chaque jour" },
-                  { value: "Absolute", label: "Une seule fois, à partir de maintenant" },
+                  { value: "Recurring", label: t("Chaque jour") },
+                  { value: "Absolute", label: t("Une seule fois, à partir de maintenant") },
                 ]}
               />
             )}
@@ -343,38 +360,42 @@ function ProfileForm({ station, onDone }: { station: Station; onDone: () => void
             {(field) => (
               <FormSelect
                 field={field}
-                label="Unité"
+                label={t("Unité")}
                 options={[
-                  { value: "W", label: "Puissance (kW)" },
-                  { value: "A", label: "Intensité (A)" },
+                  { value: "W", label: t("Puissance (kW)") },
+                  { value: "A", label: t("Intensité (A)") },
                 ]}
               />
             )}
           </form.Field>
           <form.Field
             name="profileId"
-            validators={{ onDynamic: rules(integerBetween(1, 2147483647, "Numéro invalide.")) }}
+            validators={{ onDynamic: rules(integerBetween(1, 2147483647, t("Numéro invalide."))) }}
           >
-            {(field) => <FormText field={field} label="Numéro du profil" type="number" min={1} />}
+            {(field) => (
+              <FormText field={field} label={t("Numéro du profil")} type="number" min={1} />
+            )}
           </form.Field>
         </div>
         <form.Field name="periods" mode="array">
           {(periods) => (
             <FieldSet>
-              <FieldLegend variant="label">Périodes</FieldLegend>
+              <FieldLegend variant="label">{t("Périodes")}</FieldLegend>
               {periods.state.value.map((_, index) => (
                 <div key={index} className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
                   <form.Field
                     name={`periods[${index}].start`}
                     validators={{
-                      onDynamic: rules(matches(/^([01]\d|2[0-3]):[0-5]\d$/, "Heure invalide.")),
+                      onDynamic: rules(matches(/^([01]\d|2[0-3]):[0-5]\d$/, t("Heure invalide."))),
                     }}
                   >
-                    {(field) => <FormText field={field} label="Début" type="time" />}
+                    {(field) => <FormText field={field} label={t("Début")} type="time" />}
                   </form.Field>
                   <form.Field
                     name={`periods[${index}].limit`}
-                    validators={{ onDynamic: rules(optionalNumber(0, 10000, "Valeur invalide.")) }}
+                    validators={{
+                      onDynamic: rules(optionalNumber(0, 10000, t("Valeur invalide."))),
+                    }}
                   >
                     {(field) => <FormText field={field} label={unitLabel} type="number" min={0} />}
                   </form.Field>
@@ -382,7 +403,7 @@ function ProfileForm({ station, onDone }: { station: Station; onDone: () => void
                     type="button"
                     variant="ghost"
                     size="icon"
-                    aria-label={`Retirer la période ${index + 1}`}
+                    aria-label={t("Retirer la période {index}", { index: index + 1 })}
                     disabled={periods.state.value.length <= 1}
                     onClick={() => periods.removeValue(index)}
                   >
@@ -397,7 +418,7 @@ function ProfileForm({ station, onDone }: { station: Station; onDone: () => void
                 onClick={() => periods.pushValue({ start: "12:00", limit: "" })}
               >
                 <IconPlus data-icon="inline-start" />
-                Ajouter une période
+                {t("Ajouter une période")}
               </Button>
             </FieldSet>
           )}
@@ -413,7 +434,7 @@ function ProfileForm({ station, onDone }: { station: Station; onDone: () => void
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Envoi…" : "Envoyer le profil"}
+              {submitting ? t("Envoi…") : t("Envoyer le profil")}
             </Button>
           )}
         </form.Subscribe>

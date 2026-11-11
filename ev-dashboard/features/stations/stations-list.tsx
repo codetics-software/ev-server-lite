@@ -17,22 +17,25 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ConnectorSummary } from "./connector-summary";
 import type { Station } from "./station-types";
+import { t, translated } from "@/lib/i18n";
 
-const states = [
+const states = translated([
   { value: "all", label: "Tous les états" },
   { value: "connected", label: "Connectées" },
   { value: "disconnected", label: "Hors ligne" },
   { value: "error", label: "En erreur" },
-];
+]);
 
 export function StationConnection({ station }: { station: Station }) {
   return (
     <div className="flex flex-col gap-1">
       <ToneBadge tone={!station.enabled ? "neutral" : station.connected ? "success" : "danger"}>
-        {!station.enabled ? "Désactivée" : station.connected ? "Connectée" : "Hors ligne"}
+        {!station.enabled ? t("Désactivée") : station.connected ? t("Connectée") : t("Hors ligne")}
       </ToneBadge>
       <span className="text-xs text-muted-foreground">
-        {station.last_seen ? `Signal ${relative(station.last_seen)}` : "Jamais connectée"}
+        {station.last_seen
+          ? t("Signal {time}", { time: relative(station.last_seen) })
+          : t("Jamais connectée")}
       </span>
     </div>
   );
@@ -67,7 +70,7 @@ export function StationsList({ revision }: { revision: number }) {
   const columns: Column<Station>[] = [
     {
       id: "name",
-      header: "Borne",
+      header: t("Borne"),
       sort: (station) => station.name,
       cell: (station) => (
         <Link
@@ -82,26 +85,26 @@ export function StationsList({ revision }: { revision: number }) {
     },
     {
       id: "state",
-      header: "Connexion",
+      header: t("Connexion"),
       sort: (station) => (station.connected ? 1 : 0),
       cell: (station) => <StationConnection station={station} />,
     },
     {
       id: "connectors",
-      header: "Connecteurs",
+      header: t("Connecteurs"),
       cell: (station) => <ConnectorSummary connectors={station.connectors ?? []} />,
     },
     ...(components.organization
       ? [
           {
             id: "site",
-            header: "Site · zone",
+            header: t("Site · zone"),
             sort: (station: Station) => sites.get(station.site_id ?? "") ?? "",
             cell: (station: Station) => (
               <span className="flex flex-col">
                 <span>{sites.get(station.site_id ?? "") ?? display(station.site_id)}</span>
                 <span className="text-xs text-muted-foreground">
-                  {areas.get(station.site_area_id ?? "") ?? "Sans zone"}
+                  {areas.get(station.site_area_id ?? "") ?? t("Sans zone")}
                 </span>
               </span>
             ),
@@ -110,20 +113,20 @@ export function StationsList({ revision }: { revision: number }) {
       : []),
     {
       id: "power",
-      header: "Puissance",
+      header: t("Puissance"),
       align: "right",
       sort: (station) => station.maximum_power_kw ?? null,
       cell: (station) => kw(station.maximum_power_kw),
     },
     {
       id: "firmware",
-      header: "Matériel",
+      header: t("Matériel"),
       sort: (station) => station.vendor ?? "",
       cell: (station) => (
         <span className="flex flex-col">
           <span>{[station.vendor, station.model].filter(Boolean).join(" · ") || "—"}</span>
           <span className="text-xs text-muted-foreground">
-            {station.firmware_version ?? "Version inconnue"}
+            {station.firmware_version ?? t("Version inconnue")}
             {station.firmware_status && station.firmware_status !== "Idle"
               ? ` · ${display(station.firmware_status)}`
               : ""}
@@ -134,26 +137,26 @@ export function StationsList({ revision }: { revision: number }) {
   ];
 
   return (
-    <section className="flex min-w-0 flex-col gap-4" aria-label="Liste des bornes">
+    <section className="flex min-w-0 flex-col gap-4" aria-label={t("Liste des bornes")}>
       <div className="flex flex-wrap items-end gap-3">
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Nom ou identifiant…"
-          label="Rechercher une borne"
+          placeholder={t("Nom ou identifiant…")}
+          label={t("Rechercher une borne")}
         />
         <OptionSelect
           value={state}
           onChange={setState}
           options={states}
           className="w-full sm:w-44"
-          label="Filtrer par état"
+          label={t("Filtrer par état")}
         />
         {components.organization && (
           <>
             <Field className="w-full sm:w-52">
               <FieldLabel className="sr-only" htmlFor="station-site-filter">
-                Site
+                {t("Site")}
               </FieldLabel>
               <EntityPicker
                 id="station-site-filter"
@@ -163,12 +166,12 @@ export function StationsList({ revision }: { revision: number }) {
                   setSiteId(value);
                   setSiteAreaId("");
                 }}
-                placeholder="Tous les sites"
+                placeholder={t("Tous les sites")}
               />
             </Field>
             <Field className="w-full sm:w-52">
               <FieldLabel className="sr-only" htmlFor="station-area-filter">
-                Zone
+                {t("Zone")}
               </FieldLabel>
               <EntityPicker
                 id="station-area-filter"
@@ -176,7 +179,7 @@ export function StationsList({ revision }: { revision: number }) {
                 value={siteAreaId}
                 filters={{ siteId: siteId || undefined }}
                 onChange={setSiteAreaId}
-                placeholder="Toutes les zones"
+                placeholder={t("Toutes les zones")}
               />
             </Field>
           </>
@@ -192,17 +195,17 @@ export function StationsList({ revision }: { revision: number }) {
         empty={
           <EmptyState
             icon={<IconChargingPile />}
-            title={search || state !== "all" ? "Aucune borne correspondante" : "Aucune borne"}
+            title={search || state !== "all" ? t("Aucune borne correspondante") : t("Aucune borne")}
             description={
               search || state !== "all"
-                ? "Modifiez la recherche ou les filtres."
-                : "Ajoutez une borne pour obtenir ses identifiants de connexion OCPP."
+                ? t("Modifiez la recherche ou les filtres.")
+                : t("Ajoutez une borne pour obtenir ses identifiants de connexion OCPP.")
             }
           />
         }
       >
         <DataTable
-          label="Bornes de recharge"
+          label={t("Bornes de recharge")}
           rows={list.items}
           columns={columns}
           rowKey={(station) => station.id}

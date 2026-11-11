@@ -13,12 +13,13 @@ import { useRevision } from "@/hooks/use-api";
 import { api } from "@/lib/api";
 import type { RecordItem } from "@/lib/api-types";
 import { kw, kwh, number } from "@/lib/format";
+import { t, translated } from "@/lib/i18n";
 import { IconBook, IconPlus, IconRefresh } from "@tabler/icons-react";
 import { useState } from "react";
 import { CatalogForm } from "./car-forms";
 import { CarsList, MyCars } from "./cars-list";
 
-const catalogColumns: Column<RecordItem>[] = [
+const catalogColumns: Column<RecordItem>[] = translated([
   {
     id: "model",
     header: "Modèle",
@@ -50,7 +51,7 @@ const catalogColumns: Column<RecordItem>[] = [
     sort: (record) => Number(field(record, "rangeKm") ?? 0),
     cell: (record) => (field(record, "rangeKm") ? `${number(field(record, "rangeKm"))} km` : "—"),
   },
-];
+]);
 
 function Catalog() {
   const user = useWorkspace();
@@ -62,13 +63,15 @@ function Catalog() {
     <>
       <RecordList
         kind="car-catalog"
-        label="Catalogue"
+        label={t("Catalogue")}
         revision={revision}
         columns={catalogColumns}
         onSelect={admin ? setEditing : undefined}
         emptyIcon={<IconBook />}
-        emptyTitle="Catalogue vide"
-        emptyDescription="Synchronisez le catalogue depuis la base de véhicules ou ajoutez des modèles."
+        emptyTitle={t("Catalogue vide")}
+        emptyDescription={t(
+          "Synchronisez le catalogue depuis la base de véhicules ou ajoutez des modèles.",
+        )}
         toolbar={
           admin && (
             <>
@@ -89,19 +92,36 @@ function Catalog() {
                       }),
                     {
                       success: (result) =>
-                        `Catalogue synchronisé : ${result?.created ?? 0} ajoutés, ${result?.updated ?? 0} mis à jour, ${result?.skipped ?? 0} ignorés${result?.errors?.length ? `, ${result.errors.length} erreurs` : ""}.`,
-                      failure: "La synchronisation a échoué",
+                        result?.errors?.length
+                          ? t(
+                              "Catalogue synchronisé : {created} ajoutés, {updated} mis à jour, {skipped} ignorés, {errors} erreurs.",
+                              {
+                                created: result.created ?? 0,
+                                updated: result.updated ?? 0,
+                                skipped: result.skipped ?? 0,
+                                errors: result.errors.length,
+                              },
+                            )
+                          : t(
+                              "Catalogue synchronisé : {created} ajoutés, {updated} mis à jour, {skipped} ignorés.",
+                              {
+                                created: result?.created ?? 0,
+                                updated: result?.updated ?? 0,
+                                skipped: result?.skipped ?? 0,
+                              },
+                            ),
+                      failure: t("La synchronisation a échoué"),
                       onDone: refresh,
                     },
                   )
                 }
               >
                 <IconRefresh data-icon="inline-start" />
-                {action.pending === "sync" ? "Synchronisation…" : "Synchroniser"}
+                {action.pending === "sync" ? t("Synchronisation…") : t("Synchroniser")}
               </Button>
               <Button variant="outline" onClick={() => setEditing(null)}>
                 <IconPlus data-icon="inline-start" />
-                Ajouter un modèle
+                {t("Ajouter un modèle de véhicule")}
               </Button>
             </>
           )
@@ -110,7 +130,7 @@ function Catalog() {
       <FormDialog
         open={editing !== undefined}
         onOpenChange={(open) => !open && setEditing(undefined)}
-        title={editing ? editing.name : "Ajouter un modèle"}
+        title={editing ? editing.name : t("Ajouter un modèle de véhicule")}
         wide
       >
         <CatalogForm
@@ -131,8 +151,8 @@ export function CarsScreen() {
     return (
       <>
         <PageHeader
-          title="Mes véhicules"
-          description="Vos véhicules électriques. Leur enregistrement est facultatif."
+          title={t("Mes véhicules")}
+          description={t("Vos véhicules électriques. Leur enregistrement est facultatif.")}
         />
         <MyCars />
       </>
@@ -141,14 +161,14 @@ export function CarsScreen() {
   return (
     <>
       <PageHeader
-        title="Véhicules"
-        description="Véhicules des conducteurs et catalogue des modèles électriques."
+        title={t("Véhicules")}
+        description={t("Véhicules des conducteurs et catalogue des modèles électriques.")}
       />
       <Tabs defaultValue="cars">
         <TabsList variant="line">
-          <TabsTrigger value="cars">Véhicules</TabsTrigger>
-          <TabsTrigger value="catalog">Catalogue</TabsTrigger>
-          <TabsTrigger value="mine">Mes véhicules</TabsTrigger>
+          <TabsTrigger value="cars">{t("Véhicules")}</TabsTrigger>
+          <TabsTrigger value="catalog">{t("Catalogue")}</TabsTrigger>
+          <TabsTrigger value="mine">{t("Mes véhicules")}</TabsTrigger>
         </TabsList>
         <TabsContent value="cars" className="pt-4">
           <CarsList />

@@ -22,6 +22,7 @@ import { SiteAreaForm, SiteForm } from "./organization-forms";
 import { siteAreaColumns } from "./site-areas-screen";
 import { SiteUsers } from "./site-users";
 import { useRecord } from "./use-record";
+import { t } from "@/lib/i18n";
 
 export function SiteDetailScreen({ id }: { id: string }) {
   const { user, components } = useWorkspaceSession();
@@ -37,7 +38,7 @@ export function SiteDetailScreen({ id }: { id: string }) {
   if (error && !site) {
     return (
       <>
-        <PageHeader title="Site" back={{ href: "/sites", label: "Sites" }} />
+        <PageHeader title={t("Site")} back={{ href: "/sites", label: t("Sites") }} />
         <ErrorState error={error} onRetry={refresh} />
       </>
     );
@@ -57,7 +58,7 @@ export function SiteDetailScreen({ id }: { id: string }) {
   return (
     <>
       <PageHeader
-        back={{ href: "/sites", label: "Sites" }}
+        back={{ href: "/sites", label: t("Sites") }}
         title={site.name}
         description={[companies.get(String(field(site, "companyId"))), address]
           .filter(Boolean)
@@ -65,9 +66,9 @@ export function SiteDetailScreen({ id }: { id: string }) {
         meta={
           <>
             <ToneBadge tone={field(site, "accessControl") ? "warning" : "success"}>
-              {field(site, "accessControl") ? "Accès restreint" : "Accès ouvert"}
+              {field(site, "accessControl") ? t("Accès restreint") : t("Accès ouvert")}
             </ToneBadge>
-            {field(site, "public") === true && <ToneBadge tone="progress">Public</ToneBadge>}
+            {field(site, "public") === true && <ToneBadge tone="progress">{t("Public")}</ToneBadge>}
           </>
         }
         actions={
@@ -80,22 +81,22 @@ export function SiteDetailScreen({ id }: { id: string }) {
                 rel="noreferrer"
               >
                 <IconMap data-icon="inline-start" />
-                Voir sur la carte
+                {t("Voir sur la carte")}
               </a>
             )}
             {admin && (
               <ConfirmButton
-                title={`Supprimer ${site.name} ?`}
-                description="Impossible tant que des zones sont rattachées à ce site."
-                confirmLabel="Supprimer"
+                title={t("Supprimer {name} ?", { name: site.name })}
+                description={t("Impossible tant que des zones sont rattachées à ce site.")}
+                confirmLabel={t("Supprimer")}
                 onConfirm={() =>
                   action.run("delete", () => deleteRecord("sites", site.id), {
-                    success: "Site supprimé.",
+                    success: t("Site supprimé."),
                     onDone: () => router.replace("/sites"),
                   })
                 }
               >
-                Supprimer
+                {t("Supprimer")}
               </ConfirmButton>
             )}
           </>
@@ -103,27 +104,27 @@ export function SiteDetailScreen({ id }: { id: string }) {
       />
       <Tabs defaultValue="areas">
         <TabsList variant="line">
-          <TabsTrigger value="areas">Zones</TabsTrigger>
-          <TabsTrigger value="stations">Bornes</TabsTrigger>
-          {admin && <TabsTrigger value="users">Utilisateurs</TabsTrigger>}
-          <TabsTrigger value="sessions">Sessions</TabsTrigger>
-          {admin && <TabsTrigger value="properties">Propriétés</TabsTrigger>}
+          <TabsTrigger value="areas">{t("Zones")}</TabsTrigger>
+          <TabsTrigger value="stations">{t("Bornes")}</TabsTrigger>
+          {admin && <TabsTrigger value="users">{t("Utilisateurs")}</TabsTrigger>}
+          <TabsTrigger value="sessions">{t("Sessions")}</TabsTrigger>
+          {admin && <TabsTrigger value="properties">{t("Propriétés")}</TabsTrigger>}
         </TabsList>
         <TabsContent value="areas" className="pt-4">
           <RecordList
             kind="site-areas"
-            label="Zones du site"
+            label={t("Zones du site")}
             filters={{ siteId: site.id }}
             revision={areasRevision}
             columns={siteAreaColumns(sites, components.smart_charging)}
             onSelect={(record) => router.push(`/site-areas/${record.id}`)}
-            emptyTitle="Aucune zone"
-            emptyDescription="Créez une zone pour y rattacher les bornes de ce site."
+            emptyTitle={t("Aucune zone")}
+            emptyDescription={t("Créez une zone pour y rattacher les bornes de ce site.")}
             toolbar={
               admin && (
                 <Button variant="outline" onClick={() => setCreatingArea(true)}>
                   <IconPlus data-icon="inline-start" />
-                  Ajouter une zone
+                  {t("Ajouter une zone")}
                 </Button>
               )
             }
@@ -146,7 +147,12 @@ export function SiteDetailScreen({ id }: { id: string }) {
           </TabsContent>
         )}
       </Tabs>
-      <FormDialog open={creatingArea} onOpenChange={setCreatingArea} title="Ajouter une zone" wide>
+      <FormDialog
+        open={creatingArea}
+        onOpenChange={setCreatingArea}
+        title={t("Ajouter une zone")}
+        wide
+      >
         <SiteAreaForm
           record={null}
           defaults={{ siteId: site.id }}

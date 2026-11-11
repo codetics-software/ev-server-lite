@@ -1,3 +1,4 @@
+import { getIntlLocale, t } from "./i18n";
 import { valueLabel } from "./labels";
 
 const EMPTY = "—";
@@ -7,7 +8,7 @@ export function display(value: unknown): string {
     return EMPTY;
   }
   if (typeof value === "boolean") {
-    return value ? "Oui" : "Non";
+    return value ? t("Oui") : t("Non");
   }
   if (typeof value === "object") {
     return JSON.stringify(value);
@@ -28,20 +29,25 @@ export function date(value: unknown): string {
   if (!parsed) {
     return value ? display(value) : EMPTY;
   }
-  return new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(
-    parsed,
-  );
+  return new Intl.DateTimeFormat(getIntlLocale(), {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(parsed);
 }
 
 export function day(value: unknown): string {
   const parsed = parseDate(value);
-  return parsed ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(parsed) : EMPTY;
+  return parsed
+    ? new Intl.DateTimeFormat(getIntlLocale(), { dateStyle: "medium" }).format(parsed)
+    : EMPTY;
 }
 
 export function time(value: unknown): string {
   const parsed = parseDate(value);
   return parsed
-    ? new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(parsed)
+    ? new Intl.DateTimeFormat(getIntlLocale(), { hour: "2-digit", minute: "2-digit" }).format(
+        parsed,
+      )
     : EMPTY;
 }
 
@@ -56,13 +62,13 @@ export function relative(value: unknown): string {
     ["hour", 3600],
     ["minute", 60],
   ];
-  const format = new Intl.RelativeTimeFormat("fr-FR", { numeric: "auto" });
+  const format = new Intl.RelativeTimeFormat(getIntlLocale(), { numeric: "auto" });
   for (const [unit, size] of units) {
     if (Math.abs(seconds) >= size) {
       return format.format(Math.round(seconds / size), unit);
     }
   }
-  return "à l’instant";
+  return t("à l’instant");
 }
 
 function isNumber(value: unknown): value is number | string {
@@ -74,7 +80,7 @@ function isNumber(value: unknown): value is number | string {
 
 export function number(value: unknown, digits = 0, minimum = 0): string {
   return isNumber(value)
-    ? Number(value).toLocaleString("fr-FR", {
+    ? Number(value).toLocaleString(getIntlLocale(), {
         minimumFractionDigits: minimum,
         maximumFractionDigits: digits,
       })
@@ -97,7 +103,7 @@ export function money(value: unknown, currency: unknown = "EUR", digits = 2): st
   if (!isNumber(value)) {
     return EMPTY;
   }
-  return new Intl.NumberFormat("fr-FR", {
+  return new Intl.NumberFormat(getIntlLocale(), {
     style: "currency",
     currency: typeof currency === "string" && currency ? currency : "EUR",
     maximumFractionDigits: Math.max(2, digits),
@@ -161,17 +167,20 @@ export function initials(name: string) {
   );
 }
 
-export const monthLabels = [
-  "janv.",
-  "févr.",
-  "mars",
-  "avr.",
-  "mai",
-  "juin",
-  "juil.",
-  "août",
-  "sept.",
-  "oct.",
-  "nov.",
-  "déc.",
-];
+export function monthLabel(month: number): string {
+  return new Intl.DateTimeFormat(getIntlLocale(), { month: "short" }).format(
+    new Date(2024, month, 1),
+  );
+}
+
+export const monthLabels: readonly string[] = new Proxy(
+  Array.from({ length: 12 }, () => ""),
+  {
+    get(target, key, receiver) {
+      if (typeof key === "string" && /^\d+$/.test(key) && Number(key) < 12) {
+        return monthLabel(Number(key));
+      }
+      return Reflect.get(target, key, receiver);
+    },
+  },
+);

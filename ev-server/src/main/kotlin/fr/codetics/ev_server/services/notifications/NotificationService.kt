@@ -3,7 +3,9 @@ package fr.codetics.ev_server.services.notifications
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.I18n
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.api.PageResponse
@@ -40,7 +42,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
+import java.time.format.FormatStyle
 import java.util.UUID
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.event.TransactionalEventListener
@@ -70,17 +72,30 @@ class NotificationService(
         }
     }
 
-    private val dates =
-        DateTimeFormatter.ofPattern("d MMMM yyyy 'à' HH:mm", Locale.FRENCH).withZone(ZoneId.of("Europe/Paris"))
+    private fun date(instant: Instant): String =
+        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG, FormatStyle.SHORT)
+            .withLocale(I18n.locale())
+            .withZone(ZoneId.of("Europe/Paris"))
+            .format(instant)
 
     fun notify(
         user: UserEntity,
         type: NotificationType,
-        subject: String,
-        body: String,
+        subject: () -> String,
+        body: () -> String,
         dedupeKey: String? = null,
         window: Duration = Duration.ofHours(24),
         transactionId: Int? = null,
+    ): Boolean = I18n.with(user.locale) { deliver(user, type, subject(), body(), dedupeKey, window, transactionId) }
+
+    private fun deliver(
+        user: UserEntity,
+        type: NotificationType,
+        subject: String,
+        body: String,
+        dedupeKey: String?,
+        window: Duration,
+        transactionId: Int?,
     ): Boolean {
         if (!user.enabled || user.deletedAt != null || user.email.isBlank()) return false
         val preferences = preferences(user)
@@ -98,7 +113,7 @@ class NotificationService(
                     MailEntity(
                         recipient = user.email,
                         subject = "${workspace(user.tenantId)} — $subject",
-                        body = "$body\n\n${properties.publicUrl.trimEnd('/')}\n\nVous pouvez gérer vos notifications depuis votre compte.",
+                        body = "$body\n\n${properties.publicUrl.trimEnd('/')}\n\n${msg("notification.mail.footer")}",
                     )
                 )
             } else {
@@ -123,8 +138,8 @@ class NotificationService(
     fun notifyAdmins(
         tenant: UUID,
         type: NotificationType,
-        subject: String,
-        body: String,
+        subject: () -> String,
+        body: () -> String,
         dedupeKey: String? = null,
         siteId: UUID? = null,
         window: Duration = Duration.ofHours(24),
@@ -167,23 +182,29 @@ class NotificationService(
         }
 
     fun report(user: AppPrincipal, input: ErrorReportInput): MutationResponse {
-        ensure(input.subject.isNotBlank() && input.subject.length <= 200) { "Le sujet doit contenir entre 1 et 200 caractères." }
+        ensure(input.subject.isNotBlank() && input.subject.length <= 200) { msg("notifications.report.subject_length") }
         ensure(input.description.isNotBlank() && input.description.length <= 4000) {
-            "La description doit contenir entre 1 et 4 000 caractères."
+            msg("notifications.report.description_length")
         }
-        ensure(input.phone == null || input.phone.length <= 40) { "Numéro de téléphone invalide." }
-        ensure(input.stationId == null || input.stationId.length <= 100) { "Borne invalide." }
+        ensure(input.phone == null || input.phone.length <= 40) { msg("validation.phone") }
+        ensure(input.stationId == null || input.stationId.length <= 100) { msg("notifications.report.invalid_station") }
         val station = input.stationId?.let { stations.findById(StationKey(user.tenantId, it)).orElse(null) }
-        val body =
+        val body = {
             buildString {
-                appendLine("${user.name} (${user.email}) signale un problème.")
-                input.phone?.takeIf(String::isNotBlank)?.let { appendLine("Téléphone : $it") }
-                station?.let { appendLine("Borne : ${it.name} (${it.key.stationId})${input.connectorId?.let { c -> ", connecteur $c" } ?: ""}") }
+                appendLine(msg("notification.report.body", user.name, user.email))
+                input.phone?.takeIf(String::isNotBlank)?.let { appendLine(msg("notification.report.phone", it)) }
+                station?.let {
+                    appendLine(
+                        input.connectorId?.let { c -> msg("notification.report.station_connector", it.name, it.key.stationId, c) }
+                            ?: msg("notification.report.station", it.name, it.key.stationId)
+                    )
+                }
                 appendLine()
                 append(input.description.trim())
             }
+        }
         db.atomic {
-            notifyAdmins(user.tenantId, NotificationType.END_USER_ERROR_REPORT, "Signalement : ${input.subject.trim()}", body)
+            notifyAdmins(user.tenantId, NotificationType.END_USER_ERROR_REPORT, { msg("notification.report.subject", input.subject.trim()) }, body)
             db.audit(user.tenantId, user.id.toString(), "ERROR_REPORT", input.stationId ?: "-")
         }
         return MutationResponse()
@@ -195,8 +216,8 @@ class NotificationService(
     private fun summary(transaction: TransactionEntity): String {
         val energy = ChargingSessionResponse.energyKwh(transaction) ?: "0"
         val minutes = Duration.between(transaction.startedAt, transaction.stoppedAt ?: Instant.now()).toMinutes()
-        val price = transaction.price?.let { " · ${it.toPlainString()} ${transaction.currency ?: "EUR"}" }.orEmpty()
-        return "Énergie : $energy kWh · Durée : ${minutes / 60} h ${minutes % 60} min$price"
+        val summary = msg("notification.session.summary", energy, minutes / 60, "%02d".format(minutes % 60))
+        return transaction.price?.let { "$summary · ${it.toPlainString()} ${transaction.currency ?: "EUR"}" } ?: summary
     }
 
     @TransactionalEventListener(fallbackExecution = true)
@@ -208,8 +229,8 @@ class NotificationService(
             notify(
                 user,
                 NotificationType.SESSION_STARTED,
-                "Votre session de recharge a commencé",
-                "Votre session a démarré le ${dates.format(transaction.startedAt)} sur la borne ${event.station.name}, connecteur ${transaction.connectorId}.",
+                { msg("notification.session_started.subject") },
+                { msg("notification.session_started.body", date(transaction.startedAt), event.station.name, transaction.connectorId) },
                 transactionId = transaction.id,
             )
         }
@@ -228,8 +249,8 @@ class NotificationService(
             notify(
                 user,
                 NotificationType.END_OF_CHARGE,
-                "La charge de votre véhicule est terminée",
-                "Votre véhicule ne consomme plus d’énergie sur la borne ${event.station.name}. Libérez la place pour les autres conducteurs.\n${summary(transaction)}",
+                { msg("notification.end_of_charge.subject") },
+                { msg("notification.end_of_charge.body", event.station.name) + "\n" + summary(transaction) },
                 transactionId = transaction.id,
             )
         }
@@ -243,8 +264,8 @@ class NotificationService(
             notify(
                 user,
                 NotificationType.END_OF_SESSION,
-                "Votre session de recharge est terminée",
-                "Votre session sur la borne ${event.station.name} s’est terminée le ${dates.format(requireNotNull(transaction.stoppedAt))}.\n${summary(transaction)}",
+                { msg("notification.end_of_session.subject") },
+                { msg("notification.end_of_session.body", event.station.name, date(requireNotNull(transaction.stoppedAt))) + "\n" + summary(transaction) },
                 dedupeKey = "end-of-session:${transaction.id}",
                 window = Duration.ofDays(365),
                 transactionId = transaction.id,
@@ -260,8 +281,8 @@ class NotificationService(
             notifyAdmins(
                 event.station.key.tenantId,
                 NotificationType.STATION_STATUS_ERROR,
-                "La borne ${event.station.name} signale une erreur",
-                "Connecteur ${connector.key.connectorId} : état ${connector.status}, code ${connector.errorCode}.",
+                { msg("notification.station_error.subject", event.station.name) },
+                { msg("notification.station_error.body", connector.key.connectorId, connector.status, connector.errorCode) },
                 dedupeKey = "status:${event.station.key.stationId}:${connector.key.connectorId}:${connector.errorCode}",
                 window = Duration.ofHours(1),
             )
@@ -275,8 +296,8 @@ class NotificationService(
             notifyAdmins(
                 event.station.key.tenantId,
                 NotificationType.STATION_SECURITY_EVENT,
-                "Événement de sécurité sur ${event.station.name}",
-                "La borne ${event.station.name} (${event.station.key.stationId}) signale l’événement de sécurité ${event.status}.",
+                { msg("notification.security_event.subject", event.station.name) },
+                { msg("notification.security_event.body", event.station.name, event.station.key.stationId, event.status) },
                 dedupeKey = "security:${event.station.key.stationId}:${event.status}",
                 window = Duration.ofHours(1),
             )
@@ -290,8 +311,8 @@ class NotificationService(
             notifyAdmins(
                 event.station.key.tenantId,
                 NotificationType.UNKNOWN_BADGE,
-                "Badge inconnu présenté sur ${event.station.name}",
-                "Le badge ${event.uid} a été présenté sur la borne ${event.station.name} (${event.station.key.stationId}) mais n’est pas enregistré dans l’espace.",
+                { msg("notification.unknown_badge.subject", event.station.name) },
+                { msg("notification.unknown_badge.body", event.uid, event.station.name, event.station.key.stationId) },
                 dedupeKey = "badge:${event.uid}",
                 window = Duration.ofHours(1),
             )
@@ -304,8 +325,8 @@ class NotificationService(
             notifyAdmins(
                 event.station.key.tenantId,
                 NotificationType.STATION_REGISTERED,
-                "Nouvelle borne enregistrée : ${event.station.key.stationId}",
-                "La borne ${event.station.key.stationId} s’est enregistrée avec un jeton d’enregistrement. Vérifiez sa configuration dans le tableau de bord.",
+                { msg("notification.station_registered.subject", event.station.key.stationId) },
+                { msg("notification.station_registered.body", event.station.key.stationId) },
             )
         }
     }
@@ -316,8 +337,8 @@ class NotificationService(
             notifyAdmins(
                 event.user.tenantId,
                 NotificationType.NEW_REGISTERED_USER,
-                "Nouvel utilisateur : ${event.user.displayName}",
-                "${event.user.displayName} (${event.user.email}) a créé un compte.",
+                { msg("notification.new_user.subject", event.user.displayName) },
+                { msg("notification.new_user.body", event.user.displayName, event.user.email) },
             )
         }
     }
@@ -329,8 +350,8 @@ class NotificationService(
             notify(
                 event.user,
                 NotificationType.ACCOUNT_STATUS_CHANGED,
-                "Votre compte est activé",
-                "Votre compte a été activé par un administrateur. Vous pouvez désormais vous connecter et recharger.",
+                { msg("notification.account_enabled.subject") },
+                { msg("notification.account_enabled.body") },
             )
         }
     }

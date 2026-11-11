@@ -111,7 +111,7 @@ data class UserSiteResponse(val siteId: UUID, val name: String, val siteAdmin: B
 
 @Serializable data class PageResponse<Item>(val items: List<Item>, val total: Int)
 
-@Serializable data class ProblemDetail(val status: Int? = null, val title: String? = null, val detail: String? = null)
+@Serializable data class ProblemDetail(val status: Int? = null, val title: String? = null, val detail: String? = null, val code: String? = null)
 
 @Serializable data class RecordInput<Payload>(val name: String, val data: Payload, val revision: Int? = null)
 

@@ -12,6 +12,7 @@ import { IconPin, IconTimeline } from "@tabler/icons-react";
 import { useState } from "react";
 import { presentedFingerprint, securityEventTone } from "./station-security";
 import type { StationEvent } from "./station-types";
+import { t } from "@/lib/i18n";
 
 const types = [
   "BOOT",
@@ -64,25 +65,25 @@ export function StationEvents({
   const columns: Column<StationEvent>[] = [
     {
       id: "date",
-      header: "Date",
+      header: t("Date"),
       sort: (event) => event.created_at,
       cell: (event) => <span className="whitespace-nowrap">{date(event.created_at)}</span>,
     },
     {
       id: "type",
-      header: "Événement",
+      header: t("Événement"),
       sort: (event) => event.type,
       cell: (event) => <ToneBadge tone={eventTone(event)}>{display(event.type)}</ToneBadge>,
     },
     {
       id: "connector",
-      header: "Connecteur",
+      header: t("Connecteur"),
       align: "right",
       cell: (event) => (event.connector_id ? event.connector_id : "Borne"),
     },
     {
       id: "status",
-      header: "État",
+      header: t("État"),
       cell: (event) =>
         [event.status, event.error_code && event.error_code !== "NoError" ? event.error_code : null]
           .filter(Boolean)
@@ -91,7 +92,7 @@ export function StationEvents({
     },
     {
       id: "info",
-      header: "Détail",
+      header: t("Détail"),
       cell: (event) => (
         <span className="block max-w-80 wrap-anywhere text-muted-foreground">
           {event.info ?? "—"}
@@ -102,7 +103,7 @@ export function StationEvents({
       ? [
           {
             id: "actions",
-            header: "Actions",
+            header: t("Actions"),
             srOnlyHeader: true,
             align: "right",
             cell: (event) => {
@@ -111,7 +112,7 @@ export function StationEvents({
                 fingerprint && (
                   <Button variant="outline" size="sm" onClick={() => onPin(fingerprint)}>
                     <IconPin data-icon="inline-start" />
-                    Épingler l’empreinte présentée
+                    {t("Épingler l’empreinte présentée")}
                   </Button>
                 )
               );
@@ -121,14 +122,14 @@ export function StationEvents({
       : []),
   ];
   return (
-    <section className="flex flex-col gap-4" aria-label="Historique des événements">
+    <section className="flex flex-col gap-4" aria-label={t("Historique des événements")}>
       <OptionSelect
         value={type}
         onChange={setType}
-        label="Type d’événement"
+        label={t("Type d’événement")}
         className="w-full sm:w-60"
         options={[
-          { value: "all", label: "Tous les événements" },
+          { value: "all", label: t("Tous les événements") },
           ...types.map((value) => ({ value, label: display(value) })),
         ]}
       />
@@ -141,13 +142,15 @@ export function StationEvents({
         empty={
           <EmptyState
             icon={<IconTimeline />}
-            title="Aucun événement"
-            description="Les démarrages, changements d’état et déconnexions de la borne apparaîtront ici."
+            title={t("Aucun événement")}
+            description={t(
+              "Les démarrages, changements d’état et déconnexions de la borne apparaîtront ici.",
+            )}
           />
         }
       >
         <DataTable
-          label="Événements"
+          label={t("Événements")}
           rows={list.items}
           columns={columns}
           rowKey={(event) => String(event.id)}

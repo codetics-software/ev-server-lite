@@ -1,4 +1,5 @@
-export const descriptions: Record<string, string> = {
+import { translated } from "@/lib/i18n";
+export const descriptions: Record<string, string> = translated({
   stations: "Connexion, état des connecteurs et commandes à distance.",
   transactions: "Activité de recharge du réseau et énergie mesurée en kWh.",
   commands: "Suivez les commandes jusqu’à la réponse de la borne.",
@@ -14,4 +15,4 @@ export const descriptions: Record<string, string> = {
   "charging-station-templates": "Références de configuration par fabricant et modèle.",
   settings: "Configuration de l’espace gérée par les administrateurs.",
   audit: "Accès et modifications effectués dans votre espace.",
-};
+});

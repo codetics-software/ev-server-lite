@@ -5,6 +5,7 @@ import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.WorkspacePaymentSettings
 import fr.codetics.ev_server.models.workspaces.WorkspacePaymentInput
 import fr.codetics.ev_server.models.workspaces.UserBillingSettings
@@ -44,14 +45,14 @@ class StripeConnectService(
 
     fun update(user: AppPrincipal, input: WorkspacePaymentInput): WorkspacePaymentResponse {
         ensure(input.country.matches(Regex("[A-Z]{2}"))) {
-            "Le code du pays doit contenir deux lettres majuscules."
+            msg("stripe.connect.country_code")
         }
         db.atomic {
             val current =
                 db.lock<WorkspacePaymentSettings>(user.tenantId)
                     ?: WorkspacePaymentSettings(tenantId = user.tenantId)
             ensure(current.stripeAccountId == null || current.country == input.country) {
-                "Le pays ne peut plus être modifié après la création du compte Stripe."
+                msg("stripe.connect.country_locked")
             }
             current.enabled = input.enabled
             current.country = input.country

@@ -1,10 +1,12 @@
 "use client";
 
 import { CodeticsMark } from "@/components/codetics-mark";
+import { LanguageToggle } from "@/features/workspace/language-toggle";
 import { ThemeToggle } from "@/features/workspace/theme-toggle";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { t } from "@/lib/i18n";
 
 export function PortalLayout({ children, workspace }: { children: ReactNode; workspace?: string }) {
   const [failed, setFailed] = useState(false);
@@ -14,7 +16,7 @@ export function PortalLayout({ children, workspace }: { children: ReactNode; wor
         {workspace && !failed ? (
           <Image
             src={`/api/backend/api/v1/public/workspaces/${encodeURIComponent(workspace)}/logo`}
-            alt="Logo de l’exploitant"
+            alt={t("Logo de l’exploitant")}
             width={120}
             height={40}
             unoptimized
@@ -28,13 +30,14 @@ export function PortalLayout({ children, workspace }: { children: ReactNode; wor
           </Link>
         )}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Recharge sans compte</span>
+          <span className="text-sm text-muted-foreground">{t("Recharge sans compte")}</span>
+          <LanguageToggle />
           <ThemeToggle />
         </div>
       </header>
       <main className="mx-auto flex max-w-2xl flex-col gap-6 px-5 pb-8">{children}</main>
       <footer className="mx-auto max-w-2xl px-5 pb-6 text-xs text-muted-foreground">
-        Supervision par Codetics · Paiement sécurisé par Stripe
+        {t("Supervision par Codetics · Paiement sécurisé par Stripe")}
       </footer>
     </div>
   );

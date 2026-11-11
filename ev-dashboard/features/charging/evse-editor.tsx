@@ -28,6 +28,7 @@ import { integerBetween, isInvalid, maxLength, required, rules } from "@/lib/for
 import { revalidateLogic, useForm, useStore } from "@tanstack/react-form";
 import { useState } from "react";
 import type { Evse } from "./portal-types";
+import { t } from "@/lib/i18n";
 
 export function EvseEditor({
   evse,
@@ -70,7 +71,7 @@ export function EvseEditor({
         setError(
           failure instanceof Error
             ? failure.message
-            : "Impossible d’enregistrer le point de charge.",
+            : t("Impossible d’enregistrer le point de charge."),
         );
       }
     },
@@ -88,10 +89,10 @@ export function EvseEditor({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {evse ? "Modifier le point de charge" : "Ajouter un point de charge"}
+            {evse ? t("Modifier le point de charge") : t("Ajouter un point de charge")}
           </DialogTitle>
           <DialogDescription>
-            Associez un connecteur à un tarif pour créer son portail public.
+            {t("Associez un connecteur à un tarif pour créer son portail public.")}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -106,8 +107,8 @@ export function EvseEditor({
               name="name"
               validators={{
                 onDynamic: rules(
-                  required("Renseignez le nom du point de charge."),
-                  maxLength(200, "Le nom contient au plus 200 caractères."),
+                  required(t("Renseignez le nom du point de charge.")),
+                  maxLength(200, t("Le nom contient au plus 200 caractères.")),
                 ),
               }}
             >
@@ -115,7 +116,7 @@ export function EvseEditor({
                 const invalid = isInvalid(field);
                 return (
                   <Field data-invalid={invalid}>
-                    <FieldLabel htmlFor="evse-name">Nom affiché aux conducteurs</FieldLabel>
+                    <FieldLabel htmlFor="evse-name">{t("Nom affiché aux conducteurs")}</FieldLabel>
                     <Input
                       id="evse-name"
                       name={field.name}
@@ -134,10 +135,10 @@ export function EvseEditor({
             <form.Field
               name="stationId"
               validators={{
-                onDynamic: rules(required("Choisissez la borne.")),
+                onDynamic: rules(required(t("Choisissez la borne."))),
               }}
             >
-              {(field) => <FormPicker field={field} source="stations" label="Borne" />}
+              {(field) => <FormPicker field={field} source="stations" label={t("Borne")} />}
             </form.Field>
             <form.Field
               name="connectorId"
@@ -146,7 +147,7 @@ export function EvseEditor({
                   integerBetween(
                     1,
                     Number.MAX_SAFE_INTEGER,
-                    "Sélectionnez un connecteur physique.",
+                    t("Sélectionnez un connecteur physique."),
                   ),
                 ),
               }}
@@ -155,7 +156,7 @@ export function EvseEditor({
                 const invalid = isInvalid(field);
                 return (
                   <Field data-invalid={invalid}>
-                    <FieldLabel htmlFor="evse-connector">Numéro du connecteur</FieldLabel>
+                    <FieldLabel htmlFor="evse-connector">{t("Numéro du connecteur")}</FieldLabel>
                     <Input
                       id="evse-connector"
                       name={field.name}
@@ -169,7 +170,7 @@ export function EvseEditor({
                       required
                     />
                     <FieldDescription>
-                      Le connecteur doit avoir été déclaré par la borne.
+                      {t("Le connecteur doit avoir été déclaré par la borne.")}
                     </FieldDescription>
                     {invalid && <FieldError errors={field.state.meta.errors} />}
                   </Field>
@@ -179,17 +180,17 @@ export function EvseEditor({
             <form.Field name="pricingDefinitionId">
               {(field) => (
                 <Field>
-                  <FieldLabel htmlFor="evse-tariff">Tarif</FieldLabel>
+                  <FieldLabel htmlFor="evse-tariff">{t("Tarif")}</FieldLabel>
                   <Select
                     name={field.name}
                     value={field.state.value || firstTariff}
                     onValueChange={(value) => field.handleChange(value ?? "")}
                   >
                     <SelectTrigger id="evse-tariff" className="w-full">
-                      <SelectValue placeholder="Choisir un tarif">
+                      <SelectValue placeholder={t("Choisir un tarif")}>
                         {(value: string | null) => {
                           const tariff = items.find((item) => String(item.id) === value);
-                          return tariff ? String(tariff.name) : "Choisir un tarif";
+                          return tariff ? String(tariff.name) : t("Choisir un tarif");
                         }}
                       </SelectValue>
                     </SelectTrigger>
@@ -204,7 +205,7 @@ export function EvseEditor({
                     </SelectContent>
                   </Select>
                   <FieldDescription>
-                    Créez d’abord un tarif en euros dans la page Tarifs.
+                    {t("Créez d’abord un tarif en euros dans la page Tarifs.")}
                   </FieldDescription>
                 </Field>
               )}
@@ -218,7 +219,9 @@ export function EvseEditor({
                     checked={field.state.value}
                     onCheckedChange={(checked) => field.handleChange(checked === true)}
                   />
-                  <FieldLabel htmlFor="evse-published">Publier le portail de paiement</FieldLabel>
+                  <FieldLabel htmlFor="evse-published">
+                    {t("Publier le portail de paiement")}
+                  </FieldLabel>
                 </Field>
               )}
             </form.Field>
@@ -228,7 +231,7 @@ export function EvseEditor({
               </Alert>
             )}
             <Button type="submit" disabled={pending || !items.length}>
-              {pending ? "Enregistrement…" : "Enregistrer"}
+              {pending ? t("Enregistrement…") : t("Enregistrer")}
             </Button>
           </FieldGroup>
         </form>

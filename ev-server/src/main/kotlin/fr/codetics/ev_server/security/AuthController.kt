@@ -5,6 +5,7 @@ import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.ClientAddresses
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.people.ChallengeKind
 import fr.codetics.ev_server.repositories.UserRepository
@@ -86,7 +87,7 @@ class AuthController(
         accounts.register(body.email, body.name, body.password)
         return mapOf(
             "message" to
-                "Si l’inscription est disponible pour cette adresse, un lien de vérification sera envoyé."
+                msg("auth.signup_requested")
         )
     }
 
@@ -157,7 +158,7 @@ class AuthController(
         request: HttpServletRequest,
     ): Map<String, String> {
         ensure(providers.findByRegistrationId(provider) != null) {
-            "Ce fournisseur n’est pas configuré."
+            msg("auth.provider_not_configured")
         }
 
         if (request.getSession(false) != null) {

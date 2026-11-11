@@ -2,6 +2,7 @@ package fr.codetics.ev_server.ocpi
 
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.PartnerEntity
 import fr.codetics.ev_server.repositories.PartnerRepository
@@ -62,17 +63,17 @@ class OcpiTransport(
         val uri = URI(url)
         val expected = URI(pinned)
         ensure(uri.scheme == "https" && uri.host != null) {
-            "L’adresse OCPI distante doit utiliser HTTPS."
+            msg("ocpi.remote.https")
         }
         ensure(uri.userInfo == null && uri.fragment == null && uri.port in setOf(-1, 443)) {
-            "L’adresse OCPI distante doit utiliser le port 443, sans identifiants ni fragment."
+            msg("ocpi.remote.port")
         }
         ensure(
             uri.host.equals(expected.host, true) &&
                 uri.scheme == expected.scheme &&
                 uri.port == expected.port
         ) {
-            "L’adresse distante doit correspondre à l’origine configurée du partenaire."
+            msg("ocpi.remote.origin")
         }
 
         return uri
@@ -104,12 +105,12 @@ class OcpiTransport(
     ): OcpiPage {
         val pinned =
             partner.remoteUrl
-                ?: throw OcpiFault(3001, "Configurez d’abord l’adresse de découverte distante.")
+                ?: throw OcpiFault(3001, msg("ocpi.remote.configure_url"))
         val uri = validateRemote(url, pinned)
         val credential =
             token
                 ?: partner.remoteTokenEncrypted?.let(vault::decrypt)
-                ?: throw OcpiFault(3001, "Les identifiants distants sont manquants.")
+                ?: throw OcpiFault(3001, msg("ocpi.remote.missing_credentials"))
         val publisher =
             if (body == null) {
                 HttpRequest.BodyPublishers.noBody()
@@ -130,13 +131,13 @@ class OcpiTransport(
             val bytes = response.body().use { stream -> stream.readNBytes(2_097_153) }
 
             if (response.statusCode() !in 200..299 || bytes.size > 2_097_152) {
-                throw OcpiFault(3001, "Le service distant a refusé la demande (${response.statusCode()}).")
+                throw OcpiFault(3001, msg("ocpi.remote.refused", response.statusCode()))
             }
 
             val json = if (bytes.isEmpty()) db.json.createObjectNode().put("status_code", 1000) else db.json.readTree(bytes)
 
             if (json.path("status_code").intValue() != 1000) {
-                throw OcpiFault(3001, "L’opération OCPI distante a échoué (${json.path("status_code").intValue()}).")
+                throw OcpiFault(3001, msg("ocpi.remote.failed", json.path("status_code").intValue()))
             }
 
             val next =
@@ -147,7 +148,7 @@ class OcpiTransport(
         } catch (fault: OcpiFault) {
             throw fault
         } catch (_: Exception) {
-            throw OcpiFault(3001, "Le service distant n’a pas pu être contacté.")
+            throw OcpiFault(3001, msg("ocpi.remote.unreachable"))
         }
     }
 }

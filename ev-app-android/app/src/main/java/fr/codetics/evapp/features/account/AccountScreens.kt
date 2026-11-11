@@ -185,11 +185,7 @@ private val profileLocales: List<Pair<String, Int>> =
     listOf(
         "fr" to R.string.french,
         "en" to R.string.english,
-        "de" to R.string.german,
         "es" to R.string.spanish,
-        "it" to R.string.italian,
-        "pt" to R.string.portuguese,
-        "cs" to R.string.czech,
     )
 
 @Composable

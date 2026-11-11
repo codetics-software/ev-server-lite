@@ -7,6 +7,7 @@ import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.api.PageResponse
@@ -105,7 +106,7 @@ class ChargingSessionService(
         queries.list(conditions(user, filter), Sort.by(Sort.Direction.DESC, "startedAt", "id"), limit)
 
     fun conditions(user: AppPrincipal, filter: SessionFilter): List<Condition> {
-        ensure(filter.search.length <= 200) { "La recherche est trop longue." }
+        ensure(filter.search.length <= 200) { msg("validation.search_too_long") }
         val conditions = mutableListOf<Condition>(eq("tenantId", user.tenantId))
         val userId = if (user.role == UserRole.DRIVER) user.id else filter.userId
         userId?.let { conditions += eq("userId", it) }
@@ -113,7 +114,7 @@ class ChargingSessionService(
             "active" -> conditions += present("stoppedAt", false)
             "completed" -> conditions += present("stoppedAt")
             null, "" -> Unit
-            else -> throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Filtre d’état inconnu.")
+            else -> throw ResponseStatusException(HttpStatus.BAD_REQUEST, msg("validation.unknown_status_filter"))
         }
         filter.stationId?.takeIf(String::isNotBlank)?.let { conditions += eq("stationId", it) }
         filter.siteId?.let { conditions += eq("siteId", it) }
@@ -146,9 +147,9 @@ class ChargingSessionService(
     }
 
     fun session(user: AppPrincipal, id: Int): TransactionEntity {
-        val transaction = sessions.findByTenantIdAndId(user.tenantId, id) ?: throw NotFound("Session introuvable.")
+        val transaction = sessions.findByTenantIdAndId(user.tenantId, id) ?: throw NotFound(msg("sessions.not_found"))
         if (user.role == UserRole.DRIVER && transaction.userId != user.id) {
-            throw NotFound("Session introuvable.")
+            throw NotFound(msg("sessions.not_found"))
         }
         return transaction
     }
@@ -249,17 +250,17 @@ class ChargingSessionService(
     }
 
     fun start(user: AppPrincipal, input: SessionStartInput): CommandReceipt {
-        ensure(input.connectorId in 1..100) { "Numéro de connecteur invalide." }
-        ensure(input.tokenUid.matches(Regex("[A-Za-z0-9_-]{1,20}"))) { "Badge invalide." }
+        ensure(input.connectorId in 1..100) { msg("connector.invalid_number") }
+        ensure(input.tokenUid.matches(Regex("[A-Za-z0-9_-]{1,20}"))) { msg("sessions.invalid_badge") }
         val token =
             tokens.findById(ChargingTokenKey(user.tenantId, input.tokenUid)).orElse(null)
-                ?: throw NotFound("Badge introuvable.")
+                ?: throw NotFound(msg("tokens.not_found"))
         if (user.role == UserRole.DRIVER && token.userId != user.id) {
-            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Ce badge ne vous appartient pas.")
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, msg("sessions.badge_not_yours"))
         }
-        ensure(token.enabled) { "Ce badge est désactivé." }
+        ensure(token.enabled) { msg("tokens.disabled") }
         if (sessions.existsByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(user.tenantId, input.stationId, input.connectorId)) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Une session est déjà en cours sur ce connecteur.")
+            throw ResponseStatusException(HttpStatus.CONFLICT, msg("sessions.connector_busy"))
         }
         val id =
             queue.command(
@@ -274,7 +275,7 @@ class ChargingSessionService(
 
     fun stop(user: AppPrincipal, id: Int): CommandReceipt {
         val transaction = session(user, id)
-        ensure(transaction.stoppedAt == null) { "Cette session est déjà terminée." }
+        ensure(transaction.stoppedAt == null) { msg("sessions.already_finished") }
         val command =
             queue.command(
                 user.tenantId,
@@ -291,9 +292,9 @@ class ChargingSessionService(
             val candidate = session(user, id)
             val station =
                 db.lock<StationEntity>(StationKey(user.tenantId, candidate.stationId))
-                    ?: throw NotFound("Borne introuvable.")
+                    ?: throw NotFound(msg("stations.not_found"))
             val transaction = requireNotNull(db.lock<TransactionEntity>(id))
-            ensure(transaction.stoppedAt == null) { "Cette session est déjà terminée." }
+            ensure(transaction.stoppedAt == null) { msg("sessions.already_finished") }
             val stoppedAt = transaction.lastMeterAt?.takeIf { it.isAfter(transaction.startedAt) } ?: Instant.now()
             ocpp.close(
                 station,
@@ -313,10 +314,10 @@ class ChargingSessionService(
         db.atomic {
             val transaction = session(user, id)
             if (transaction.stoppedAt == null) {
-                throw ResponseStatusException(HttpStatus.CONFLICT, "Terminez la session avant de la supprimer.")
+                throw ResponseStatusException(HttpStatus.CONFLICT, msg("sessions.finish_before_delete"))
             }
             if (payments.findByTenantIdAndTransactionId(user.tenantId, id) != null || transaction.invoiceId != null) {
-                throw ResponseStatusException(HttpStatus.CONFLICT, "Une session payée ou facturée ne peut pas être supprimée.")
+                throw ResponseStatusException(HttpStatus.CONFLICT, msg("sessions.paid_cannot_delete"))
             }
             meters.deleteAllByTenantIdAndTransactionId(user.tenantId, id)
             sessions.delete(transaction)

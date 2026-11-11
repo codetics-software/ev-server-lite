@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthIntro } from "./auth-intro";
+import { t } from "@/lib/i18n";
 
 type Eula = { version: string; attribution: string; url: string };
 
@@ -35,7 +36,7 @@ export function EulaScreen() {
       await api("auth/eula/accept", { method: "POST" });
       router.replace(user?.role === "DRIVER" ? "/transactions" : "/");
     } catch (problem) {
-      setFailure(errorMessage(problem, "Impossible d’enregistrer votre acceptation."));
+      setFailure(errorMessage(problem, t("Impossible d’enregistrer votre acceptation.")));
       setPending(false);
     }
   }
@@ -47,8 +48,10 @@ export function EulaScreen() {
         <Card className="w-full max-w-lg">
           <CardHeader>
             <CardDescription>Codetics Supervision</CardDescription>
-            <CardTitle className="text-2xl">Conditions d’utilisation</CardTitle>
-            <CardDescription>{eula ? `Version ${eula.version}` : "Chargement…"}</CardDescription>
+            <CardTitle className="text-2xl">{t("Conditions d’utilisation")}</CardTitle>
+            <CardDescription>
+              {eula ? t("Version {version}", { version: eula.version }) : t("Chargement…")}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4 text-sm">
             {error && (
@@ -62,13 +65,13 @@ export function EulaScreen() {
               eula && (
                 <>
                   <p>
-                    Cette supervision de recharge est fournie sous licence d’attribution :{" "}
+                    {t("Cette supervision de recharge est fournie sous licence d’attribution :")}{" "}
                     <strong className="font-medium">{eula.attribution}</strong>.
                   </p>
                   <p className="text-muted-foreground">
-                    En utilisant ce service, vous acceptez que vos données de recharge (sessions,
-                    badges, consommation) soient traitées par l’exploitant du réseau pour la
-                    supervision, la facturation et le support. Le texte complet est disponible sur{" "}
+                    {t(
+                      "En utilisant ce service, vous acceptez que vos données de recharge (sessions, badges, consommation) soient traitées par l’exploitant du réseau pour la supervision, la facturation et le support. Le texte complet est disponible sur",
+                    )}{" "}
                     <a
                       href={eula.url}
                       target="_blank"
@@ -92,25 +95,25 @@ export function EulaScreen() {
             {user ? (
               <>
                 <span className="text-xs text-muted-foreground">
-                  Connecté en tant que {user.email}
+                  {t("Connecté en tant que {email}", { email: user.email })}
                 </span>
                 {user.eulaAccepted === false ? (
                   <Button onClick={accept} disabled={pending || !eula}>
-                    {pending ? "Enregistrement…" : "J’accepte les conditions"}
+                    {pending ? t("Enregistrement…") : t("J’accepte les conditions")}
                   </Button>
                 ) : (
                   <Link
                     href={user.role === "DRIVER" ? "/transactions" : "/"}
                     className={buttonVariants()}
                   >
-                    Retour à la supervision
+                    {t("Retour à la supervision")}
                   </Link>
                 )}
               </>
             ) : (
               !userLoading && (
                 <Link href="/auth/login" className={buttonVariants({ variant: "outline" })}>
-                  Retour à la connexion
+                  {t("Retour à la connexion")}
                 </Link>
               )
             )}

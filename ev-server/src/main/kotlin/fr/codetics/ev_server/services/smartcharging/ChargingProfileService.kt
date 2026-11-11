@@ -4,6 +4,7 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.commands.CommandReceipt
 import fr.codetics.ev_server.models.entities.ChargingProfileEntity
@@ -69,7 +70,7 @@ class ChargingProfileService(
 
     fun delete(user: AppPrincipal, id: UUID): MutationResponse =
         db.atomic {
-            val profile = profiles.findByTenantIdAndId(user.tenantId, id) ?: throw NotFound("Profil introuvable.")
+            val profile = profiles.findByTenantIdAndId(user.tenantId, id) ?: throw NotFound(msg("profiles.not_found"))
             clear(profile)
             db.audit(user.tenantId, user.id.toString(), "CHARGING_PROFILE_CLEAR", "${profile.stationId}/${profile.profileId}")
             MutationResponse()
@@ -77,10 +78,10 @@ class ChargingProfileService(
 
     fun powerLimit(user: AppPrincipal, stationId: String, input: PowerLimitInput): CommandReceipt {
         val station = requireStation(user.tenantId, stationId)
-        ensure(input.connectorId in 0..100) { "Numéro de connecteur invalide." }
-        ensure(input.limitKw.signum() >= 0 && input.limitKw <= BigDecimal(10000)) { "La limite doit être positive." }
+        ensure(input.connectorId in 0..100) { msg("connector.invalid_number") }
+        ensure(input.limitKw.signum() >= 0 && input.limitKw <= BigDecimal(10000)) { msg("profiles.limit_positive") }
         station.maximumPowerKw?.let { maximum ->
-            ensure(input.limitKw <= maximum) { "La limite dépasse la puissance maximale de la borne." }
+            ensure(input.limitKw <= maximum) { msg("profiles.limit_too_high") }
         }
         val purpose = if (input.connectorId == 0) "ChargePointMaxProfile" else "TxDefaultProfile"
         val profile =
@@ -155,42 +156,42 @@ class ChargingProfileService(
 
     private fun requireStation(tenant: UUID, stationId: String) =
         stations.findById(StationKey(tenant, stationId)).orElse(null)?.takeUnless { it.deleted }
-            ?: throw NotFound("Borne introuvable.")
+            ?: throw NotFound(msg("stations.not_found"))
 
     private fun validate(connectorId: Int, profile: JsonNode): JsonNode {
-        ensure(connectorId in 0..100) { "Numéro de connecteur invalide." }
-        ensure(profile.isObject) { "Le profil doit être un objet OCPP csChargingProfiles." }
+        ensure(connectorId in 0..100) { msg("connector.invalid_number") }
+        ensure(profile.isObject) { msg("profiles.object") }
         val id = profile.path("chargingProfileId")
-        ensure(id.isIntegralNumber && id.intValue() in 1..Int.MAX_VALUE) { "chargingProfileId doit être un entier positif." }
+        ensure(id.isIntegralNumber && id.intValue() in 1..Int.MAX_VALUE) { msg("profiles.id_positive") }
         ensure(profile.path("stackLevel").isIntegralNumber && profile.path("stackLevel").intValue() >= 0) {
-            "stackLevel doit être un entier positif ou nul."
+            msg("profiles.stack_level")
         }
         val purpose = profile.path("chargingProfilePurpose").asText()
         ensure(purpose in setOf("ChargePointMaxProfile", "TxDefaultProfile", "TxProfile")) { "chargingProfilePurpose inconnu." }
         ensure(purpose != "ChargePointMaxProfile" || connectorId == 0) {
-            "Un profil ChargePointMaxProfile s’applique au connecteur 0."
+            msg("profiles.max_profile_connector")
         }
         ensure(purpose != "TxProfile" || profile.path("transactionId").isIntegralNumber) {
-            "Un profil TxProfile doit cibler une session."
+            msg("profiles.tx_profile_session")
         }
         ensure(profile.path("chargingProfileKind").asText() in setOf("Absolute", "Recurring", "Relative")) {
             "chargingProfileKind inconnu."
         }
         val schedule = profile.path("chargingSchedule")
-        ensure(schedule.path("chargingRateUnit").asText() in setOf("W", "A")) { "L’unité doit être W ou A." }
+        ensure(schedule.path("chargingRateUnit").asText() in setOf("W", "A")) { msg("profiles.unit") }
         val periods = schedule.path("chargingSchedulePeriod")
-        ensure(periods.isArray && periods.size() in 1..48) { "Renseignez entre 1 et 48 périodes." }
+        ensure(periods.isArray && periods.size() in 1..48) { msg("profiles.period_count") }
         var previous = -1
         periods.forEach { period ->
             val start = period.path("startPeriod")
-            ensure(start.isIntegralNumber && start.intValue() > previous) { "Les périodes doivent être croissantes." }
+            ensure(start.isIntegralNumber && start.intValue() > previous) { msg("profiles.periods_ascending") }
             previous = start.intValue()
             ensure(period.path("limit").isNumber && period.path("limit").decimalValue().signum() >= 0) {
-                "Chaque période doit avoir une limite positive."
+                msg("profiles.period_limit")
             }
         }
-        ensure(previous >= 0 && periods[0].path("startPeriod").intValue() == 0) { "La première période commence à 0." }
-        ensure(db.encode(profile).length <= 16384) { "Le profil est trop volumineux." }
+        ensure(previous >= 0 && periods[0].path("startPeriod").intValue() == 0) { msg("profiles.first_period") }
+        ensure(db.encode(profile).length <= 16384) { msg("profiles.too_large") }
         return profile
     }
 

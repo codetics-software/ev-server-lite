@@ -18,7 +18,7 @@ struct ProfileScreen: View {
     @State private var notice: String?
 
     private let locales: [(String, LocalizedStringResource)] = [
-        ("fr", "French"), ("en", "English"), ("de", "German"), ("es", "Spanish"), ("it", "Italian"), ("pt", "Portuguese"), ("cs", "Czech"),
+        ("fr", "French"), ("en", "English"), ("es", "Spanish"),
     ]
 
     var body: some View {

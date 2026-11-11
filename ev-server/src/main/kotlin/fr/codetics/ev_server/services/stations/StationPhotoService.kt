@@ -9,6 +9,7 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.entities.StationPhotoContentEntity
 import fr.codetics.ev_server.models.entities.StationPhotoEntity
@@ -40,13 +41,13 @@ class StationPhotoService(
     fun upload(user: AppPrincipal, stationId: String, contentType: String, content: ByteArray): StationPhotoResponse {
         stations.requireVisible(user, stationId)
         val type = contentType.substringBefore(';').trim().lowercase()
-        ensure(type in TYPES) { "La photo doit être une image JPEG, PNG ou WebP." }
-        ensure(content.size in 1..SIZE_LIMIT) { "La photo doit peser au plus 5 Mo." }
-        ensure(matches(type, content)) { "Le contenu du fichier ne correspond pas à son format." }
+        ensure(type in TYPES) { msg("photos.format") }
+        ensure(content.size in 1..SIZE_LIMIT) { msg("photos.size") }
+        ensure(matches(type, content)) { msg("files.content_mismatch") }
         limiter.check("station-photo:${user.id}", UPLOADS_PER_WINDOW)
         return db.atomic {
             ensure(photos.countByTenantIdAndStationId(user.tenantId, stationId) < MAXIMUM_PER_STATION) {
-                "Cette borne a atteint le nombre maximal de photos."
+                msg("photos.limit")
             }
             val photo =
                 photos.save(
@@ -66,7 +67,7 @@ class StationPhotoService(
     fun content(user: AppPrincipal, stationId: String, photoId: UUID): StationPhotoContent {
         stations.requireVisible(user, stationId)
         val photo = photo(user, stationId, photoId)
-        val content = contents.findById(photo.id).orElse(null) ?: throw NotFound("Photo introuvable.")
+        val content = contents.findById(photo.id).orElse(null) ?: throw NotFound(msg("photos.not_found"))
         return StationPhotoContent(photo.contentType, content.content)
     }
 
@@ -74,7 +75,7 @@ class StationPhotoService(
         db.atomic {
             val photo = photo(user, stationId, photoId)
             if (photo.userId != user.id && user.role !in setOf(UserRole.ADMIN, UserRole.OPERATOR)) {
-                throw ResponseStatusException(HttpStatus.FORBIDDEN, "Vos droits ne permettent pas cette action.")
+                throw ResponseStatusException(HttpStatus.FORBIDDEN, msg("error.forbidden"))
             }
             remove(photo)
             db.audit(user.tenantId, user.id.toString(), "STATION_PHOTO_DELETE", "$stationId/$photoId")
@@ -92,7 +93,7 @@ class StationPhotoService(
 
     private fun photo(user: AppPrincipal, stationId: String, photoId: UUID) =
         photos.findById(photoId).orElse(null)?.takeIf { it.tenantId == user.tenantId && it.stationId == stationId }
-            ?: throw NotFound("Photo introuvable.")
+            ?: throw NotFound(msg("photos.not_found"))
 
     private fun response(user: AppPrincipal, photo: StationPhotoEntity) =
         StationPhotoResponse(

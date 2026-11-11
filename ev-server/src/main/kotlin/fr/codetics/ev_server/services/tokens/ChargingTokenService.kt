@@ -8,6 +8,7 @@ import fr.codetics.ev_server.core.ImportResult
 import fr.codetics.ev_server.core.InvalidRequest
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.api.PageResponse
@@ -57,7 +58,7 @@ class ChargingTokenService(
     }
 
     private fun conditions(tenant: UUID, search: String, userId: UUID?): List<Condition> {
-        ensure(search.length <= 200) { "La recherche est trop longue." }
+        ensure(search.length <= 200) { msg("validation.search_too_long") }
         val conditions = mutableListOf<Condition>(eq("key.tenantId", tenant))
         if (search.isNotBlank()) {
             conditions +=
@@ -109,7 +110,7 @@ class ChargingTokenService(
         db.atomic {
             val token = find(user.tenantId, uid)
             if (transactions.findAllByTenantIdAndStoppedAtIsNull(user.tenantId).any { it.tokenUid == uid }) {
-                throw ResponseStatusException(HttpStatus.CONFLICT, "Une session est en cours avec ce badge.")
+                throw ResponseStatusException(HttpStatus.CONFLICT, msg("tokens.session_in_progress"))
             }
             tokens.delete(token)
             db.audit(user.tenantId, user.id.toString(), "TOKEN_DELETE", uid)
@@ -121,7 +122,7 @@ class ChargingTokenService(
         return db.atomic {
             val token = find(user.tenantId, uid)
             ensure(token.vehicleId == null) { VEHICLE_TOKEN }
-            ensure(token.userId == null || token.userId == userId) { "Ce badge est déjà attribué à un autre utilisateur." }
+            ensure(token.userId == null || token.userId == userId) { msg("tokens.assigned_to_other") }
             token.userId = userId
             tokens.save(token)
             db.audit(user.tenantId, user.id.toString(), "TOKEN_ASSIGN", "$uid/$userId")
@@ -173,7 +174,7 @@ class ChargingTokenService(
                 val owner =
                     if (email.isBlank()) null
                     else users.findByTenantIdAndEmail(user.tenantId, email)?.takeIf { it.deletedAt == null }
-                        ?: throw InvalidRequest("Utilisateur inconnu : $email.")
+                        ?: throw InvalidRequest(msg("tokens.import.unknown_user", email))
                 val input =
                     TokenInput(
                         uid = uid,
@@ -193,7 +194,7 @@ class ChargingTokenService(
                     if (existing == null) created += 1 else updated += 1
                 }
             } catch (error: IllegalArgumentException) {
-                errors += ImportError(index + 2, error.message ?: "Ligne invalide.")
+                errors += ImportError(index + 2, error.message ?: msg("csv.invalid_line"))
             }
         }
         db.audit(user.tenantId, user.id.toString(), "TOKENS_IMPORT", "${created + updated}")
@@ -208,23 +209,24 @@ class ChargingTokenService(
     }
 
     private fun find(tenant: UUID, uid: String) =
-        tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null) ?: throw NotFound("Badge introuvable.")
+        tokens.findById(ChargingTokenKey(tenant, uid)).orElse(null) ?: throw NotFound(msg("tokens.not_found"))
 
     private fun requireUser(tenant: UUID, id: UUID) {
         if (users.findByTenantIdAndId(tenant, id)?.takeIf { it.deletedAt == null } == null) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur indisponible.")
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, msg("users.unavailable"))
         }
     }
 
     private companion object {
-        const val VEHICLE_TOKEN = "Un identifiant de véhicule se gère depuis la fiche du véhicule."
+        val VEHICLE_TOKEN: String
+            get() = msg("tokens.vehicle_id_managed_by_car")
     }
 
     private fun validate(body: TokenInput) {
         ensure(body.uid.matches(Regex("[A-Za-z0-9_-]{1,20}"))) {
-            "L’identifiant du badge OCPP 1.6 doit contenir au plus 20 caractères."
+            msg("tokens.uid_too_long")
         }
-        ensure(body.visualId == null || body.visualId.length <= 100) { "L’identifiant visible contient 100 caractères au plus." }
-        ensure(body.description == null || body.description.length <= 200) { "La description contient 200 caractères au plus." }
+        ensure(body.visualId == null || body.visualId.length <= 100) { msg("tokens.visual_id_too_long") }
+        ensure(body.description == null || body.description.length <= 200) { msg("tokens.description_too_long") }
     }
 }

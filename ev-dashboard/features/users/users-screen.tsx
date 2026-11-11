@@ -16,6 +16,7 @@ import { useApi, useRevision } from "@/hooks/use-api";
 import { relative } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
 import { IconCircleCheck, IconPlus, IconUsers } from "@tabler/icons-react";
+import { t, translated } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { roleOptions, UserForm } from "./user-form";
@@ -23,15 +24,15 @@ import type { ManagedUser, UserInError } from "./user-types";
 
 export function UserState({ user }: { user: ManagedUser }) {
   if (!user.enabled) {
-    return <ToneBadge tone="neutral">Désactivé</ToneBadge>;
+    return <ToneBadge tone="neutral">{t("Désactivé")}</ToneBadge>;
   }
   if (!user.email_verified) {
-    return <ToneBadge tone="warning">À vérifier</ToneBadge>;
+    return <ToneBadge tone="warning">{t("À vérifier")}</ToneBadge>;
   }
-  return <ToneBadge tone="success">Actif</ToneBadge>;
+  return <ToneBadge tone="success">{t("Actif")}</ToneBadge>;
 }
 
-const columns: Column<ManagedUser>[] = [
+const columns: Column<ManagedUser>[] = translated([
   {
     id: "name",
     header: "Utilisateur",
@@ -61,16 +62,16 @@ const columns: Column<ManagedUser>[] = [
     id: "login",
     header: "Dernière connexion",
     sort: (user) => user.last_login_at ?? "",
-    cell: (user) => (user.last_login_at ? relative(user.last_login_at) : "Jamais"),
+    cell: (user) => (user.last_login_at ? relative(user.last_login_at) : t("Jamais")),
   },
-];
+]);
 
-const states = [
+const states = translated([
   { value: "all", label: "Tous les états" },
   { value: "active", label: "Actifs" },
   { value: "disabled", label: "Désactivés" },
   { value: "unverified", label: "Adresse à vérifier" },
-];
+]);
 
 function UsersList({ revision }: { revision: number }) {
   const router = useRouter();
@@ -83,25 +84,25 @@ function UsersList({ revision }: { revision: number }) {
     { revision },
   );
   return (
-    <section className="flex flex-col gap-4" aria-label="Utilisateurs">
+    <section className="flex flex-col gap-4" aria-label={t("Utilisateurs")}>
       <div className="flex flex-wrap items-end gap-3">
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Nom ou adresse…"
-          label="Rechercher un utilisateur"
+          placeholder={t("Nom ou adresse…")}
+          label={t("Rechercher un utilisateur")}
         />
         <OptionSelect
           value={role}
           onChange={setRole}
-          label="Rôle"
+          label={t("Rôle")}
           className="w-full sm:w-44"
-          options={[{ value: "all", label: "Tous les rôles" }, ...roleOptions]}
+          options={[{ value: "all", label: t("Tous les rôles") }, ...roleOptions()]}
         />
         <OptionSelect
           value={state}
           onChange={setState}
-          label="État"
+          label={t("État")}
           className="w-full sm:w-48"
           options={states}
         />
@@ -116,13 +117,13 @@ function UsersList({ revision }: { revision: number }) {
         empty={
           <EmptyState
             icon={<IconUsers />}
-            title="Aucun utilisateur"
-            description="Modifiez la recherche ou les filtres."
+            title={t("Aucun utilisateur")}
+            description={t("Modifiez la recherche ou les filtres.")}
           />
         }
       >
         <DataTable
-          label="Utilisateurs"
+          label={t("Utilisateurs")}
           rows={list.items}
           columns={columns}
           rowKey={(user) => user.id}
@@ -154,13 +155,13 @@ function UsersInError({ revision }: { revision: number }) {
       empty={
         <EmptyState
           icon={<IconCircleCheck />}
-          title="Aucun utilisateur en erreur"
-          description="Tous les comptes sont vérifiés, actifs et équipés d’un badge."
+          title={t("Aucun utilisateur en erreur")}
+          description={t("Tous les comptes sont vérifiés, actifs et équipés d’un badge.")}
         />
       }
     >
       <DataTable
-        label="Utilisateurs en erreur"
+        label={t("Utilisateurs en erreur")}
         rows={rows}
         rowKey={(user) => user.id}
         onRowClick={(user) => router.push(`/users/${user.id}`)}
@@ -168,7 +169,7 @@ function UsersInError({ revision }: { revision: number }) {
           ...(columns.slice(0, 2) as Column<ManagedUser & { errors: string[] }>[]),
           {
             id: "errors",
-            header: "Anomalies",
+            header: t("Anomalies"),
             cell: (user) => <ErrorBadges errors={user.errors} />,
           },
         ]}
@@ -184,28 +185,30 @@ export function UsersScreen() {
   return (
     <>
       <PageHeader
-        title="Utilisateurs et rôles"
-        description="Comptes de supervision et conducteurs, rôles, accès aux sites et moyens de paiement."
+        title={t("Utilisateurs et rôles")}
+        description={t(
+          "Comptes de supervision et conducteurs, rôles, accès aux sites et moyens de paiement.",
+        )}
         actions={
           <>
             <ImportButton
               path="users/import"
-              title="Importer des utilisateurs"
+              title={t("Importer des utilisateurs")}
               columns="email;name;role;badge"
               onImported={refresh}
             />
             <ExportButton path="users/export" filename="utilisateurs" />
             <Button onClick={() => setCreating(true)}>
               <IconPlus data-icon="inline-start" />
-              Ajouter un utilisateur
+              {t("Ajouter un utilisateur")}
             </Button>
           </>
         }
       />
       <Tabs defaultValue="all">
         <TabsList variant="line">
-          <TabsTrigger value="all">Tous les utilisateurs</TabsTrigger>
-          <TabsTrigger value="errors">En erreur</TabsTrigger>
+          <TabsTrigger value="all">{t("Tous les utilisateurs")}</TabsTrigger>
+          <TabsTrigger value="errors">{t("En erreur")}</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="pt-4">
           <UsersList revision={revision} />
@@ -217,8 +220,8 @@ export function UsersScreen() {
       <FormDialog
         open={creating}
         onOpenChange={setCreating}
-        title="Ajouter un utilisateur"
-        description="Un courriel l’invitera à définir son mot de passe."
+        title={t("Ajouter un utilisateur")}
+        description={t("Un courriel l’invitera à définir son mot de passe.")}
         wide
       >
         <UserForm

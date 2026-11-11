@@ -16,6 +16,7 @@ import { IconMapPin, IconPlus } from "@tabler/icons-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { SiteForm } from "./organization-forms";
+import { t } from "@/lib/i18n";
 
 export function SitesScreen() {
   const user = useWorkspace();
@@ -28,7 +29,7 @@ export function SitesScreen() {
   const columns: Column<RecordItem>[] = [
     {
       id: "name",
-      header: "Site",
+      header: t("Site"),
       sort: (record) => record.name,
       cell: (record) => (
         <span className="flex flex-col">
@@ -41,7 +42,7 @@ export function SitesScreen() {
     },
     {
       id: "address",
-      header: "Adresse",
+      header: t("Adresse"),
       sort: (record) => String(field(record, "city") ?? ""),
       cell: (record) =>
         [field(record, "address"), field(record, "postalCode"), field(record, "city")]
@@ -50,57 +51,61 @@ export function SitesScreen() {
     },
     {
       id: "access",
-      header: "Contrôle d’accès",
+      header: t("Contrôle d’accès"),
       cell: (record) => (
-        <BooleanBadge value={field(record, "accessControl")} yes="Restreint" no="Ouvert" />
+        <BooleanBadge
+          value={field(record, "accessControl")}
+          yes={t("Restreint")}
+          no={t("Ouvert")}
+        />
       ),
     },
     {
       id: "public",
-      header: "Public",
+      header: t("Public"),
       cell: (record) => <BooleanBadge value={field(record, "public")} />,
     },
   ];
   return (
     <>
       <PageHeader
-        title="Sites"
-        description="Les lieux qui accueillent vos bornes, leurs accès et leurs utilisateurs."
+        title={t("Sites")}
+        description={t("Les lieux qui accueillent vos bornes, leurs accès et leurs utilisateurs.")}
         actions={
           isAdmin(user) && (
             <Button onClick={() => setCreating(true)}>
               <IconPlus data-icon="inline-start" />
-              Ajouter un site
+              {t("Ajouter un site")}
             </Button>
           )
         }
       />
       <RecordList
         kind="sites"
-        label="Sites"
+        label={t("Sites")}
         columns={columns}
         revision={revision}
         filters={{ companyId: companyId || undefined }}
         onSelect={(record) => router.push(`/sites/${record.id}`)}
         emptyIcon={<IconMapPin />}
-        emptyTitle="Aucun site"
-        emptyDescription="Ajoutez un site pour y regrouper vos zones et vos bornes."
+        emptyTitle={t("Aucun site")}
+        emptyDescription={t("Ajoutez un site pour y regrouper vos zones et vos bornes.")}
         toolbar={
           <Field className="w-full sm:w-56">
             <FieldLabel htmlFor="sites-company" className="sr-only">
-              Entreprise
+              {t("Entreprise")}
             </FieldLabel>
             <EntityPicker
               id="sites-company"
               source="companies"
               value={companyId}
               onChange={setCompanyId}
-              placeholder="Toutes les entreprises"
+              placeholder={t("Toutes les entreprises")}
             />
           </Field>
         }
       />
-      <FormDialog open={creating} onOpenChange={setCreating} title="Ajouter un site" wide>
+      <FormDialog open={creating} onOpenChange={setCreating} title={t("Ajouter un site")} wide>
         <SiteForm
           record={null}
           defaults={{ companyId }}

@@ -1,4 +1,5 @@
 import type { Components, User } from "@/lib/api-types";
+import { t } from "@/lib/i18n";
 import { sections, type Section } from "./navigation";
 
 export function canSee(section: Section, user: User, components: Components) {
@@ -20,5 +21,5 @@ export function homeFor(user: User) {
 }
 
 export function sectionLabel(section: Section, user: User) {
-  return user.role === "DRIVER" && section.driverLabel ? section.driverLabel : section.label;
+  return t(user.role === "DRIVER" && section.driverLabel ? section.driverLabel : section.label);
 }

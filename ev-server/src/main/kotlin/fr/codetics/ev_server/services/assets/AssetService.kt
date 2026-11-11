@@ -5,6 +5,7 @@ import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.InvalidRequest
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.randomToken
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.api.MutationResponse
@@ -77,14 +78,14 @@ class AssetService(
     private val byType = connectors.associateBy { it.type }
 
     private fun asset(tenant: UUID, id: UUID): Entry<AssetData> =
-        organization.asset(tenant, id) ?: throw NotFound("Équipement introuvable.")
+        organization.asset(tenant, id) ?: throw NotFound(msg("assets.not_found"))
 
     fun list(user: AppPrincipal, id: UUID, from: Instant?, to: Instant?): List<AssetConsumptionResponse> {
         asset(user.tenantId, id)
         val end = to ?: Instant.now()
         val start = from ?: end.minus(Duration.ofDays(1))
         ensure(start.isBefore(end) && Duration.between(start, end) <= Duration.ofDays(31)) {
-            "Choisissez une période de 31 jours au plus."
+            msg("validation.period_31_days")
         }
         return consumptions.findAllByTenantIdAndAssetIdAndSampledAtBetweenOrderBySampledAt(user.tenantId, id, start, end).map(::response)
     }
@@ -111,13 +112,13 @@ class AssetService(
     }
 
     private fun store(tenant: UUID, id: UUID, input: List<AssetConsumptionInput>) {
-        ensure(input.size in 1..1000) { "Envoyez entre 1 et 1 000 mesures." }
+        ensure(input.size in 1..1000) { msg("assets.measurement_count") }
         val horizon = Instant.now().plus(Duration.ofMinutes(5))
         input.forEach { point ->
-            ensure(!point.at.isAfter(horizon)) { "Une mesure est datée dans le futur." }
-            ensure(point.powerKw.abs() <= BigDecimal(100000)) { "Puissance invalide." }
-            ensure(point.energyKwh == null || point.energyKwh.signum() >= 0) { "Énergie invalide." }
-            ensure(point.soc == null || point.soc in 0..100) { "État de charge invalide." }
+            ensure(!point.at.isAfter(horizon)) { msg("assets.measurement_future") }
+            ensure(point.powerKw.abs() <= BigDecimal(100000)) { msg("assets.invalid_power") }
+            ensure(point.energyKwh == null || point.energyKwh.signum() >= 0) { msg("assets.invalid_energy") }
+            ensure(point.soc == null || point.soc in 0..100) { msg("assets.invalid_soc") }
         }
         db.atomic {
             consumptions.saveAll(
@@ -155,7 +156,7 @@ class AssetService(
     fun updateSecrets(user: AppPrincipal, id: UUID, input: AssetSecretsInput): AssetConnectionStatus {
         asset(user.tenantId, id)
         listOfNotNull(input.password, input.clientSecret, input.apiKey).forEach {
-            ensure(it.length <= 1000) { "Le secret est trop long." }
+            ensure(it.length <= 1000) { msg("assets.secret_too_long") }
         }
         db.atomic {
             val connection = connections.findByTenantIdAndAssetId(user.tenantId, id) ?: AssetConnectionEntity(id, user.tenantId)
@@ -187,13 +188,13 @@ class AssetService(
 
     fun check(user: AppPrincipal, id: UUID): ConnectionCheck {
         val asset = asset(user.tenantId, id)
-        val connection = asset.data.connection ?: return ConnectionCheck(false, "Aucune connexion configurée.")
-        val connector = byType[connection.type] ?: return ConnectionCheck(connection.type == "PUSH", "Connexion par envoi des mesures.")
+        val connection = asset.data.connection ?: return ConnectionCheck(false, msg("assets.no_connection"))
+        val connector = byType[connection.type] ?: return ConnectionCheck(connection.type == "PUSH", msg("assets.push_connection"))
         return try {
             connector.check(connection, secrets(user.tenantId, id))
-            ConnectionCheck(true, "Connexion réussie.")
+            ConnectionCheck(true, msg("common.connection_ok"))
         } catch (error: AssetConnectionError) {
-            ConnectionCheck(false, error.message ?: "Connexion impossible.")
+            ConnectionCheck(false, error.message ?: msg("common.connection_failed"))
         } catch (error: InvalidRequest) {
             ConnectionCheck(false, error.message)
         }
@@ -222,8 +223,8 @@ class AssetService(
     }
 
     private fun poll(tenant: UUID, asset: Entry<AssetData>, manual: Boolean): List<AssetConsumptionEntity> {
-        val connection = asset.data.connection ?: throw InvalidRequest("Aucune connexion configurée.")
-        val connector = byType[connection.type] ?: throw InvalidRequest("Cette connexion ne permet pas de relever les mesures.")
+        val connection = asset.data.connection ?: throw InvalidRequest(msg("assets.no_connection"))
+        val connector = byType[connection.type] ?: throw InvalidRequest(msg("assets.cannot_read"))
         val since = consumptions.findFirstByTenantIdAndAssetIdOrderBySampledAtDesc(tenant, asset.id)?.sampledAt
         return try {
             val samples =
@@ -251,7 +252,7 @@ class AssetService(
             db.atomic {
                 val entity = connections.findByTenantIdAndAssetId(tenant, asset.id) ?: AssetConnectionEntity(asset.id, tenant)
                 entity.lastAttemptAt = Instant.now()
-                entity.lastError = (error.message ?: "Relevé impossible.").take(500)
+                entity.lastError = (error.message ?: msg("assets.read_failed")).take(500)
                 connections.save(entity)
             }
             throw error

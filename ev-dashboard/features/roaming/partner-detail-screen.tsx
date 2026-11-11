@@ -36,6 +36,7 @@ import {
   type OcpiObject,
   type Partner,
 } from "./roaming-types";
+import { t } from "@/lib/i18n";
 
 const moduleLabel = (module: string) => ocpiModuleLabels[module] ?? module;
 
@@ -45,30 +46,30 @@ function Jobs({ partnerId, revision }: { partnerId: string; revision: number }) 
   const columns: Column<JobResult>[] = [
     {
       id: "module",
-      header: "Module",
+      header: t("Module"),
       sort: (job) => job.module,
       cell: (job) =>
         job.direction
-          ? `${moduleLabel(job.module)} · ${job.direction === "PULL" || job.direction === "RECEIVER" ? "récupération" : "envoi"}`
+          ? `${moduleLabel(job.module)} · ${t(job.direction === "PULL" || job.direction === "RECEIVER" ? "récupération" : "envoi")}`
           : moduleLabel(job.module),
     },
     {
       id: "started",
-      header: "Début",
+      header: t("Début"),
       sort: (job) => job.started_at,
       cell: (job) => date(job.started_at),
     },
-    { id: "total", header: "Total", align: "right", cell: (job) => job.total },
-    { id: "success", header: "Réussis", align: "right", cell: (job) => job.success },
+    { id: "total", header: t("Total"), align: "right", cell: (job) => job.total },
+    { id: "success", header: t("Réussis"), align: "right", cell: (job) => job.success },
     {
       id: "failure",
-      header: "Échecs",
+      header: t("Échecs"),
       align: "right",
       cell: (job) => (job.failure ? <ToneBadge tone="danger">{job.failure}</ToneBadge> : 0),
     },
     {
       id: "errors",
-      header: "Erreurs",
+      header: t("Erreurs"),
       cell: (job) =>
         job.errors?.length ? (
           <span className="block max-w-80 truncate text-xs text-muted-foreground">
@@ -88,13 +89,13 @@ function Jobs({ partnerId, revision }: { partnerId: string; revision: number }) 
       empty={
         <EmptyState
           icon={<IconHistory />}
-          title="Aucune synchronisation"
-          description="Lancez un envoi ou une récupération pour voir son résultat."
+          title={t("Aucune synchronisation")}
+          description={t("Lancez un envoi ou une récupération pour voir son résultat.")}
         />
       }
     >
       <DataTable
-        label="Synchronisations"
+        label={t("Synchronisations")}
         rows={items}
         columns={columns}
         rowKey={(job, index) => job.id ?? `${job.module}-${job.started_at}-${index}`}
@@ -111,24 +112,24 @@ function Objects({ partnerId }: { partnerId: string }) {
   const columns: Column<OcpiObject>[] = [
     {
       id: "path",
-      header: "Objet",
+      header: t("Objet"),
       sort: (item) => item.path,
       cell: (item) => <code className="text-xs">{item.path}</code>,
     },
     {
       id: "updated",
-      header: "Mise à jour",
+      header: t("Mise à jour"),
       sort: (item) => item.last_updated ?? "",
       cell: (item) => date(item.last_updated),
     },
   ];
   return (
-    <section className="flex flex-col gap-4" aria-label="Objets OCPI">
+    <section className="flex flex-col gap-4" aria-label={t("Objets OCPI")}>
       <div className="flex flex-wrap gap-3">
         <OptionSelect
           value={module}
           onChange={setModule}
-          label="Module"
+          label={t("Module")}
           className="w-full sm:w-60"
           options={Object.keys(ocpiModuleLabels).map((value) => ({
             value,
@@ -138,11 +139,11 @@ function Objects({ partnerId }: { partnerId: string }) {
         <OptionSelect
           value={direction}
           onChange={setDirection}
-          label="Sens"
+          label={t("Sens")}
           className="w-full sm:w-60"
           options={[
-            { value: "SENDER", label: "Publiés au partenaire" },
-            { value: "RECEIVER", label: "Reçus du partenaire" },
+            { value: "SENDER", label: t("Publiés au partenaire") },
+            { value: "RECEIVER", label: t("Reçus du partenaire") },
           ]}
         />
       </div>
@@ -155,13 +156,13 @@ function Objects({ partnerId }: { partnerId: string }) {
         empty={
           <EmptyState
             icon={<IconDatabase />}
-            title="Aucun objet"
-            description="Aucun objet échangé pour ce module et ce sens."
+            title={t("Aucun objet")}
+            description={t("Aucun objet échangé pour ce module et ce sens.")}
           />
         }
       >
         <DataTable
-          label="Objets"
+          label={t("Objets")}
           rows={list.items}
           columns={columns}
           rowKey={(item) => item.path}
@@ -212,10 +213,13 @@ export function PartnerDetailScreen({ id }: { id: string }) {
     return (
       <>
         <PageHeader
-          title="Partenaire introuvable"
-          back={{ href: "/roaming", label: "Partenaires" }}
+          title={t("Partenaire introuvable")}
+          back={{ href: "/roaming", label: t("Partenaires") }}
         />
-        <EmptyState title="Ce partenaire n’existe pas" description="Il a peut-être été supprimé." />
+        <EmptyState
+          title={t("Ce partenaire n’existe pas")}
+          description={t("Il a peut-être été supprimé.")}
+        />
       </>
     );
   }
@@ -233,7 +237,11 @@ export function PartnerDetailScreen({ id }: { id: string }) {
       () => api<JobResult>(`ocpi/partners/${id}/${kind}/${module}`, { method: "POST" }),
       {
         success: (result) =>
-          `${moduleLabel(module)} : ${result?.success ?? 0} réussis sur ${result?.total ?? 0}.`,
+          t("{module} : {success} réussis sur {total}.", {
+            module: moduleLabel(module),
+            success: result?.success ?? 0,
+            total: result?.total ?? 0,
+          }),
         onDone: () => {
           refresh();
           refreshJobs();
@@ -245,7 +253,7 @@ export function PartnerDetailScreen({ id }: { id: string }) {
   return (
     <>
       <PageHeader
-        back={{ href: "/roaming", label: "Partenaires" }}
+        back={{ href: "/roaming", label: t("Partenaires") }}
         title={partner.name}
         description={`${partner.country_code}*${partner.party_id} · ${display(partner.local_role)} · ${partner.remote_url}`}
         meta={
@@ -270,48 +278,50 @@ export function PartnerDetailScreen({ id }: { id: string }) {
                     }),
                   {
                     success: (result) =>
-                      result?.ok ? "Le partenaire répond." : display(result?.message),
+                      result?.ok ? t("Le partenaire répond.") : display(result?.message),
                     onDone: refresh,
                   },
                 )
               }
             >
               <IconBroadcast data-icon="inline-start" />
-              Tester la connexion
+              {t("Tester la connexion")}
             </Button>
             <Button variant="outline" onClick={() => setRegistering(true)}>
-              {partner.registered ? "Renouveler les identifiants" : "S’enregistrer"}
+              {partner.registered ? t("Renouveler les identifiants") : t("S’enregistrer")}
             </Button>
             {partner.registered && (
               <ConfirmButton
-                title="Annuler l’enregistrement ?"
-                description="Les identifiants échangés sont supprimés chez nous et chez le partenaire."
-                confirmLabel="Annuler l’enregistrement"
+                title={t("Annuler l’enregistrement ?")}
+                description={t(
+                  "Les identifiants échangés sont supprimés chez nous et chez le partenaire.",
+                )}
+                confirmLabel={t("Annuler l’enregistrement")}
                 variant="outline"
                 onConfirm={() =>
                   action.run(
                     "unregister",
                     () => api(`ocpi/partners/${id}/unregister`, { method: "POST" }),
-                    { success: "Enregistrement annulé.", onDone: refresh },
+                    { success: t("Enregistrement annulé."), onDone: refresh },
                   )
                 }
               >
-                Désenregistrer
+                {t("Désenregistrer")}
               </ConfirmButton>
             )}
             {partner.enabled && (
               <ConfirmButton
-                title={`Désactiver ${partner.name} ?`}
-                description="Les identifiants sont révoqués et plus aucun échange n’a lieu."
-                confirmLabel="Désactiver"
+                title={t("Désactiver {name} ?", { name: partner.name })}
+                description={t("Les identifiants sont révoqués et plus aucun échange n’a lieu.")}
+                confirmLabel={t("Désactiver")}
                 onConfirm={() =>
                   action.run("disable", () => api(`ocpi/partners/${id}`, { method: "DELETE" }), {
-                    success: "Partenaire désactivé.",
+                    success: t("Partenaire désactivé."),
                     onDone: () => router.replace("/roaming"),
                   })
                 }
               >
-                Désactiver
+                {t("Désactiver")}
               </ConfirmButton>
             )}
           </>
@@ -320,10 +330,10 @@ export function PartnerDetailScreen({ id }: { id: string }) {
       <dl className="grid grid-cols-2 gap-4 border-y py-4 sm:grid-cols-4">
         {(
           [
-            ["Enregistré", partner.registered ? "Oui" : "Non"],
-            ["Dernier ping", date(partner.last_ping_at)],
-            ["Dernier envoi", date(partner.last_push_at)],
-            ["Dernière récupération", date(partner.last_pull_at)],
+            [t("Enregistré"), partner.registered ? t("Oui") : t("Non")],
+            [t("Dernier ping"), date(partner.last_ping_at)],
+            [t("Dernier envoi"), date(partner.last_push_at)],
+            [t("Dernière récupération"), date(partner.last_pull_at)],
           ] as const
         ).map(([label, value]) => (
           <div key={label}>
@@ -335,12 +345,14 @@ export function PartnerDetailScreen({ id }: { id: string }) {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Envoyer au partenaire</CardTitle>
-            <CardDescription>Publie nos données (sites publics, états, sessions…).</CardDescription>
+            <CardTitle>{t("Envoyer au partenaire")}</CardTitle>
+            <CardDescription>
+              {t("Publie nos données (sites publics, états, sessions…).")}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
             <Field className="w-full sm:w-60">
-              <FieldLabel htmlFor="push-module">Module</FieldLabel>
+              <FieldLabel htmlFor="push-module">{t("Module")}</FieldLabel>
               <OptionSelect
                 id="push-module"
                 value={pushModule}
@@ -356,18 +368,18 @@ export function PartnerDetailScreen({ id }: { id: string }) {
               onClick={() => job("push", pushModule)}
             >
               <IconArrowUp data-icon="inline-start" />
-              Envoyer
+              {t("Envoyer")}
             </Button>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Récupérer du partenaire</CardTitle>
-            <CardDescription>Importe ses données (badges, tarifs, sites…).</CardDescription>
+            <CardTitle>{t("Récupérer du partenaire")}</CardTitle>
+            <CardDescription>{t("Importe ses données (badges, tarifs, sites…).")}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
             <Field className="w-full sm:w-60">
-              <FieldLabel htmlFor="pull-module">Module</FieldLabel>
+              <FieldLabel htmlFor="pull-module">{t("Module")}</FieldLabel>
               <OptionSelect
                 id="pull-module"
                 value={pullModule}
@@ -383,16 +395,16 @@ export function PartnerDetailScreen({ id }: { id: string }) {
               onClick={() => job("pull", pullModule)}
             >
               <IconArrowDown data-icon="inline-start" />
-              Récupérer
+              {t("Récupérer")}
             </Button>
           </CardContent>
         </Card>
       </div>
       <Tabs defaultValue="jobs">
         <TabsList variant="line">
-          <TabsTrigger value="jobs">Synchronisations</TabsTrigger>
-          <TabsTrigger value="objects">Objets échangés</TabsTrigger>
-          <TabsTrigger value="settings">Paramètres</TabsTrigger>
+          <TabsTrigger value="jobs">{t("Synchronisations")}</TabsTrigger>
+          <TabsTrigger value="objects">{t("Objets échangés")}</TabsTrigger>
+          <TabsTrigger value="settings">{t("Paramètres")}</TabsTrigger>
         </TabsList>
         <TabsContent value="jobs" className="pt-4">
           <Jobs partnerId={id} revision={jobsRevision} />
@@ -411,7 +423,7 @@ export function PartnerDetailScreen({ id }: { id: string }) {
       <FormDialog
         open={registering}
         onOpenChange={setRegistering}
-        title="Échange des identifiants OCPI"
+        title={t("Échange des identifiants OCPI")}
         description={partner.name}
       >
         <RegisterForm

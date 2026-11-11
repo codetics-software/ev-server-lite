@@ -3,11 +3,12 @@
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { IconSearch } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
+import { t } from "@/lib/i18n";
 
 export function SearchInput({
   value,
   onChange,
-  placeholder = "Rechercher…",
+  placeholder = t("Rechercher…"),
   label = "Rechercher",
 }: {
   value: string;

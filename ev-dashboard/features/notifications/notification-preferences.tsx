@@ -17,6 +17,7 @@ import { useApi, useRevision } from "@/hooks/use-api";
 import { api } from "@/lib/api";
 import { notificationLabels } from "@/lib/labels";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 type Preferences = { email: boolean; push?: boolean; types: Record<string, boolean> };
 
@@ -90,23 +91,23 @@ export function NotificationPreferences({ path, staff }: { path: string; staff: 
         />
         <FieldContent>
           <FieldLabel htmlFor="notification-email">
-            Recevoir les notifications par courriel
+            {t("Recevoir les notifications par courriel")}
           </FieldLabel>
           <FieldDescription>
-            Désactivez pour ne plus recevoir aucun courriel de notification.
+            {t("Désactivez pour ne plus recevoir aucun courriel de notification.")}
           </FieldDescription>
         </FieldContent>
       </Field>
       {group(
-        "Mes recharges",
-        "Événements liés à vos sessions, à votre compte et à vos factures.",
+        t("Mes recharges"),
+        t("Événements liés à vos sessions, à votre compte et à vos factures."),
         own,
       )}
       {staff &&
         network.length > 0 &&
         group(
-          "Exploitation du réseau",
-          "Alertes envoyées aux administrateurs du réseau et des sites.",
+          t("Exploitation du réseau"),
+          t("Alertes envoyées aux administrateurs du réseau et des sites."),
           network,
         )}
       <div className="flex gap-2">
@@ -117,7 +118,7 @@ export function NotificationPreferences({ path, staff }: { path: string; staff: 
               "save",
               () => api<Preferences>(path, { method: "PUT", body: JSON.stringify(value) }),
               {
-                success: "Préférences de notification enregistrées.",
+                success: t("Préférences de notification enregistrées."),
                 onDone: () => {
                   setDraft(null);
                   refresh();
@@ -126,11 +127,11 @@ export function NotificationPreferences({ path, staff }: { path: string; staff: 
             )
           }
         >
-          Enregistrer
+          {t("Enregistrer")}
         </Button>
         {draft && (
           <Button variant="ghost" onClick={() => setDraft(null)}>
-            Annuler
+            {t("Annuler")}
           </Button>
         )}
       </div>

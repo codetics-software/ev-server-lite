@@ -17,6 +17,7 @@ import type { RecordItem } from "@/lib/api-types";
 import { date, relative } from "@/lib/format";
 import { integerBetween, matches, required, rules } from "@/lib/form";
 import { IconTrash } from "@tabler/icons-react";
+import { t, translated } from "@/lib/i18n";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import {
@@ -26,17 +27,22 @@ import {
   type VehicleId,
 } from "./autocharge-types";
 
-export const enrollWarning =
-  "Les bornes dont la recharge automatique est activée démarreront la recharge dès le branchement de ce véhicule, sans badge, aux frais de son conducteur. L’identifiant du véhicule n’est pas un secret : révoquez-le si vous vendez ou prêtez le véhicule.";
+export const enrollWarning = () =>
+  t(
+    "Les bornes dont la recharge automatique est activée démarreront la recharge dès le branchement de ce véhicule, sans badge, aux frais de son conducteur. L’identifiant du véhicule n’est pas un secret : révoquez-le si vous vendez ou prêtez le véhicule.",
+  );
 
 export function CandidateSummary({ candidate }: { candidate: AutoChargeCandidate }) {
   return (
     <span className="flex min-w-0 flex-col">
       <span className="font-medium">
-        {candidate.station_id} · connecteur {candidate.connector_id}
+        {t("{station} · connecteur {connector}", {
+          station: candidate.station_id,
+          connector: candidate.connector_id,
+        })}
       </span>
       <span className="text-xs text-muted-foreground">
-        Session n° {candidate.transaction_id} · {date(candidate.started_at)} ·{" "}
+        {t("Session n° {id}", { id: candidate.transaction_id })} · {date(candidate.started_at)} ·{" "}
         <span className="font-mono">{candidate.vid}</span>
       </span>
     </span>
@@ -71,39 +77,41 @@ export function AutoChargePanel({
   const columns: Column<VehicleId>[] = [
     {
       id: "uid",
-      header: "Identifiant du véhicule",
+      header: t("Identifiant du véhicule"),
       cell: (vehicle) => (
         <span className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-xs">{vehicle.uid}</span>
-          {!vehicle.enabled && <ToneBadge tone="neutral">Bloqué</ToneBadge>}
+          {!vehicle.enabled && <ToneBadge tone="neutral">{t("Bloqué")}</ToneBadge>}
         </span>
       ),
     },
     {
       id: "used",
-      header: "Dernière utilisation",
-      cell: (vehicle) => (vehicle.last_used_at ? relative(vehicle.last_used_at) : "Jamais"),
+      header: t("Dernière utilisation"),
+      cell: (vehicle) => (vehicle.last_used_at ? relative(vehicle.last_used_at) : t("Jamais")),
     },
     ...(revocable
       ? [
           {
             id: "actions",
-            header: "Actions",
+            header: t("Actions"),
             srOnlyHeader: true,
             align: "right" as const,
             cell: (vehicle: VehicleId) => (
               <ConfirmButton
-                title="Révoquer cet identifiant ?"
-                description="Les bornes ne démarreront plus automatiquement la recharge de ce véhicule. Un badge ou l’application restent nécessaires."
-                confirmLabel="Révoquer"
+                title={t("Révoquer cet identifiant ?")}
+                description={t(
+                  "Les bornes ne démarreront plus automatiquement la recharge de ce véhicule. Un badge ou l’application restent nécessaires.",
+                )}
+                confirmLabel={t("Révoquer")}
                 variant="ghost"
                 size="icon-sm"
-                ariaLabel={`Révoquer ${vehicle.uid}`}
+                ariaLabel={t("Révoquer {uid}", { uid: vehicle.uid })}
                 onConfirm={() =>
                   action.run(
                     vehicle.uid,
                     () => api(`${path}/${encodeURIComponent(vehicle.uid)}`, { method: "DELETE" }),
-                    { success: "Identifiant du véhicule révoqué.", onDone: refresh },
+                    { success: t("Identifiant du véhicule révoqué."), onDone: refresh },
                   )
                 }
               >
@@ -119,12 +127,12 @@ export function AutoChargePanel({
     <section className="flex flex-col gap-4 border-t pt-4" aria-labelledby={`autocharge-${car.id}`}>
       <div>
         <h3 id={`autocharge-${car.id}`} className="text-base font-semibold">
-          Recharge automatique
+          {t("Recharge automatique")}
         </h3>
         <p className="text-sm text-muted-foreground">
-          Sur les bornes compatibles, la recharge démarre dès le branchement du véhicule, sans
-          badge. L’identifiant transmis par le véhicule n’est pas un secret : ne l’associez qu’à vos
-          propres véhicules.
+          {t(
+            "Sur les bornes compatibles, la recharge démarre dès le branchement du véhicule, sans badge. L’identifiant transmis par le véhicule n’est pas un secret : ne l’associez qu’à vos propres véhicules.",
+          )}
         </p>
       </div>
       <ListState
@@ -135,12 +143,12 @@ export function AutoChargePanel({
         onRetry={refresh}
         empty={
           <p className="text-sm text-muted-foreground">
-            Aucun identifiant de véhicule n’est associé.
+            {t("Aucun identifiant de véhicule n’est associé.")}
           </p>
         }
       >
         <DataTable
-          label="Identifiants du véhicule"
+          label={t("Identifiants du véhicule")}
           rows={items}
           columns={columns}
           rowKey={(vehicle) => vehicle.uid}
@@ -148,10 +156,11 @@ export function AutoChargePanel({
       </ListState>
       {!owned ? (
         <Alert>
-          <AlertTitle>Conducteur requis</AlertTitle>
+          <AlertTitle>{t("Conducteur requis")}</AlertTitle>
           <AlertDescription>
-            Attribuez ce véhicule à un conducteur pour activer la recharge automatique : les
-            sessions démarrées ainsi sont rattachées à son compte.
+            {t(
+              "Attribuez ce véhicule à un conducteur pour activer la recharge automatique : les sessions démarrées ainsi sont rattachées à son compte.",
+            )}
           </AlertDescription>
         </Alert>
       ) : mine ? (
@@ -195,15 +204,15 @@ function CandidateList({
   if (!candidates?.length) {
     return (
       <p className="text-sm text-muted-foreground">
-        Pour associer ce véhicule, branchez-le sur une borne où la recharge automatique est activée
-        et démarrez la session avec votre badge ou l’application. La session apparaît ici pendant 24
-        heures.
+        {t(
+          "Pour associer ce véhicule, branchez-le sur une borne où la recharge automatique est activée et démarrez la session avec votre badge ou l’application. La session apparaît ici pendant 24 heures.",
+        )}
       </p>
     );
   }
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium">Sessions récentes ayant identifié un véhicule</p>
+      <p className="text-sm font-medium">{t("Sessions récentes ayant identifié un véhicule")}</p>
       <ul className="flex flex-col gap-2">
         {candidates.map((candidate) => (
           <li
@@ -212,9 +221,9 @@ function CandidateList({
           >
             <CandidateSummary candidate={candidate} />
             <ConfirmButton
-              title="Associer cet identifiant au véhicule ?"
-              description={enrollWarning}
-              confirmLabel="Associer"
+              title={t("Associer cet identifiant au véhicule ?")}
+              description={enrollWarning()}
+              confirmLabel={t("Associer")}
               destructive={false}
               size="sm"
               disabled={action.busy}
@@ -227,14 +236,14 @@ function CandidateList({
                       body: JSON.stringify({ transactionId: candidate.transaction_id }),
                     }),
                   {
-                    success: "Recharge automatique activée pour ce véhicule.",
-                    failure: "Association impossible",
+                    success: t("Recharge automatique activée pour ce véhicule."),
+                    failure: t("Association impossible"),
                     onDone: onEnrolled,
                   },
                 )
               }
             >
-              Associer
+              {t("Associer")}
             </ConfirmButton>
           </li>
         ))}
@@ -243,10 +252,10 @@ function CandidateList({
   );
 }
 
-const enrollModes = [
+const enrollModes = translated([
   { value: "session", label: "Depuis une session de recharge" },
   { value: "vid", label: "Saisie manuelle de l’identifiant" },
-] as const;
+] as const);
 
 function EnrollForm({ path, onEnrolled }: { path: string; onEnrolled: () => void }) {
   const [error, setError] = useState("");
@@ -264,11 +273,11 @@ function EnrollForm({ path, onEnrolled }: { path: string; onEnrolled: () => void
               : { vid: value.value.trim().toUpperCase() },
           ),
         });
-        notify("Recharge automatique activée pour ce véhicule.");
+        notify(t("Recharge automatique activée pour ce véhicule."));
         formApi.reset();
         onEnrolled();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’associer l’identifiant du véhicule."));
+        setError(errorMessage(failure, t("Impossible d’associer l’identifiant du véhicule.")));
       }
     },
   });
@@ -283,7 +292,7 @@ function EnrollForm({ path, onEnrolled }: { path: string; onEnrolled: () => void
       <FieldGroup>
         <form.Field name="mode" listeners={{ onChange: () => form.setFieldValue("value", "") }}>
           {(field) => (
-            <FormSelect field={field} label="Associer un identifiant" options={enrollModes} />
+            <FormSelect field={field} label={t("Associer un identifiant")} options={enrollModes} />
           )}
         </form.Field>
         <form.Subscribe selector={(state) => state.values.mode}>
@@ -294,14 +303,16 @@ function EnrollForm({ path, onEnrolled }: { path: string; onEnrolled: () => void
                 onDynamic: ({ value, fieldApi }) =>
                   fieldApi.form.getFieldValue("mode") === "session"
                     ? rules(
-                        required("Indiquez le numéro de la session."),
-                        integerBetween(1, 2147483647, "Numéro de session invalide."),
+                        required(t("Indiquez le numéro de la session.")),
+                        integerBetween(1, 2147483647, t("Numéro de session invalide.")),
                       )({ value })
                     : rules(
-                        required("Indiquez l’identifiant du véhicule."),
+                        required(t("Indiquez l’identifiant du véhicule.")),
                         matches(
                           VID_PATTERN,
-                          "VID: suivi de 12 caractères hexadécimaux, par exemple VID:92D50A693F80.",
+                          t(
+                            "VID: suivi de 12 caractères hexadécimaux, par exemple VID:92D50A693F80.",
+                          ),
                         ),
                       )({ value: value.trim() }),
               }}
@@ -310,29 +321,33 @@ function EnrollForm({ path, onEnrolled }: { path: string; onEnrolled: () => void
                 mode === "session" ? (
                   <FormText
                     field={field}
-                    label="Numéro de session"
+                    label={t("Numéro de session")}
                     type="number"
                     min={1}
-                    description="Session du conducteur de moins de 24 heures, pendant laquelle la borne a transmis l’identifiant du véhicule."
+                    description={t(
+                      "Session du conducteur de moins de 24 heures, pendant laquelle la borne a transmis l’identifiant du véhicule.",
+                    )}
                   />
                 ) : (
                   <FormText
                     field={field}
-                    label="Identifiant du véhicule"
+                    label={t("Identifiant du véhicule")}
                     placeholder="VID:92D50A693F80"
                     maxLength={40}
                     className="font-mono"
-                    description="Préférez une session : l’identifiant est alors celui réellement transmis par la borne. Une saisie erronée peut autoriser un autre véhicule."
+                    description={t(
+                      "Préférez une session : l’identifiant est alors celui réellement transmis par la borne. Une saisie erronée peut autoriser un autre véhicule.",
+                    )}
                   />
                 )
               }
             </form.Field>
           )}
         </form.Subscribe>
-        <p className="text-sm text-muted-foreground">{enrollWarning}</p>
+        <p className="text-sm text-muted-foreground">{enrollWarning()}</p>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
-            <FormFooter error={error} submitting={submitting} label="Associer l’identifiant" />
+            <FormFooter error={error} submitting={submitting} label={t("Associer l’identifiant")} />
           )}
         </form.Subscribe>
       </FieldGroup>

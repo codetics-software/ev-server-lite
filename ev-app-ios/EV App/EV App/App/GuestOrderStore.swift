@@ -38,7 +38,7 @@ final class GuestOrderStore {
                 if payment.state.isFinished, order.createdAt < .now.addingTimeInterval(-86_400) {
                     remove(order.id)
                 }
-            } catch APIError.server(status: 404, _) {
+            } catch APIError.server(status: 404, _, _) {
                 remove(order.id)
             } catch {
                 continue

@@ -17,10 +17,12 @@ import {
   rules,
   toNumber,
 } from "@/lib/form";
+import { t } from "@/lib/i18n";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
 
-const power = rules(optionalNumber(0, 1000, "Valeur invalide."));
+const power = (input: { value: string }) =>
+  rules(optionalNumber(0, 1000, t("Valeur invalide.")))(input);
 
 export function CarForm({
   record,
@@ -67,7 +69,7 @@ export function CarForm({
         value.name.trim() ||
         [value.make, value.model].filter(Boolean).join(" ") ||
         value.licensePlate ||
-        "Véhicule";
+        t("Véhicule");
       try {
         if (mine) {
           await api(record ? `account/cars/${record.id}` : "account/cars", {
@@ -77,10 +79,10 @@ export function CarForm({
         } else {
           await saveRecord("cars", record, name, data);
         }
-        notify(record ? "Véhicule enregistré." : "Véhicule ajouté.");
+        notify(record ? t("Véhicule enregistré.") : t("Véhicule ajouté."));
         onSaved();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer le véhicule."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer le véhicule.")));
       }
     },
   });
@@ -115,14 +117,14 @@ export function CarForm({
           {(field) => (
             <FormText
               field={field}
-              label="Nom du véhicule (facultatif)"
-              placeholder="Voiture de service"
+              label={t("Nom du véhicule (facultatif)")}
+              placeholder={t("Voiture de service")}
             />
           )}
         </form.Field>
         {!mine && (
           <form.Field name="userId">
-            {(field) => <FormPicker field={field} source="users" label="Conducteur" />}
+            {(field) => <FormPicker field={field} source="users" label={t("Conducteur")} />}
           </form.Field>
         )}
         <form.Field
@@ -133,20 +135,20 @@ export function CarForm({
             <FormPicker
               field={field}
               source="car-catalog"
-              label="Modèle du catalogue"
-              description="Remplit automatiquement les caractéristiques."
+              label={t("Modèle du catalogue")}
+              description={t("Remplit automatiquement les caractéristiques.")}
             />
           )}
         </form.Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <form.Field name="make" validators={{ onDynamic: rules(maxLength(100)) }}>
-            {(field) => <FormText field={field} label="Fabricant" />}
+            {(field) => <FormText field={field} label={t("Fabricant")} />}
           </form.Field>
           <form.Field name="model" validators={{ onDynamic: rules(maxLength(100)) }}>
-            {(field) => <FormText field={field} label="Modèle" />}
+            {(field) => <FormText field={field} label={t("Modèle")} />}
           </form.Field>
           <form.Field name="licensePlate" validators={{ onDynamic: rules(maxLength(20)) }}>
-            {(field) => <FormText field={field} label="Immatriculation" />}
+            {(field) => <FormText field={field} label={t("Immatriculation")} />}
           </form.Field>
           <form.Field
             name="vin"
@@ -154,27 +156,33 @@ export function CarForm({
               onDynamic: rules(
                 matches(
                   /^[A-HJ-NPR-Za-hj-npr-z0-9]{17}$/,
-                  "Le VIN contient 17 caractères (sans I, O ni Q).",
+                  t("Le VIN contient 17 caractères (sans I, O ni Q)."),
                 ),
               ),
             }}
           >
-            {(field) => <FormText field={field} label="Numéro VIN" maxLength={17} />}
+            {(field) => <FormText field={field} label={t("Numéro VIN")} maxLength={17} />}
           </form.Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <form.Field name="batteryKwh" validators={{ onDynamic: power }}>
-            {(field) => <FormText field={field} label="Batterie (kWh)" type="number" min={0} />}
+            {(field) => (
+              <FormText field={field} label={t("Batterie (kWh)")} type="number" min={0} />
+            )}
           </form.Field>
           <form.Field name="maxAcPowerKw" validators={{ onDynamic: power }}>
-            {(field) => <FormText field={field} label="Puissance AC (kW)" type="number" min={0} />}
+            {(field) => (
+              <FormText field={field} label={t("Puissance AC (kW)")} type="number" min={0} />
+            )}
           </form.Field>
           <form.Field name="maxDcPowerKw" validators={{ onDynamic: power }}>
-            {(field) => <FormText field={field} label="Puissance DC (kW)" type="number" min={0} />}
+            {(field) => (
+              <FormText field={field} label={t("Puissance DC (kW)")} type="number" min={0} />
+            )}
           </form.Field>
         </div>
         <form.Field name="default">
-          {(field) => <FormSwitch field={field} label="Véhicule par défaut" />}
+          {(field) => <FormSwitch field={field} label={t("Véhicule par défaut")} />}
         </form.Field>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => <FormFooter error={error} submitting={submitting} />}
@@ -223,10 +231,10 @@ export function CatalogForm({
             imageUrl: value.imageUrl.trim() || undefined,
           },
         );
-        notify("Modèle enregistré.");
+        notify(t("Modèle de véhicule enregistré."));
         onSaved();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer le modèle."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer le modèle de véhicule.")));
       }
     },
   });
@@ -242,45 +250,45 @@ export function CatalogForm({
         <div className="grid gap-4 sm:grid-cols-3">
           <form.Field
             name="make"
-            validators={{ onDynamic: rules(required("Fabricant requis."), maxLength(100)) }}
+            validators={{ onDynamic: rules(required(t("Fabricant requis.")), maxLength(100)) }}
           >
-            {(field) => <FormText field={field} label="Fabricant" required />}
+            {(field) => <FormText field={field} label={t("Fabricant")} required />}
           </form.Field>
           <form.Field
             name="model"
-            validators={{ onDynamic: rules(required("Modèle requis."), maxLength(100)) }}
+            validators={{ onDynamic: rules(required(t("Modèle requis.")), maxLength(100)) }}
           >
-            {(field) => <FormText field={field} label="Modèle" required />}
+            {(field) => <FormText field={field} label={t("Modèle")} required />}
           </form.Field>
           <form.Field name="version" validators={{ onDynamic: rules(maxLength(100)) }}>
-            {(field) => <FormText field={field} label="Version" />}
+            {(field) => <FormText field={field} label={t("Version")} />}
           </form.Field>
           <form.Field name="batteryKwh" validators={{ onDynamic: power }}>
-            {(field) => <FormText field={field} label="Batterie (kWh)" type="number" />}
+            {(field) => <FormText field={field} label={t("Batterie (kWh)")} type="number" />}
           </form.Field>
           <form.Field name="maxAcPowerKw" validators={{ onDynamic: power }}>
-            {(field) => <FormText field={field} label="Puissance AC (kW)" type="number" />}
+            {(field) => <FormText field={field} label={t("Puissance AC (kW)")} type="number" />}
           </form.Field>
           <form.Field name="maxDcPowerKw" validators={{ onDynamic: power }}>
-            {(field) => <FormText field={field} label="Puissance DC (kW)" type="number" />}
+            {(field) => <FormText field={field} label={t("Puissance DC (kW)")} type="number" />}
           </form.Field>
           <form.Field
             name="rangeKm"
             validators={{
               onDynamic: ({ value }) =>
-                value && integerBetween(0, 5000, "Autonomie invalide.")(value)
-                  ? { message: "Autonomie invalide." }
+                value && integerBetween(0, 5000, t("Autonomie invalide."))(value)
+                  ? { message: t("Autonomie invalide.") }
                   : undefined,
             }}
           >
-            {(field) => <FormText field={field} label="Autonomie (km)" type="number" />}
+            {(field) => <FormText field={field} label={t("Autonomie (km)")} type="number" />}
           </form.Field>
         </div>
         <form.Field
           name="imageUrl"
-          validators={{ onDynamic: rules(matches(/^https:\/\//, "Adresse HTTPS requise.")) }}
+          validators={{ onDynamic: rules(matches(/^https:\/\//, t("Adresse HTTPS requise."))) }}
         >
-          {(field) => <FormText field={field} label="Image (adresse HTTPS)" type="url" />}
+          {(field) => <FormText field={field} label={t("Image (adresse HTTPS)")} type="url" />}
         </form.Field>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => <FormFooter error={error} submitting={submitting} />}

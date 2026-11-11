@@ -3,6 +3,7 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
+import { t } from "@/lib/i18n";
 
 export function FormFooter({
   error,
@@ -25,7 +26,7 @@ export function FormFooter({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">{extra}</div>
         <Button type="submit" disabled={submitting}>
-          {submitting ? "Enregistrement…" : label}
+          {submitting ? t("Enregistrement…") : label}
         </Button>
       </div>
     </>

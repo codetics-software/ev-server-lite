@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { t } from "@/lib/i18n";
 
 export function useApi<T>(path: string | null, revision: number | string = 0) {
   const [data, setData] = useState<T | null>(null);
@@ -28,7 +29,7 @@ export function useApi<T>(path: string | null, revision: number | string = 0) {
       } catch (failure) {
         if (active) {
           setError(
-            failure instanceof Error ? failure : new Error("Impossible de charger les données."),
+            failure instanceof Error ? failure : new Error(t("Impossible de charger les données.")),
           );
         }
       } finally {

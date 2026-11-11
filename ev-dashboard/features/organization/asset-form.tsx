@@ -17,24 +17,25 @@ import {
   rules,
   toNumber,
 } from "@/lib/form";
+import { t, translated } from "@/lib/i18n";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import type { FormProps } from "./organization-forms";
 
-export const assetTypes = [
+export const assetTypes = translated([
   { value: "CONSUMPTION", label: "Consommation" },
   { value: "PRODUCTION", label: "Production" },
   { value: "CONSUMPTION_AND_PRODUCTION", label: "Consommation et production" },
-];
+]);
 
-export const assetKinds = [
+export const assetKinds = translated([
   { value: "METER", label: "Compteur" },
   { value: "SOLAR", label: "Production solaire" },
   { value: "BATTERY", label: "Batterie" },
   { value: "BUILDING", label: "Bâtiment" },
-];
+]);
 
-export const connectionTypes = [
+export const connectionTypes = translated([
   { value: "NONE", label: "Aucune (puissance fixe)" },
   { value: "PUSH", label: "Envoi par l’équipement" },
   { value: "SCHNEIDER", label: "Schneider" },
@@ -42,7 +43,7 @@ export const connectionTypes = [
   { value: "IOTHINK", label: "ioThink" },
   { value: "LACROIX", label: "Lacroix" },
   { value: "WIT", label: "WIT" },
-];
+]);
 
 export function AssetForm({ record, onSaved, defaults }: FormProps) {
   const [error, setError] = useState("");
@@ -88,10 +89,10 @@ export function AssetForm({ record, onSaved, defaults }: FormProps) {
                   refreshSeconds: toNumber(value.refreshSeconds),
                 },
         });
-        notify(record ? "Équipement enregistré." : "Équipement créé.");
+        notify(record ? t("Équipement enregistré.") : t("Équipement créé."));
         onSaved(saved?.id ?? record?.id ?? "");
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer l’équipement."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer l’équipement.")));
       }
     },
   });
@@ -107,11 +108,11 @@ export function AssetForm({ record, onSaved, defaults }: FormProps) {
         <form.Field
           name="name"
           validators={{
-            onDynamic: rules(required("Renseignez le nom de l’équipement."), maxLength(200)),
+            onDynamic: rules(required(t("Renseignez le nom de l’équipement.")), maxLength(200)),
           }}
         >
           {(field) => (
-            <FormText field={field} label="Nom de l’équipement" maxLength={200} required />
+            <FormText field={field} label={t("Nom de l’équipement")} maxLength={200} required />
           )}
         </form.Field>
         <form.Field name="siteAreaId">
@@ -119,48 +120,50 @@ export function AssetForm({ record, onSaved, defaults }: FormProps) {
             <FormPicker
               field={field}
               source="site-areas"
-              label="Zone de recharge"
-              description="Sa puissance est prise en compte dans le calcul de la zone."
+              label={t("Zone de recharge")}
+              description={t("Sa puissance est prise en compte dans le calcul de la zone.")}
             />
           )}
         </form.Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <form.Field name="type">
-            {(field) => <FormSelect field={field} label="Sens" options={assetTypes} />}
+            {(field) => <FormSelect field={field} label={t("Sens")} options={assetTypes} />}
           </form.Field>
           <form.Field name="kind">
-            {(field) => <FormSelect field={field} label="Catégorie" options={assetKinds} />}
+            {(field) => <FormSelect field={field} label={t("Catégorie")} options={assetKinds} />}
           </form.Field>
           <form.Field
             name="maximumPowerKw"
-            validators={{ onDynamic: rules(optionalNumber(0, 100000, "Puissance invalide.")) }}
+            validators={{ onDynamic: rules(optionalNumber(0, 100000, t("Puissance invalide."))) }}
           >
             {(field) => (
-              <FormText field={field} label="Puissance maximale (kW)" type="number" min={0} />
+              <FormText field={field} label={t("Puissance maximale (kW)")} type="number" min={0} />
             )}
           </form.Field>
           <form.Field
             name="staticPowerKw"
-            validators={{ onDynamic: rules(optionalNumber(0, 100000, "Puissance invalide.")) }}
+            validators={{ onDynamic: rules(optionalNumber(0, 100000, t("Puissance invalide."))) }}
           >
             {(field) => (
               <FormText
                 field={field}
-                label="Puissance fixe (kW)"
+                label={t("Puissance fixe (kW)")}
                 type="number"
                 min={0}
-                description="Utilisée sans mesure en direct."
+                description={t("Utilisée sans mesure en direct.")}
               />
             )}
           </form.Field>
         </div>
         <form.Field name="excludeFromSmartCharging">
-          {(field) => <FormSwitch field={field} label="Exclure de la recharge intelligente" />}
+          {(field) => <FormSwitch field={field} label={t("Exclure de la recharge intelligente")} />}
         </form.Field>
         <FieldSet>
-          <FieldLegend variant="label">Connexion aux mesures</FieldLegend>
+          <FieldLegend variant="label">{t("Connexion aux mesures")}</FieldLegend>
           <form.Field name="connectionType">
-            {(field) => <FormSelect field={field} label="Fournisseur" options={connectionTypes} />}
+            {(field) => (
+              <FormSelect field={field} label={t("Fournisseur")} options={connectionTypes} />
+            )}
           </form.Field>
           <form.Subscribe selector={(state) => state.values.connectionType}>
             {(type) =>
@@ -170,40 +173,46 @@ export function AssetForm({ record, onSaved, defaults }: FormProps) {
                   <form.Field
                     name="url"
                     validators={{
-                      onDynamic: rules(matches(/^https:\/\//, "Adresse HTTPS requise.")),
+                      onDynamic: rules(matches(/^https:\/\//, t("Adresse HTTPS requise."))),
                     }}
                   >
-                    {(field) => <FormText field={field} label="Adresse du service" type="url" />}
+                    {(field) => (
+                      <FormText field={field} label={t("Adresse du service")} type="url" />
+                    )}
                   </form.Field>
                   <form.Field
                     name="authenticationUrl"
                     validators={{
-                      onDynamic: rules(matches(/^https:\/\//, "Adresse HTTPS requise.")),
+                      onDynamic: rules(matches(/^https:\/\//, t("Adresse HTTPS requise."))),
                     }}
                   >
                     {(field) => (
-                      <FormText field={field} label="Adresse d’authentification" type="url" />
+                      <FormText field={field} label={t("Adresse d’authentification")} type="url" />
                     )}
                   </form.Field>
                   <form.Field name="clientId" validators={{ onDynamic: rules(maxLength(200)) }}>
                     {(field) => (
-                      <FormText field={field} label="Identifiant client" autoComplete="off" />
+                      <FormText field={field} label={t("Identifiant client")} autoComplete="off" />
                     )}
                   </form.Field>
                   <form.Field name="meterId" validators={{ onDynamic: rules(maxLength(100)) }}>
-                    {(field) => <FormText field={field} label="Identifiant du compteur" />}
+                    {(field) => <FormText field={field} label={t("Identifiant du compteur")} />}
                   </form.Field>
                   <form.Field name="user" validators={{ onDynamic: rules(maxLength(200)) }}>
-                    {(field) => <FormText field={field} label="Utilisateur" autoComplete="off" />}
+                    {(field) => (
+                      <FormText field={field} label={t("Utilisateur")} autoComplete="off" />
+                    )}
                   </form.Field>
                   <form.Field
                     name="refreshSeconds"
                     validators={{
-                      onDynamic: rules(integerBetween(60, 86400, "Entre 60 secondes et un jour.")),
+                      onDynamic: rules(
+                        integerBetween(60, 86400, t("Entre 60 secondes et un jour.")),
+                      ),
                     }}
                   >
                     {(field) => (
-                      <FormText field={field} label="Fréquence de relevé (s)" type="number" />
+                      <FormText field={field} label={t("Fréquence de relevé (s)")} type="number" />
                     )}
                   </form.Field>
                 </div>

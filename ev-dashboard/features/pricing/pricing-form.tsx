@@ -20,13 +20,14 @@ import {
   rules,
   toNumber,
 } from "@/lib/form";
+import { t, translated } from "@/lib/i18n";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
 
 const pressed =
   "aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground";
 
-export const days = [
+export const days = translated([
   { value: "1", label: "Lun.", name: "lundi" },
   { value: "2", label: "Mar.", name: "mardi" },
   { value: "3", label: "Mer.", name: "mercredi" },
@@ -34,11 +35,13 @@ export const days = [
   { value: "5", label: "Ven.", name: "vendredi" },
   { value: "6", label: "Sam.", name: "samedi" },
   { value: "7", label: "Dim.", name: "dimanche" },
-];
+]);
 
 const currencies = ["EUR", "CHF", "GBP", "USD", "XPF"].map((value) => ({ value, label: value }));
-const price = rules(optionalNumber(0, 10000, "Prix invalide."));
-const clock = rules(matches(/^([01]\d|2[0-3]):[0-5]\d$/, "Heure au format HH:mm."));
+const price = (input: { value: string }) =>
+  rules(optionalNumber(0, 10000, t("Prix invalide.")))(input);
+const clock = (input: { value: string }) =>
+  rules(matches(/^([01]\d|2[0-3]):[0-5]\d$/, t("Heure au format HH:mm.")))(input);
 const optionalInteger =
   (min: number, max: number, message: string) =>
   ({ value }: { value: string }) =>
@@ -115,10 +118,10 @@ export function PricingForm({
           validTo: fromInputDateTime(value.validTo) ?? undefined,
           restrictions: Object.keys(restrictionData).length ? restrictionData : undefined,
         });
-        notify(record ? "Tarif enregistré." : "Tarif créé.");
+        notify(record ? t("Tarif enregistré.") : t("Tarif créé."));
         onSaved();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer le tarif."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer le tarif.")));
       }
     },
   });
@@ -136,82 +139,92 @@ export function PricingForm({
           <form.Field
             name="name"
             validators={{
-              onDynamic: rules(required("Renseignez le nom du tarif."), maxLength(200)),
+              onDynamic: rules(required(t("Renseignez le nom du tarif.")), maxLength(200)),
             }}
           >
-            {(field) => <FormText field={field} label="Nom du tarif" maxLength={200} required />}
+            {(field) => (
+              <FormText field={field} label={t("Nom du tarif")} maxLength={200} required />
+            )}
           </form.Field>
           <form.Field name="currency">
-            {(field) => <FormSelect field={field} label="Devise" options={currencies} />}
+            {(field) => <FormSelect field={field} label={t("Devise")} options={currencies} />}
           </form.Field>
           <form.Field
             name="priority"
-            validators={{ onDynamic: optionalInteger(-1000, 1000, "Entre -1 000 et 1 000.") }}
+            validators={{ onDynamic: optionalInteger(-1000, 1000, t("Entre -1 000 et 1 000.")) }}
           >
-            {(field) => <FormText field={field} label="Priorité" type="number" />}
+            {(field) => <FormText field={field} label={t("Priorité")} type="number" />}
           </form.Field>
         </div>
         <form.Field name="active">
           {(field) => (
             <FormSwitch
               field={field}
-              label="Tarif actif"
-              description="Un tarif inactif n’est jamais appliqué."
+              label={t("Tarif actif")}
+              description={t("Un tarif inactif n’est jamais appliqué.")}
             />
           )}
         </form.Field>
         <FieldSet>
-          <FieldLegend>Prix</FieldLegend>
+          <FieldLegend>{t("Prix")}</FieldLegend>
           <FieldDescription>
-            Montants hors taxes de la devise choisie. Laissez vide ce qui n’est pas facturé.
+            {t("Montants hors taxes de la devise choisie. Laissez vide ce qui n’est pas facturé.")}
           </FieldDescription>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <form.Field name="flatPrice" validators={{ onDynamic: price }}>
               {(field) => (
-                <FormText field={field} label="Frais par session" type="number" min={0} />
+                <FormText field={field} label={t("Frais par session")} type="number" min={0} />
               )}
             </form.Field>
             <form.Field name="energyPrice" validators={{ onDynamic: price }}>
-              {(field) => <FormText field={field} label="Prix par kWh" type="number" min={0} />}
+              {(field) => (
+                <FormText field={field} label={t("Prix par kWh")} type="number" min={0} />
+              )}
             </form.Field>
             <form.Field name="timePrice" validators={{ onDynamic: price }}>
               {(field) => (
-                <FormText field={field} label="Prix par heure de recharge" type="number" min={0} />
+                <FormText
+                  field={field}
+                  label={t("Prix par heure de recharge")}
+                  type="number"
+                  min={0}
+                />
               )}
             </form.Field>
             <form.Field name="parkingPrice" validators={{ onDynamic: price }}>
               {(field) => (
                 <FormText
                   field={field}
-                  label="Prix par heure d’inactivité"
+                  label={t("Prix par heure d’inactivité")}
                   type="number"
                   min={0}
-                  description="Après la fin de charge."
+                  description={t("Après la fin de charge.")}
                 />
               )}
             </form.Field>
           </div>
           <form.Field
             name="energyStepWh"
-            validators={{ onDynamic: optionalInteger(1, 100000, "Entre 1 et 100 000 Wh.") }}
+            validators={{ onDynamic: optionalInteger(1, 100000, t("Entre 1 et 100 000 Wh.")) }}
           >
             {(field) => (
               <FormText
                 field={field}
-                label="Pas de facturation de l’énergie (Wh)"
+                label={t("Pas de facturation de l’énergie (Wh)")}
                 type="number"
                 min={1}
-                description="Par exemple 1000 pour facturer par kWh entamé."
+                description={t("Par exemple 1000 pour facturer par kWh entamé.")}
                 className="sm:max-w-60"
               />
             )}
           </form.Field>
         </FieldSet>
         <FieldSet>
-          <FieldLegend>Portée</FieldLegend>
+          <FieldLegend>{t("Portée")}</FieldLegend>
           <FieldDescription>
-            Sans portée, le tarif s’applique à tout l’espace. Le tarif le plus précis l’emporte
-            (connecteur, borne, zone, site), puis la priorité la plus élevée.
+            {t(
+              "Sans portée, le tarif s’applique à tout l’espace. Le tarif le plus précis l’emporte (connecteur, borne, zone, site), puis la priorité la plus élevée.",
+            )}
           </FieldDescription>
           <div className="grid gap-4 sm:grid-cols-2">
             <form.Field name="siteId">
@@ -219,8 +232,8 @@ export function PricingForm({
                 <FormPicker
                   field={field}
                   source="sites"
-                  label="Site"
-                  placeholder="Tous les sites"
+                  label={t("Site")}
+                  placeholder={t("Tous les sites")}
                 />
               )}
             </form.Field>
@@ -232,8 +245,8 @@ export function PricingForm({
                       field={field}
                       source="site-areas"
                       filters={{ siteId: siteId || undefined }}
-                      label="Zone"
-                      placeholder="Toutes les zones"
+                      label={t("Zone")}
+                      placeholder={t("Toutes les zones")}
                     />
                   )}
                 </form.Field>
@@ -244,8 +257,8 @@ export function PricingForm({
                 <FormPicker
                   field={field}
                   source="stations"
-                  label="Borne"
-                  placeholder="Toutes les bornes"
+                  label={t("Borne")}
+                  placeholder={t("Toutes les bornes")}
                 />
               )}
             </form.Field>
@@ -253,12 +266,12 @@ export function PricingForm({
               {(stationId) => (
                 <form.Field
                   name="connectorId"
-                  validators={{ onDynamic: optionalInteger(1, 100, "Connecteur invalide.") }}
+                  validators={{ onDynamic: optionalInteger(1, 100, t("Connecteur invalide.")) }}
                 >
                   {(field) => (
                     <FormText
                       field={field}
-                      label="Connecteur"
+                      label={t("Connecteur")}
                       type="number"
                       min={1}
                       disabled={!stationId}
@@ -270,11 +283,11 @@ export function PricingForm({
           </div>
         </FieldSet>
         <FieldSet>
-          <FieldLegend>Validité et restrictions</FieldLegend>
+          <FieldLegend>{t("Validité et restrictions")}</FieldLegend>
           <div className="grid gap-4 sm:grid-cols-2">
             <form.Field name="validFrom">
               {(field) => (
-                <FormText field={field} label="Valable à partir du" type="datetime-local" />
+                <FormText field={field} label={t("Valable à partir du")} type="datetime-local" />
               )}
             </form.Field>
             <form.Field
@@ -283,25 +296,25 @@ export function PricingForm({
                 onDynamic: ({ value, fieldApi }) => {
                   const from = fieldApi.form.getFieldValue("validFrom");
                   return value && from && value <= from
-                    ? { message: "La fin doit suivre le début." }
+                    ? { message: t("La fin doit suivre le début.") }
                     : undefined;
                 },
               }}
             >
-              {(field) => <FormText field={field} label="Jusqu’au" type="datetime-local" />}
+              {(field) => <FormText field={field} label={t("Jusqu’au")} type="datetime-local" />}
             </form.Field>
           </div>
           <form.Field name="daysOfWeek">
             {(field) => (
               <div className="flex flex-col gap-2">
-                <Label>Jours d’application</Label>
+                <Label>{t("Jours d’application")}</Label>
                 <ToggleGroup
                   multiple
                   variant="outline"
                   className="flex-wrap"
                   value={field.state.value}
                   onValueChange={(value) => field.handleChange(value as string[])}
-                  aria-label="Jours d’application"
+                  aria-label={t("Jours d’application")}
                 >
                   {days.map((day) => (
                     <ToggleGroupItem
@@ -315,7 +328,7 @@ export function PricingForm({
                   ))}
                 </ToggleGroup>
                 <p className="text-xs text-muted-foreground">
-                  Aucun jour sélectionné : tous les jours.
+                  {t("Aucun jour sélectionné : tous les jours.")}
                 </p>
               </div>
             )}
@@ -327,41 +340,41 @@ export function PricingForm({
                 onDynamic: ({ value, fieldApi }) =>
                   (value && clock({ value })) ||
                   (Boolean(value) !== Boolean(fieldApi.form.getFieldValue("timeTo"))
-                    ? { message: "Renseignez les deux heures." }
+                    ? { message: t("Renseignez les deux heures.") }
                     : undefined),
               }}
             >
               {(field) => (
-                <FormText field={field} label="De (heure de début de session)" type="time" />
+                <FormText field={field} label={t("De (heure de début de session)")} type="time" />
               )}
             </form.Field>
             <form.Field name="timeTo" validators={{ onDynamic: clock }}>
-              {(field) => <FormText field={field} label="À" type="time" />}
+              {(field) => <FormText field={field} label={t("À")} type="time" />}
             </form.Field>
             <form.Field name="minEnergyKwh" validators={{ onDynamic: price }}>
               {(field) => (
-                <FormText field={field} label="Énergie minimale (kWh)" type="number" min={0} />
+                <FormText field={field} label={t("Énergie minimale (kWh)")} type="number" min={0} />
               )}
             </form.Field>
             <form.Field name="maxEnergyKwh" validators={{ onDynamic: price }}>
               {(field) => (
-                <FormText field={field} label="Énergie maximale (kWh)" type="number" min={0} />
+                <FormText field={field} label={t("Énergie maximale (kWh)")} type="number" min={0} />
               )}
             </form.Field>
             <form.Field
               name="minDurationMinutes"
-              validators={{ onDynamic: optionalInteger(0, 100000, "Durée invalide.") }}
+              validators={{ onDynamic: optionalInteger(0, 100000, t("Durée invalide.")) }}
             >
               {(field) => (
-                <FormText field={field} label="Durée minimale (min)" type="number" min={0} />
+                <FormText field={field} label={t("Durée minimale (min)")} type="number" min={0} />
               )}
             </form.Field>
             <form.Field
               name="maxDurationMinutes"
-              validators={{ onDynamic: optionalInteger(1, 100000, "Durée invalide.") }}
+              validators={{ onDynamic: optionalInteger(1, 100000, t("Durée invalide.")) }}
             >
               {(field) => (
-                <FormText field={field} label="Durée maximale (min)" type="number" min={1} />
+                <FormText field={field} label={t("Durée maximale (min)")} type="number" min={1} />
               )}
             </form.Field>
           </div>

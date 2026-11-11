@@ -3,6 +3,12 @@
   "strings": {
     "CFBundleDisplayName": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EV App"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -13,6 +19,12 @@
     },
     "NFCReaderUsageDescription": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El NFC lee su tarjeta de carga para comprobar que está registrada en su cuenta."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -23,6 +35,12 @@
     },
     "NSCameraUsageDescription": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La cámara se usa para escanear el código QR de una estación y para fotografiar las estaciones."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -33,6 +51,12 @@
     },
     "NSLocationWhenInUseUsageDescription": {
       "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su ubicación muestra las estaciones cercanas y las ordena por distancia."
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",

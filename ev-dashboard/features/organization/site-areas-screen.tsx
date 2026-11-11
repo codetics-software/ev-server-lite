@@ -17,6 +17,7 @@ import { IconPlus, IconSitemap } from "@tabler/icons-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { SiteAreaForm } from "./organization-forms";
+import { t } from "@/lib/i18n";
 
 export function siteAreaColumns(
   sites: Map<string, string>,
@@ -25,7 +26,7 @@ export function siteAreaColumns(
   return [
     {
       id: "name",
-      header: "Zone",
+      header: t("Zone"),
       sort: (record) => record.name,
       cell: (record) => (
         <span className="flex flex-col">
@@ -38,24 +39,28 @@ export function siteAreaColumns(
     },
     {
       id: "power",
-      header: "Puissance disponible",
+      header: t("Puissance disponible"),
       align: "right",
       sort: (record) => Number(field(record, "maximumPowerKw") ?? 0),
       cell: (record) => kw(field(record, "maximumPowerKw")),
     },
     {
       id: "phases",
-      header: "Raccordement",
+      header: t("Raccordement"),
       cell: (record) =>
-        `${field(record, "numberOfPhases") === 1 ? "Monophasé" : "Triphasé"} · ${field(record, "voltage") ?? 230} V`,
+        `${t(field(record, "numberOfPhases") === 1 ? "Monophasé" : "Triphasé")} · ${field(record, "voltage") ?? 230} V`,
     },
     ...(smartCharging
       ? [
           {
             id: "smart",
-            header: "Recharge intelligente",
+            header: t("Recharge intelligente"),
             cell: (record: RecordItem) => (
-              <BooleanBadge value={field(record, "smartCharging")} yes="Active" no="Inactive" />
+              <BooleanBadge
+                value={field(record, "smartCharging")}
+                yes={t("Active")}
+                no={t("Inactive")}
+              />
             ),
           },
         ]
@@ -74,43 +79,43 @@ export function SiteAreasScreen() {
   return (
     <>
       <PageHeader
-        title="Zones de recharge"
-        description="Regroupez les bornes par raccordement électrique et puissance disponible."
+        title={t("Zones de recharge")}
+        description={t("Regroupez les bornes par raccordement électrique et puissance disponible.")}
         actions={
           isAdmin(user) && (
             <Button onClick={() => setCreating(true)}>
               <IconPlus data-icon="inline-start" />
-              Ajouter une zone
+              {t("Ajouter une zone")}
             </Button>
           )
         }
       />
       <RecordList
         kind="site-areas"
-        label="Zones"
+        label={t("Zones")}
         columns={siteAreaColumns(sites, components.smart_charging)}
         revision={revision}
         filters={{ siteId: siteId || undefined }}
         onSelect={(record) => router.push(`/site-areas/${record.id}`)}
         emptyIcon={<IconSitemap />}
-        emptyTitle="Aucune zone"
-        emptyDescription="Créez une zone dans un site, puis rattachez-y vos bornes."
+        emptyTitle={t("Aucune zone")}
+        emptyDescription={t("Créez une zone dans un site, puis rattachez-y vos bornes.")}
         toolbar={
           <Field className="w-full sm:w-56">
             <FieldLabel htmlFor="areas-site" className="sr-only">
-              Site
+              {t("Site")}
             </FieldLabel>
             <EntityPicker
               id="areas-site"
               source="sites"
               value={siteId}
               onChange={setSiteId}
-              placeholder="Tous les sites"
+              placeholder={t("Tous les sites")}
             />
           </Field>
         }
       />
-      <FormDialog open={creating} onOpenChange={setCreating} title="Ajouter une zone" wide>
+      <FormDialog open={creating} onOpenChange={setCreating} title={t("Ajouter une zone")} wide>
         <SiteAreaForm
           record={null}
           defaults={{ siteId }}

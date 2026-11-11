@@ -1,5 +1,7 @@
 package fr.codetics.ev_server.models.people
 
+import fr.codetics.ev_server.core.I18n
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.UserEntity
 import java.time.Instant
 import java.util.UUID
@@ -33,7 +35,7 @@ data class UserResponse(
                 user.enabled,
                 user.emailVerified,
                 user.phone,
-                user.locale,
+                I18n.of(user.locale).language,
                 user.createdAt,
                 user.lastLoginAt,
                 user.stripeCustomerId != null,
@@ -62,5 +64,5 @@ data class SiteUserResponse(
 data class CreatedUser(
     val id: UUID,
     val message: String =
-        "Un lien pour définir le mot de passe est envoyé à l’adresse électronique de l’utilisateur.",
+        msg("users.created.message"),
 )

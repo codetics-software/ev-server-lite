@@ -10,6 +10,7 @@ import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
 import fr.codetics.ev_server.ocpp.VehicleIds
@@ -64,12 +65,12 @@ class WalletPassService(
     fun pass(user: AppPrincipal, uid: String): ByteArray {
         val token =
             tokens.findById(ChargingTokenKey(user.tenantId, uid)).orElse(null)?.takeIf { it.userId == user.id }
-                ?: throw NotFound("Badge introuvable.")
-        ensure(!VehicleIds.isVid(uid)) { "Un identifiant de véhicule ne peut pas être ajouté à Cartes." }
-        ensure(token.enabled) { "Ce badge est désactivé." }
+                ?: throw NotFound(msg("tokens.not_found"))
+        ensure(!VehicleIds.isVid(uid)) { msg("wallet.apple.vehicle_id") }
+        ensure(token.enabled) { msg("tokens.disabled") }
         val signing =
             credentials
-                ?: throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Apple Wallet n’est pas configuré sur ce serveur.")
+                ?: throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, msg("wallet.apple.not_configured"))
         val workspace = tenants.findById(user.tenantId).orElseThrow()
         val files = linkedMapOf<String, ByteArray>()
         files["pass.json"] =
@@ -89,7 +90,7 @@ class WalletPassService(
             put("teamIdentifier", settings.teamId)
             put("serialNumber", sha256("${user.tenantId}:$uid").take(32))
             put("organizationName", settings.organizationName.ifBlank { workspace })
-            put("description", "Badge de recharge $workspace")
+            put("description", msg("wallet.description", workspace))
             put("logoText", workspace.take(30))
             put("foregroundColor", "rgb(255, 255, 255)")
             put("labelColor", "rgb(200, 240, 220)")
@@ -99,12 +100,12 @@ class WalletPassService(
             put(
                 "storeCard",
                 mapOf(
-                    "primaryFields" to listOf(mapOf("key" to "holder", "label" to "Conducteur", "value" to user.name)),
-                    "secondaryFields" to listOf(mapOf("key" to "badge", "label" to "Badge", "value" to (visualId ?: uid))),
+                    "primaryFields" to listOf(mapOf("key" to "holder", "label" to msg("wallet.driver"), "value" to user.name)),
+                    "secondaryFields" to listOf(mapOf("key" to "badge", "label" to msg("wallet.badge"), "value" to (visualId ?: uid))),
                     "backFields" to
                         listOf(
-                            mapOf("key" to "workspace", "label" to "Réseau", "value" to workspace),
-                            mapOf("key" to "credit", "label" to "Édité avec", "value" to "EV Supervision Lite — Kevin Vavelin, Codetics — https://codetics.fr"),
+                            mapOf("key" to "workspace", "label" to msg("wallet.network"), "value" to workspace),
+                            mapOf("key" to "credit", "label" to msg("wallet.made_with"), "value" to "EV Supervision Lite — Kevin Vavelin, Codetics — https://codetics.fr"),
                         ),
                 ),
             )

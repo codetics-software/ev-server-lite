@@ -16,6 +16,7 @@ import { fieldLabel } from "@/lib/labels";
 import { useState } from "react";
 import { endpoint } from "../config/endpoint";
 import { fields } from "../config/form-fields";
+import { t } from "@/lib/i18n";
 
 type Props = {
   section: string;
@@ -42,7 +43,9 @@ export function ResourceDetails({ section, title, record, canDelete, onClose, on
       onDeleted();
       onClose();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Impossible de supprimer cet élément.");
+      setError(
+        failure instanceof Error ? failure.message : t("Impossible de supprimer cet élément."),
+      );
     } finally {
       setDeleting(false);
     }
@@ -61,7 +64,9 @@ export function ResourceDetails({ section, title, record, canDelete, onClose, on
       <DialogContent className="max-h-[85svh] overflow-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {display(record?.name ?? record?.uid ?? record?.action ?? `Détails · ${title}`)}
+            {display(
+              record?.name ?? record?.uid ?? record?.action ?? t("Détails · {title}", { title }),
+            )}
           </DialogTitle>
           <DialogDescription>{title}</DialogDescription>
         </DialogHeader>
@@ -82,7 +87,9 @@ export function ResourceDetails({ section, title, record, canDelete, onClose, on
         {canDelete && (
           <div className="flex flex-col gap-3 border-t pt-4">
             <p className="text-sm text-muted-foreground">
-              Supprimer définitivement {String(record?.name ?? "cet élément")}.
+              {t("Supprimer définitivement {name}.", {
+                name: String(record?.name ?? t("cet élément")),
+              })}
             </p>
             {error && (
               <Alert variant="destructive">
@@ -90,7 +97,7 @@ export function ResourceDetails({ section, title, record, canDelete, onClose, on
               </Alert>
             )}
             <Button variant="destructive" disabled={deleting} onClick={remove}>
-              {deleting ? "Suppression…" : "Supprimer"}
+              {deleting ? t("Suppression…") : t("Supprimer")}
             </Button>
           </div>
         )}

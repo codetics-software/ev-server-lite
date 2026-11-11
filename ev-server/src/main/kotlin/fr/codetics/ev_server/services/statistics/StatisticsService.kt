@@ -3,6 +3,7 @@ package fr.codetics.ev_server.services.statistics
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Csv
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.entities.TransactionEntity
 import fr.codetics.ev_server.models.people.UserRole
@@ -78,9 +79,9 @@ class StatisticsService(
     }
 
     fun compute(user: AppPrincipal, metric: String, filter: StatisticsFilter): StatisticsResponse {
-        ensure(metric in units) { "Indicateur inconnu." }
-        ensure(filter.groupBy in setOf("station", "user", "site", "site-area")) { "Regroupement inconnu." }
-        ensure(filter.year in 2000..2100) { "Année invalide." }
+        ensure(metric in units) { msg("statistics.unknown_metric") }
+        ensure(filter.groupBy in setOf("station", "user", "site", "site-area")) { msg("statistics.unknown_grouping") }
+        ensure(filter.year in 2000..2100) { msg("statistics.invalid_year") }
         val from = LocalDate.of(filter.year, 1, 1).atStartOfDay(zone).toInstant()
         val to = LocalDate.of(filter.year + 1, 1, 1).atStartOfDay(zone).toInstant()
         val conditions = mutableListOf<Condition>(eq("tenantId", user.tenantId), atLeast("startedAt", from), before("startedAt", to))
@@ -128,7 +129,7 @@ class StatisticsService(
                 "statistiques-$metric-${filter.year}",
                 listOf("groupe") + (1..12).map { "mois_$it" } + "total",
                 (result.groups.asSequence().map { listOf(it.label) + it.months + it.total }) +
-                    sequenceOf(listOf<Any?>("Total") + result.months + result.total),
+                    sequenceOf(listOf<Any?>(msg("statistics.total")) + result.months + result.total),
             )
         }
 
@@ -152,7 +153,7 @@ class StatisticsService(
         }
 
     private fun labels(tenant: UUID, groupBy: String, rows: List<TransactionEntity>): Map<String, String> {
-        val unknown = "unknown" to "Non renseigné"
+        val unknown = "unknown" to msg("statistics.unknown")
         return when (groupBy) {
             "user" ->
                 users.findAllByTenantIdAndIdIn(tenant, rows.mapNotNull { it.userId }.toSet())

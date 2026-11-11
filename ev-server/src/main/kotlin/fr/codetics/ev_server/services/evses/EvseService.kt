@@ -5,6 +5,7 @@ import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.billing.PaymentState
 import fr.codetics.ev_server.models.entities.ConnectorKey
 import fr.codetics.ev_server.models.entities.PublicEvseEntity
@@ -48,27 +49,27 @@ class EvseService(
 
     fun find(tenantId: UUID, id: UUID): PublicEvseEntity =
         evses.findByTenantIdAndId(tenantId, id)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Point de charge introuvable.")
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, msg("evses.not_found"))
 
     fun save(user: AppPrincipal, input: EvseInput, id: UUID? = null): EvseResponse =
         db.atomic {
             ensure(input.name.isNotBlank() && input.name.length <= 200) {
-                "Renseignez le nom du point de charge."
+                msg("evses.name_required")
             }
-            ensure(input.connectorId > 0) { "Sélectionnez un connecteur physique." }
+            ensure(input.connectorId > 0) { msg("evses.physical_connector") }
             val station =
                 db.lock<StationEntity>(StationKey(user.tenantId, input.stationId))
                     ?: throw ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Borne introuvable dans cet espace.",
+                        msg("evses.station_not_in_workspace"),
                     )
-            ensure(station.enabled) { "La borne est désactivée." }
+            ensure(station.enabled) { msg("stations.disabled") }
             ensure(
                 connectors.existsById(
                     ConnectorKey(user.tenantId, input.stationId, input.connectorId)
                 )
             ) {
-                "Le connecteur doit avoir été déclaré par la borne."
+                msg("evses.connector_declared")
             }
             tariffs.find(user.tenantId, input.pricingDefinitionId)
             val evse =
@@ -81,13 +82,13 @@ class EvseService(
                     input.connectorId,
                 )
             ensure(duplicate == null || duplicate.id == evse.id) {
-                "Ce connecteur possède déjà un point de charge public."
+                msg("evses.connector_taken")
             }
             if (payments.existsByEvseIdAndStateIn(evse.id, PaymentState.WORKABLE)) {
                 ensure(
                     evse.stationId == input.stationId && evse.connectorId == input.connectorId
                 ) {
-                    "Un point de charge avec une session en cours ne peut pas changer de connecteur."
+                    msg("evses.session_in_progress")
                 }
             }
             evse.name = input.name.trim()
@@ -105,13 +106,13 @@ class EvseService(
             tenants.findBySlugAndActiveTrue(workspace)
                 ?: throw ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "Point de charge introuvable.",
+                    msg("evses.not_found"),
                 )
         val evse = find(tenant.id, id)
         if (!evse.published)
             throw ResponseStatusException(
                 HttpStatus.NOT_FOUND,
-                "Ce point de charge n’est pas publié.",
+                msg("evses.not_published"),
             )
         val station = stations.findById(StationKey(tenant.id, evse.stationId)).orElseThrow()
         val connector =
@@ -154,7 +155,7 @@ class EvseService(
             base.scheme == "https" ||
                 (base.scheme == "http" && base.host in setOf("localhost", "127.0.0.1"))
         ) {
-            "L’URL publique doit utiliser HTTPS."
+            msg("evses.public_url_https")
         }
         return "${properties.publicUrl.trimEnd('/')}/charge/${tenant.slug}/$id"
     }

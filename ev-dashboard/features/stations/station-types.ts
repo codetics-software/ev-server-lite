@@ -1,3 +1,5 @@
+import { t } from "@/lib/i18n";
+
 export type StationConnector = {
   connector_id: number;
   status: string;
@@ -111,14 +113,16 @@ export type RegistrationToken = {
 
 export type ProvisionedStation = { id: string; secret: string; message: string };
 
-export const connectorTypes = [
-  { value: "Type2", label: "Type 2" },
-  { value: "CCS", label: "Combo CCS" },
-  { value: "CHAdeMO", label: "CHAdeMO" },
-  { value: "Type1", label: "Type 1" },
-  { value: "Type3", label: "Type 3" },
-  { value: "Domestic", label: "Prise domestique" },
-  { value: "Tesla", label: "Tesla" },
-  { value: "Cable", label: "Câble attaché" },
-  { value: "Other", label: "Autre" },
-] as const;
+export function connectorTypes() {
+  return [
+    { value: "Type2", label: t("Type 2") },
+    { value: "CCS", label: t("Combo CCS") },
+    { value: "CHAdeMO", label: "CHAdeMO" },
+    { value: "Type1", label: t("Type 1") },
+    { value: "Type3", label: t("Type 3") },
+    { value: "Domestic", label: t("Prise domestique") },
+    { value: "Tesla", label: t("Tesla") },
+    { value: "Cable", label: t("Câble attaché") },
+    { value: "Other", label: t("Autre") },
+  ];
+}

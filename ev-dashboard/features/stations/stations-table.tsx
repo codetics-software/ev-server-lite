@@ -12,12 +12,13 @@ import { useRouter } from "next/navigation";
 import { ConnectorSummary } from "./connector-summary";
 import type { Station } from "./station-types";
 import { StationConnection } from "./stations-list";
+import { t } from "@/lib/i18n";
 
 export function StationsTable({
   filters,
   revision = 0,
   onRemove,
-  emptyDescription = "Aucune borne n’est rattachée ici.",
+  emptyDescription,
 }: {
   filters: Record<string, string | undefined>;
   revision?: number;
@@ -29,7 +30,7 @@ export function StationsTable({
   const columns: Column<Station>[] = [
     {
       id: "name",
-      header: "Borne",
+      header: t("Borne"),
       sort: (station) => station.name,
       cell: (station) => (
         <Link
@@ -44,17 +45,17 @@ export function StationsTable({
     },
     {
       id: "state",
-      header: "Connexion",
+      header: t("Connexion"),
       cell: (station) => <StationConnection station={station} />,
     },
     {
       id: "connectors",
-      header: "Connecteurs",
+      header: t("Connecteurs"),
       cell: (station) => <ConnectorSummary connectors={station.connectors ?? []} />,
     },
     {
       id: "power",
-      header: "Puissance",
+      header: t("Puissance"),
       align: "right",
       sort: (station) => station.maximum_power_kw ?? null,
       cell: (station) => kw(station.maximum_power_kw),
@@ -63,7 +64,7 @@ export function StationsTable({
       ? [
           {
             id: "remove",
-            header: "Actions",
+            header: t("Actions"),
             srOnlyHeader: true,
             align: "right" as const,
             cell: (station: Station) => (
@@ -75,7 +76,7 @@ export function StationsTable({
                   onRemove(station);
                 }}
               >
-                Retirer
+                {t("Retirer")}
               </Button>
             ),
           },
@@ -93,13 +94,13 @@ export function StationsTable({
         empty={
           <EmptyState
             icon={<IconChargingPile />}
-            title="Aucune borne"
-            description={emptyDescription}
+            title={t("Aucune borne")}
+            description={emptyDescription ?? t("Aucune borne n’est rattachée ici.")}
           />
         }
       >
         <DataTable
-          label="Bornes"
+          label={t("Bornes")}
           rows={list.items}
           columns={columns}
           rowKey={(station) => station.id}

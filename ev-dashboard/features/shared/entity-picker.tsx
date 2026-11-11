@@ -12,6 +12,7 @@ import { useApi } from "@/hooks/use-api";
 import { query } from "@/lib/api";
 import type { Row } from "@/lib/api-types";
 import { useEffect, useMemo, useState } from "react";
+import { t } from "@/lib/i18n";
 
 export type PickerOption = { value: string; label: string; description?: string };
 
@@ -95,7 +96,7 @@ export function EntityPicker({
   value,
   onChange,
   id,
-  placeholder = "Rechercher…",
+  placeholder = t("Rechercher…"),
   filters,
   disabled,
   invalid,
@@ -160,7 +161,7 @@ export function EntityPicker({
         className="w-full"
       />
       <ComboboxContent>
-        <ComboboxEmpty>{loading ? "Recherche…" : "Aucun résultat"}</ComboboxEmpty>
+        <ComboboxEmpty>{loading ? t("Recherche…") : t("Aucun résultat")}</ComboboxEmpty>
         <ComboboxList>
           {(option: PickerOption) => (
             <ComboboxItem key={option.value} value={option}>

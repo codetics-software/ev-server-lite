@@ -26,6 +26,7 @@ import { SiteAreaForm } from "./organization-forms";
 import { siteAreaColumns } from "./site-areas-screen";
 import { ConsumptionPanel, SmartChargingPanel } from "./smart-charging-panel";
 import { useRecord } from "./use-record";
+import { t } from "@/lib/i18n";
 
 export function SiteAreaDetailScreen({ id }: { id: string }) {
   const { user, components } = useWorkspaceSession();
@@ -43,7 +44,7 @@ export function SiteAreaDetailScreen({ id }: { id: string }) {
   if (error && !area) {
     return (
       <>
-        <PageHeader title="Zone" back={{ href: "/site-areas", label: "Zones" }} />
+        <PageHeader title={t("Zone")} back={{ href: "/site-areas", label: t("Zones") }} />
         <ErrorState error={error} onRetry={refresh} />
       </>
     );
@@ -62,63 +63,69 @@ export function SiteAreaDetailScreen({ id }: { id: string }) {
       <PageHeader
         back={{
           href: siteId ? `/sites/${siteId}` : "/site-areas",
-          label: sites.get(siteId) ?? "Zones",
+          label: sites.get(siteId) ?? t("Zones"),
         }}
         title={area.name}
-        description={`${kw(field(area, "maximumPowerKw"))} disponibles · ${field(area, "numberOfPhases") === 1 ? "monophasé" : "triphasé"} ${field(area, "voltage") ?? 230} V`}
+        description={t("{power} disponibles · {phases} {voltage} V", {
+          power: kw(field(area, "maximumPowerKw")),
+          phases: t(field(area, "numberOfPhases") === 1 ? "monophasé" : "triphasé"),
+          voltage: String(field(area, "voltage") ?? 230),
+        })}
         meta={
           components.smart_charging && (
             <ToneBadge tone={smart ? "success" : "neutral"}>
-              {smart ? "Recharge intelligente active" : "Sans recharge intelligente"}
+              {smart ? t("Recharge intelligente active") : t("Sans recharge intelligente")}
             </ToneBadge>
           )
         }
         actions={
           admin && (
             <ConfirmButton
-              title={`Supprimer ${area.name} ?`}
-              description="Impossible tant que des sous-zones ou des équipements y sont rattachés."
-              confirmLabel="Supprimer"
+              title={t("Supprimer {name} ?", { name: area.name })}
+              description={t(
+                "Impossible tant que des sous-zones ou des équipements y sont rattachés.",
+              )}
+              confirmLabel={t("Supprimer")}
               onConfirm={() =>
                 action.run("delete", () => deleteRecord("site-areas", area.id), {
-                  success: "Zone supprimée.",
+                  success: t("Zone supprimée."),
                   onDone: () => router.replace("/site-areas"),
                 })
               }
             >
-              Supprimer
+              {t("Supprimer")}
             </ConfirmButton>
           )
         }
       />
       <Tabs defaultValue="stations">
         <TabsList variant="line">
-          <TabsTrigger value="stations">Bornes</TabsTrigger>
+          <TabsTrigger value="stations">{t("Bornes")}</TabsTrigger>
           {components.smart_charging && (
-            <TabsTrigger value="smart">Recharge intelligente</TabsTrigger>
+            <TabsTrigger value="smart">{t("Recharge intelligente")}</TabsTrigger>
           )}
-          <TabsTrigger value="consumption">Consommation</TabsTrigger>
-          <TabsTrigger value="children">Sous-zones</TabsTrigger>
-          {components.assets && <TabsTrigger value="assets">Équipements</TabsTrigger>}
-          <TabsTrigger value="sessions">Sessions</TabsTrigger>
-          {admin && <TabsTrigger value="properties">Propriétés</TabsTrigger>}
+          <TabsTrigger value="consumption">{t("Consommation")}</TabsTrigger>
+          <TabsTrigger value="children">{t("Sous-zones")}</TabsTrigger>
+          {components.assets && <TabsTrigger value="assets">{t("Équipements")}</TabsTrigger>}
+          <TabsTrigger value="sessions">{t("Sessions")}</TabsTrigger>
+          {admin && <TabsTrigger value="properties">{t("Propriétés")}</TabsTrigger>}
         </TabsList>
         <TabsContent value="stations" className="flex flex-col gap-4 pt-4">
           {operate && (
             <Field className="w-full sm:w-80">
-              <FieldLabel htmlFor="area-station">Rattacher une borne</FieldLabel>
+              <FieldLabel htmlFor="area-station">{t("Rattacher une borne")}</FieldLabel>
               <EntityPicker
                 id="area-station"
                 source="stations"
                 value={picker}
-                placeholder="Rechercher une borne…"
+                placeholder={t("Rechercher une borne…")}
                 onChange={(stationId) => {
                   if (!stationId) {
                     return;
                   }
                   setPicker("");
                   void action.run("assign", () => assignStation(stationId, area.id), {
-                    success: "Borne rattachée à la zone.",
+                    success: t("Borne rattachée à la zone."),
                     onDone: refreshStations,
                   });
                 }}
@@ -132,7 +139,7 @@ export function SiteAreaDetailScreen({ id }: { id: string }) {
               operate
                 ? (station) =>
                     action.run("unassign", () => assignStation(station.id, null), {
-                      success: "Borne retirée de la zone.",
+                      success: t("Borne retirée de la zone."),
                       onDone: refreshStations,
                     })
                 : undefined
@@ -147,14 +154,16 @@ export function SiteAreaDetailScreen({ id }: { id: string }) {
         <TabsContent value="consumption" className="pt-4">
           <ConsumptionPanel
             path={`site-areas/${area.id}/consumptions`}
-            title="Consommation de la zone"
-            description="Puissance des bornes et des équipements, par tranches de cinq minutes, et limite appliquée."
+            title={t("Consommation de la zone")}
+            description={t(
+              "Puissance des bornes et des équipements, par tranches de cinq minutes, et limite appliquée.",
+            )}
           />
         </TabsContent>
         <TabsContent value="children" className="pt-4">
           <RecordList
             kind="site-areas"
-            label="Sous-zones"
+            label={t("Sous-zones")}
             revision={childRevision}
             filters={{ siteId }}
             filterRows={(record) => field(record, "parentSiteAreaId") === area.id}
@@ -162,13 +171,15 @@ export function SiteAreaDetailScreen({ id }: { id: string }) {
               (column) => column.id !== "smart",
             )}
             onSelect={(record) => router.push(`/site-areas/${record.id}`)}
-            emptyTitle="Aucune sous-zone"
-            emptyDescription="Une sous-zone partage la puissance de cette zone avec ses propres bornes."
+            emptyTitle={t("Aucune sous-zone")}
+            emptyDescription={t(
+              "Une sous-zone partage la puissance de cette zone avec ses propres bornes.",
+            )}
             toolbar={
               admin && (
                 <Button variant="outline" onClick={() => setCreatingChild(true)}>
                   <IconPlus data-icon="inline-start" />
-                  Ajouter une sous-zone
+                  {t("Ajouter une sous-zone")}
                 </Button>
               )
             }
@@ -178,12 +189,14 @@ export function SiteAreaDetailScreen({ id }: { id: string }) {
           <TabsContent value="assets" className="pt-4">
             <RecordList
               kind="assets"
-              label="Équipements de la zone"
+              label={t("Équipements de la zone")}
               filters={{ siteAreaId: area.id }}
               columns={assetColumns(new Map())}
               onSelect={(record) => router.push(`/assets/${record.id}`)}
-              emptyTitle="Aucun équipement"
-              emptyDescription="Rattachez un compteur ou une production pour l’intégrer au calcul de puissance."
+              emptyTitle={t("Aucun équipement")}
+              emptyDescription={t(
+                "Rattachez un compteur ou une production pour l’intégrer au calcul de puissance.",
+              )}
             />
           </TabsContent>
         )}
@@ -199,7 +212,7 @@ export function SiteAreaDetailScreen({ id }: { id: string }) {
       <FormDialog
         open={creatingChild}
         onOpenChange={setCreatingChild}
-        title="Ajouter une sous-zone"
+        title={t("Ajouter une sous-zone")}
         wide
       >
         <SiteAreaForm

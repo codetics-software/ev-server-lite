@@ -22,16 +22,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LanguageToggle } from "@/features/workspace/language-toggle";
+import { ThemeToggle } from "@/features/workspace/theme-toggle";
 import { AuthIntro } from "./auth-intro";
+import { t, translated } from "@/lib/i18n";
 
-const titles: Record<string, string> = {
+const titles: Record<string, string> = translated({
   login: "Se connecter",
   register: "Créer votre compte",
   "forgot-password": "Rétablir votre accès",
   "reset-password": "Définir votre mot de passe",
   "define-password": "Définir votre mot de passe",
   "verify-email": "Vérifier votre adresse électronique",
-};
+});
 
 export function AuthScreen({ action }: { action: string }) {
   const router = useRouter();
@@ -52,7 +55,7 @@ export function AuthScreen({ action }: { action: string }) {
     onSubmit: async ({ value }) => {
       setError("");
       if (action === "register" && !accepted) {
-        setError("Acceptez les conditions d’utilisation pour créer votre compte.");
+        setError(t("Acceptez les conditions d’utilisation pour créer votre compte."));
         return;
       }
 
@@ -84,13 +87,15 @@ export function AuthScreen({ action }: { action: string }) {
         } else {
           setMessage(
             action === "register" || action === "forgot-password"
-              ? "Si votre compte est éligible, vous recevrez un courriel avec les prochaines étapes."
-              : "Votre compte a été mis à jour. Vous pouvez vous connecter.",
+              ? t(
+                  "Si votre compte est éligible, vous recevrez un courriel avec les prochaines étapes.",
+                )
+              : t("Votre compte a été mis à jour. Vous pouvez vous connecter."),
           );
         }
       } catch (failure) {
         setError(
-          failure instanceof Error ? failure.message : "Impossible de traiter cette demande.",
+          failure instanceof Error ? failure.message : t("Impossible de traiter cette demande."),
         );
       }
     },
@@ -117,7 +122,11 @@ export function AuthScreen({ action }: { action: string }) {
   return (
     <main className="grid min-h-svh lg:grid-cols-2" aria-busy={providersLoading}>
       <AuthIntro />
-      <section className="flex items-center justify-center p-5 sm:p-12">
+      <section className="relative flex items-center justify-center p-5 sm:p-12">
+        <div className="absolute top-4 right-4 flex items-center gap-1">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
         <Card className="w-full max-w-sm">
           <CardHeader>
             {logoTenant && logoFailed !== logoTenant && (
@@ -135,16 +144,20 @@ export function AuthScreen({ action }: { action: string }) {
             <CardTitle className="text-2xl">{titles[action]}</CardTitle>
             <CardDescription>
               {action === "define-password"
-                ? "Choisissez le mot de passe de votre nouveau compte. Il contient au moins 16 caractères."
+                ? t(
+                    "Choisissez le mot de passe de votre nouveau compte. Il contient au moins 16 caractères.",
+                  )
                 : action === "reset-password"
-                  ? "Nouveau compte ou mot de passe oublié : choisissez un mot de passe d’au moins 16 caractères."
-                  : "Renseignez votre espace client et vos identifiants."}
+                  ? t(
+                      "Nouveau compte ou mot de passe oublié : choisissez un mot de passe d’au moins 16 caractères.",
+                    )
+                  : t("Renseignez votre espace client et vos identifiants.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             {message ? (
               <Alert>
-                <AlertTitle>Demande traitée</AlertTitle>
+                <AlertTitle>{t("Demande traitée")}</AlertTitle>
                 <AlertDescription>{message}</AlertDescription>
               </Alert>
             ) : (
@@ -160,14 +173,14 @@ export function AuthScreen({ action }: { action: string }) {
                     <form.Field
                       name="tenant"
                       validators={{
-                        onDynamic: rules(required("Renseignez l’identifiant de votre espace.")),
+                        onDynamic: rules(required(t("Renseignez l’identifiant de votre espace."))),
                       }}
                     >
                       {(field) => {
                         const invalid = isInvalid(field);
                         return (
                           <Field data-invalid={invalid}>
-                            <FieldLabel htmlFor="tenant">Espace client</FieldLabel>
+                            <FieldLabel htmlFor="tenant">{t("Espace client")}</FieldLabel>
                             <Input
                               id="tenant"
                               name={field.name}
@@ -176,7 +189,7 @@ export function AuthScreen({ action }: { action: string }) {
                               onChange={(event) => field.handleChange(event.target.value)}
                               aria-invalid={invalid}
                               autoComplete="organization"
-                              placeholder="Identifiant de votre espace"
+                              placeholder={t("Identifiant de votre espace")}
                               required
                             />
                             {invalid && <FieldError errors={field.state.meta.errors} />}
@@ -190,8 +203,8 @@ export function AuthScreen({ action }: { action: string }) {
                       name="name"
                       validators={{
                         onDynamic: rules(
-                          required("Renseignez votre nom."),
-                          maxLength(200, "Le nom contient au plus 200 caractères."),
+                          required(t("Renseignez votre nom.")),
+                          maxLength(200, t("Le nom contient au plus 200 caractères.")),
                         ),
                       }}
                     >
@@ -199,7 +212,7 @@ export function AuthScreen({ action }: { action: string }) {
                         const invalid = isInvalid(field);
                         return (
                           <Field data-invalid={invalid}>
-                            <FieldLabel htmlFor="name">Nom complet</FieldLabel>
+                            <FieldLabel htmlFor="name">{t("Nom complet")}</FieldLabel>
                             <Input
                               id="name"
                               name={field.name}
@@ -221,7 +234,7 @@ export function AuthScreen({ action }: { action: string }) {
                       name="email"
                       validators={{
                         onDynamic: rules(
-                          required("Renseignez votre adresse électronique."),
+                          required(t("Renseignez votre adresse électronique.")),
                           email(),
                         ),
                       }}
@@ -230,7 +243,7 @@ export function AuthScreen({ action }: { action: string }) {
                         const invalid = isInvalid(field);
                         return (
                           <Field data-invalid={invalid}>
-                            <FieldLabel htmlFor="email">Adresse électronique</FieldLabel>
+                            <FieldLabel htmlFor="email">{t("Adresse électronique")}</FieldLabel>
                             <Input
                               id="email"
                               name={field.name}
@@ -256,11 +269,11 @@ export function AuthScreen({ action }: { action: string }) {
                       validators={{
                         onDynamic: rules(
                           action === "login"
-                            ? required("Renseignez votre mot de passe.")
+                            ? required(t("Renseignez votre mot de passe."))
                             : lengthBetween(
                                 16,
                                 128,
-                                "Le mot de passe doit contenir entre 16 et 128 caractères.",
+                                t("Le mot de passe doit contenir entre 16 et 128 caractères."),
                               ),
                         ),
                       }}
@@ -269,7 +282,7 @@ export function AuthScreen({ action }: { action: string }) {
                         const invalid = isInvalid(field);
                         return (
                           <Field data-invalid={invalid}>
-                            <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+                            <FieldLabel htmlFor="password">{t("Mot de passe")}</FieldLabel>
                             <Input
                               id="password"
                               name={field.name}
@@ -300,13 +313,13 @@ export function AuthScreen({ action }: { action: string }) {
                       />
                       <FieldLabel htmlFor="eula" className="font-normal">
                         <span>
-                          J’accepte les{" "}
+                          {t("J’accepte les")}{" "}
                           <Link
                             href="/auth/eula"
                             target="_blank"
                             className="underline underline-offset-4"
                           >
-                            conditions d’utilisation
+                            {t("conditions d’utilisation")}
                           </Link>
                         </span>
                       </FieldLabel>
@@ -319,12 +332,12 @@ export function AuthScreen({ action }: { action: string }) {
                   )}
                   <Button type="submit" className="w-full" disabled={pending}>
                     {pending
-                      ? "Veuillez patienter…"
+                      ? t("Veuillez patienter…")
                       : action === "login"
-                        ? "Se connecter"
+                        ? t("Se connecter")
                         : action === "verify-email"
-                          ? "Vérifier l’adresse"
-                          : "Continuer"}
+                          ? t("Vérifier l’adresse")
+                          : t("Continuer")}
                   </Button>
                 </FieldGroup>
               </form>
@@ -334,7 +347,7 @@ export function AuthScreen({ action }: { action: string }) {
                 href="/auth/forgot-password"
                 className="text-center text-sm text-muted-foreground hover:text-foreground"
               >
-                Mot de passe oublié ?
+                {t("Mot de passe oublié ?")}
               </Link>
             )}
             {action === "login" && Boolean(providers?.length) && (
@@ -348,7 +361,7 @@ export function AuthScreen({ action }: { action: string }) {
                       data-slot="button"
                       className={buttonVariants({ variant: "outline" })}
                     >
-                      Continuer avec {provider.name}
+                      {t("Continuer avec {provider}", { provider: provider.name })}
                     </a>
                   ))}
                 </div>
@@ -357,14 +370,14 @@ export function AuthScreen({ action }: { action: string }) {
           </CardContent>
           <CardFooter className="flex-col justify-center gap-3 text-xs text-muted-foreground">
             {action === "login" && options?.registrationAvailable && (
-              <Link href="/auth/create-workspace">Créer un espace client</Link>
+              <Link href="/auth/create-workspace">{t("Créer un espace client")}</Link>
             )}
             {action === "login" ? (
-              "Votre administrateur gère l’accès à cet espace."
+              t("Votre administrateur gère l’accès à cet espace.")
             ) : (
-              <Link href="/auth/login">Retour à la connexion</Link>
+              <Link href="/auth/login">{t("Retour à la connexion")}</Link>
             )}
-            <Link href="/auth/eula">Conditions d’utilisation</Link>
+            <Link href="/auth/eula">{t("Conditions d’utilisation")}</Link>
             <span>
               Kevin Vavelin, <a href="https://codetics.fr">Codetics</a>
             </span>

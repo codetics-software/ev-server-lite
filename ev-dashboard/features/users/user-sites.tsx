@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 import { IconMapPin, IconTrash } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 type UserSite = { site_id: string; name: string; site_admin: boolean; site_owner: boolean };
 
@@ -34,7 +35,7 @@ export function UserSites({ userId }: { userId: string }) {
   const columns: Column<UserSite>[] = [
     {
       id: "name",
-      header: "Site",
+      header: t("Site"),
       sort: (row) => row.name,
       cell: (row) => (
         <Link
@@ -47,10 +48,10 @@ export function UserSites({ userId }: { userId: string }) {
     },
     {
       id: "admin",
-      header: "Administrateur du site",
+      header: t("Administrateur du site"),
       cell: (row) => (
         <Switch
-          aria-label={`Administrateur de ${row.name}`}
+          aria-label={t("Administrateur de {name}", { name: row.name })}
           checked={row.site_admin}
           onCheckedChange={(checked) => update(row.site_id, { site_admin: checked === true })}
         />
@@ -58,10 +59,10 @@ export function UserSites({ userId }: { userId: string }) {
     },
     {
       id: "owner",
-      header: "Propriétaire",
+      header: t("Propriétaire"),
       cell: (row) => (
         <Switch
-          aria-label={`Propriétaire de ${row.name}`}
+          aria-label={t("Propriétaire de {name}", { name: row.name })}
           checked={row.site_owner}
           onCheckedChange={(checked) => update(row.site_id, { site_owner: checked === true })}
         />
@@ -69,14 +70,14 @@ export function UserSites({ userId }: { userId: string }) {
     },
     {
       id: "remove",
-      header: "Retirer",
+      header: t("Retirer"),
       srOnlyHeader: true,
       align: "right",
       cell: (row) => (
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={`Retirer ${row.name}`}
+          aria-label={t("Retirer {name}", { name: row.name })}
           onClick={() => setDraft(rows.filter((item) => item.site_id !== row.site_id))}
         >
           <IconTrash />
@@ -91,16 +92,16 @@ export function UserSites({ userId }: { userId: string }) {
     return <LoadingState rows={3} />;
   }
   return (
-    <section className="flex flex-col gap-4" aria-label="Sites de l’utilisateur">
+    <section className="flex flex-col gap-4" aria-label={t("Sites de l’utilisateur")}>
       <div className="flex flex-wrap items-end gap-3">
         <Field className="w-full sm:w-72">
-          <FieldLabel htmlFor="user-site-add">Affecter à un site</FieldLabel>
+          <FieldLabel htmlFor="user-site-add">{t("Affecter à un site")}</FieldLabel>
           <EntityPicker
             id="user-site-add"
             source="sites"
             value=""
             onChange={(_, option) => add(option)}
-            placeholder="Rechercher un site…"
+            placeholder={t("Rechercher un site…")}
           />
         </Field>
         {draft && (
@@ -122,7 +123,7 @@ export function UserSites({ userId }: { userId: string }) {
                       ),
                     }),
                   {
-                    success: "Sites enregistrés.",
+                    success: t("Sites enregistrés."),
                     onDone: () => {
                       setDraft(null);
                       refresh();
@@ -131,21 +132,21 @@ export function UserSites({ userId }: { userId: string }) {
                 )
               }
             >
-              Enregistrer
+              {t("Enregistrer")}
             </Button>
             <Button variant="ghost" onClick={() => setDraft(null)}>
-              Annuler
+              {t("Annuler")}
             </Button>
           </>
         )}
       </div>
       {rows.length ? (
-        <DataTable label="Sites" rows={rows} columns={columns} rowKey={(row) => row.site_id} />
+        <DataTable label={t("Sites")} rows={rows} columns={columns} rowKey={(row) => row.site_id} />
       ) : (
         <EmptyState
           icon={<IconMapPin />}
-          title="Aucun site affecté"
-          description="L’utilisateur ne peut recharger que sur les sites en accès ouvert."
+          title={t("Aucun site affecté")}
+          description={t("L’utilisateur ne peut recharger que sur les sites en accès ouvert.")}
         />
       )}
     </section>

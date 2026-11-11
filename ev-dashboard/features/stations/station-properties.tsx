@@ -12,6 +12,7 @@ import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { connectorTypes, type Station } from "./station-types";
+import { t } from "@/lib/i18n";
 
 type ConnectorDraft = { connectorId: string; type: string; maximumPowerKw: string; phases: string };
 
@@ -68,10 +69,10 @@ export function StationProperties({
             })),
           }),
         });
-        notify("Propriétés de la borne enregistrées.");
+        notify(t("Propriétés de la borne enregistrées."));
         onSaved();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer la borne."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer la borne.")));
       }
     },
   });
@@ -88,13 +89,15 @@ export function StationProperties({
       <fieldset disabled={!canEdit} className="contents">
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>Identification</FieldLegend>
+            <FieldLegend>{t("Identification")}</FieldLegend>
             <FieldGroup>
               <form.Field
                 name="name"
-                validators={{ onDynamic: rules(required("Renseignez un nom."), maxLength(200)) }}
+                validators={{ onDynamic: rules(required(t("Renseignez un nom.")), maxLength(200)) }}
               >
-                {(field) => <FormText field={field} label="Nom affiché" maxLength={200} required />}
+                {(field) => (
+                  <FormText field={field} label={t("Nom affiché")} maxLength={200} required />
+                )}
               </form.Field>
               {organization && (
                 <form.Field name="siteAreaId">
@@ -102,8 +105,8 @@ export function StationProperties({
                     <FormPicker
                       field={field}
                       source="site-areas"
-                      label="Zone de recharge"
-                      description="Le site est déduit de la zone choisie."
+                      label={t("Zone de recharge")}
+                      description={t("Le site est déduit de la zone choisie.")}
                     />
                   )}
                 </form.Field>
@@ -112,8 +115,8 @@ export function StationProperties({
                 {(field) => (
                   <FormSwitch
                     field={field}
-                    label="Borne activée"
-                    description="Une borne désactivée refuse les nouvelles connexions OCPP."
+                    label={t("Borne activée")}
+                    description={t("Une borne désactivée refuse les nouvelles connexions OCPP.")}
                   />
                 )}
               </form.Field>
@@ -122,8 +125,10 @@ export function StationProperties({
                   {(field) => (
                     <FormSwitch
                       field={field}
-                      label="Borne publique"
-                      description="Publiée aux partenaires d’itinérance lorsque son site est public."
+                      label={t("Borne publique")}
+                      description={t(
+                        "Publiée aux partenaires d’itinérance lorsque son site est public.",
+                      )}
                     />
                   )}
                 </form.Field>
@@ -131,30 +136,37 @@ export function StationProperties({
             </FieldGroup>
           </FieldSet>
           <FieldSet>
-            <FieldLegend>Position et puissance</FieldLegend>
+            <FieldLegend>{t("Position et puissance")}</FieldLegend>
             <div className="grid gap-4 sm:grid-cols-3">
               <form.Field
                 name="latitude"
                 validators={{
-                  onDynamic: rules(optionalNumber(-90, 90, "Latitude entre -90 et 90.")),
+                  onDynamic: rules(optionalNumber(-90, 90, t("Latitude entre -90 et 90."))),
                 }}
               >
-                {(field) => <FormText field={field} label="Latitude" type="number" />}
+                {(field) => <FormText field={field} label={t("Latitude")} type="number" />}
               </form.Field>
               <form.Field
                 name="longitude"
                 validators={{
-                  onDynamic: rules(optionalNumber(-180, 180, "Longitude entre -180 et 180.")),
+                  onDynamic: rules(optionalNumber(-180, 180, t("Longitude entre -180 et 180."))),
                 }}
               >
-                {(field) => <FormText field={field} label="Longitude" type="number" />}
+                {(field) => <FormText field={field} label={t("Longitude")} type="number" />}
               </form.Field>
               <form.Field
                 name="maximumPowerKw"
-                validators={{ onDynamic: rules(optionalNumber(0, 10000, "Puissance invalide.")) }}
+                validators={{
+                  onDynamic: rules(optionalNumber(0, 10000, t("Puissance invalide."))),
+                }}
               >
                 {(field) => (
-                  <FormText field={field} label="Puissance maximale (kW)" type="number" min={0} />
+                  <FormText
+                    field={field}
+                    label={t("Puissance maximale (kW)")}
+                    type="number"
+                    min={0}
+                  />
                 )}
               </form.Field>
             </div>
@@ -163,8 +175,10 @@ export function StationProperties({
                 {(field) => (
                   <FormSwitch
                     field={field}
-                    label="Exclure de la recharge intelligente"
-                    description="La borne n’est pas prise en compte dans la répartition de puissance."
+                    label={t("Exclure de la recharge intelligente")}
+                    description={t(
+                      "La borne n’est pas prise en compte dans la répartition de puissance.",
+                    )}
                   />
                 )}
               </form.Field>
@@ -173,7 +187,7 @@ export function StationProperties({
           <form.Field name="connectors" mode="array">
             {(connectors) => (
               <FieldSet>
-                <FieldLegend>Connecteurs</FieldLegend>
+                <FieldLegend>{t("Connecteurs")}</FieldLegend>
                 {connectors.state.value.map((_, index) => (
                   <div
                     key={index}
@@ -184,27 +198,27 @@ export function StationProperties({
                     </form.Field>
                     <form.Field name={`connectors[${index}].type`}>
                       {(field) => (
-                        <FormSelect field={field} label="Type" options={connectorTypes} />
+                        <FormSelect field={field} label={t("Type")} options={connectorTypes()} />
                       )}
                     </form.Field>
                     <form.Field
                       name={`connectors[${index}].maximumPowerKw`}
                       validators={{
-                        onDynamic: rules(optionalNumber(0, 1000, "Puissance invalide.")),
+                        onDynamic: rules(optionalNumber(0, 1000, t("Puissance invalide."))),
                       }}
                     >
                       {(field) => (
-                        <FormText field={field} label="Puissance (kW)" type="number" min={0} />
+                        <FormText field={field} label={t("Puissance (kW)")} type="number" min={0} />
                       )}
                     </form.Field>
                     <form.Field name={`connectors[${index}].phases`}>
                       {(field) => (
                         <FormSelect
                           field={field}
-                          label="Phases"
+                          label={t("Phases")}
                           options={[
-                            { value: "1", label: "Monophasé" },
-                            { value: "3", label: "Triphasé" },
+                            { value: "1", label: t("Monophasé") },
+                            { value: "3", label: t("Triphasé") },
                           ]}
                         />
                       )}
@@ -213,7 +227,7 @@ export function StationProperties({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      aria-label={`Retirer le connecteur ${index + 1}`}
+                      aria-label={t("Retirer le connecteur {index}", { index: index + 1 })}
                       onClick={() => connectors.removeValue(index)}
                     >
                       <IconTrash />
@@ -234,7 +248,7 @@ export function StationProperties({
                   }
                 >
                   <IconPlus data-icon="inline-start" />
-                  Ajouter un connecteur
+                  {t("Ajouter un connecteur")}
                 </Button>
               </FieldSet>
             )}
@@ -248,7 +262,7 @@ export function StationProperties({
             <form.Subscribe selector={(state) => state.isSubmitting}>
               {(submitting) => (
                 <Button type="submit" className="w-fit" disabled={submitting}>
-                  {submitting ? "Enregistrement…" : "Enregistrer les propriétés"}
+                  {submitting ? t("Enregistrement…") : t("Enregistrer les propriétés")}
                 </Button>
               )}
             </form.Subscribe>

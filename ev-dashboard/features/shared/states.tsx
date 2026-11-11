@@ -11,10 +11,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { IconAlertTriangle, IconInbox, IconRefresh } from "@tabler/icons-react";
 import type { ReactNode } from "react";
+import { t } from "@/lib/i18n";
 
 export function ErrorState({
   error,
-  title = "Impossible de charger les données",
+  title = t("Impossible de charger les données"),
   onRetry,
 }: {
   error: Error | string | null | undefined;
@@ -33,7 +34,7 @@ export function ErrorState({
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry}>
             <IconRefresh data-icon="inline-start" />
-            Réessayer
+            {t("Réessayer")}
           </Button>
         )}
       </AlertDescription>
@@ -66,7 +67,7 @@ export function EmptyState({
 
 export function LoadingState({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="flex flex-col gap-2" aria-busy="true" aria-label="Chargement">
+    <div className="flex flex-col gap-2" aria-busy="true" aria-label={t("Chargement")}>
       <Skeleton className="h-9 w-full" />
       {Array.from({ length: rows }, (_, index) => (
         <Skeleton key={index} className="h-11 w-full" />

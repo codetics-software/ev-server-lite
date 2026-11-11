@@ -3,6 +3,7 @@ package fr.codetics.ev_server.services.commands
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.commands.CommandInput
 import fr.codetics.ev_server.models.commands.CommandReceipt
 import fr.codetics.ev_server.models.commands.CommandResponse
@@ -36,20 +37,20 @@ class CommandService(
 
     fun queue(user: AppPrincipal, stationId: String, input: CommandInput): CommandReceipt {
         ensure(input.action !in StationSecurityService.CERTIFICATE_ACTIONS) {
-            "Les certificats se gèrent depuis la section Sécurité de la borne."
+            msg("commands.certificates_in_security")
         }
         ensure(
             input.action != "ChangeConfiguration" ||
                 !StationSecurityService.protectedKey(input.payload["key"]?.toString().orEmpty())
         ) {
-            "Ce paramètre de sécurité se modifie depuis la section Sécurité de la borne."
+            msg("commands.security_parameter")
         }
         ensure(
             user.role == UserRole.ADMIN ||
                 input.action != "ExtendedTriggerMessage" ||
                 input.payload["requestedMessage"] != "SignChargePointCertificate"
         ) {
-            "Seul un administrateur peut demander un certificat à la borne."
+            msg("commands.certificate_admin_only")
         }
         val id =
             queue.command(

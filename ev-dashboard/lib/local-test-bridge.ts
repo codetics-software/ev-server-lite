@@ -2,6 +2,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
+import { t } from "@/lib/i18n";
 
 type BridgeResponse = {
   id: string;
@@ -33,7 +34,7 @@ class LocalTestBridge {
     const classpathFile = process.env.EV_LOCAL_TEST_CLASSPATH;
 
     if (!classpathFile || process.env.NODE_ENV === "production") {
-      throw new Error("Le transport local de test est désactivé.");
+      throw new Error(t("Le transport local de test est désactivé."));
     }
 
     const classpath = (await readFile(classpathFile, "utf8")).trim();
@@ -65,7 +66,7 @@ class LocalTestBridge {
       });
 
       child.on("exit", () => {
-        const error = new Error("Le serveur local de test s’est arrêté.");
+        const error = new Error(t("Le serveur local de test s’est arrêté."));
         reject(error);
         this.pending.forEach((request) => request.reject(error));
         this.pending.clear();
@@ -84,7 +85,7 @@ class LocalTestBridge {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error("La demande de test locale a dépassé son délai."));
+        reject(new Error(t("La demande de test locale a dépassé son délai.")));
       }, 20000);
 
       this.pending.set(id, {

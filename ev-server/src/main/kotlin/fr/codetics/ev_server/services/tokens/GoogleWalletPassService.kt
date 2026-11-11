@@ -10,6 +10,7 @@ import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
 import fr.codetics.ev_server.models.entities.TenantEntity
@@ -50,11 +51,11 @@ class GoogleWalletPassService(
     fun pass(user: AppPrincipal, uid: String): GoogleWalletPassResponse {
         val token =
             tokens.findById(ChargingTokenKey(user.tenantId, uid)).orElse(null)?.takeIf { it.userId == user.id }
-                ?: throw NotFound("Badge introuvable.")
-        ensure(!VehicleIds.isVid(uid)) { "Un identifiant de véhicule ne peut pas être ajouté à Google Wallet." }
-        ensure(token.enabled) { "Ce badge est désactivé." }
+                ?: throw NotFound(msg("tokens.not_found"))
+        ensure(!VehicleIds.isVid(uid)) { msg("wallet.google.vehicle_id") }
+        ensure(token.enabled) { msg("tokens.disabled") }
         if (!configured) {
-            throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Google Wallet n’est pas configuré sur ce serveur.")
+            throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, msg("wallet.google.not_configured"))
         }
         val workspace = tenants.findById(user.tenantId).orElseThrow()
         val jwt = account.sign(claims(workspace, user, uid, token.visualId, token.expiresAt))
@@ -107,9 +108,9 @@ class GoogleWalletPassService(
             put(
                 "textModulesData",
                 listOf(
-                    mapOf("id" to "badge", "header" to "Badge", "body" to (visualId ?: uid)),
-                    mapOf("id" to "workspace", "header" to "Réseau", "body" to workspace.name),
-                    mapOf("id" to "credit", "header" to "Édité avec", "body" to ATTRIBUTION),
+                    mapOf("id" to "badge", "header" to msg("wallet.badge"), "body" to (visualId ?: uid)),
+                    mapOf("id" to "workspace", "header" to msg("wallet.network"), "body" to workspace.name),
+                    mapOf("id" to "credit", "header" to msg("wallet.made_with"), "body" to ATTRIBUTION),
                 ),
             )
             if (workspace.hasLogo) {

@@ -9,6 +9,7 @@ import { IconCircleCheck } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { sessionColumns } from "./session-columns";
 import type { ChargingSession, SessionInError } from "./session-types";
+import { t } from "@/lib/i18n";
 
 export function SessionsInError({ revision }: { revision: number }) {
   const router = useRouter();
@@ -24,7 +25,7 @@ export function SessionsInError({ revision }: { revision: number }) {
     ),
     {
       id: "errors",
-      header: "Anomalies",
+      header: t("Anomalies"),
       cell: (session: ChargingSession) => <ErrorBadges errors={session.errors ?? []} />,
     },
   ];
@@ -38,13 +39,15 @@ export function SessionsInError({ revision }: { revision: number }) {
         empty={
           <EmptyState
             icon={<IconCircleCheck />}
-            title="Aucune session en erreur"
-            description="Les sessions sans consommation, sans prix ou avec un badge invalide apparaîtront ici."
+            title={t("Aucune session en erreur")}
+            description={t(
+              "Les sessions sans consommation, sans prix ou avec un badge invalide apparaîtront ici.",
+            )}
           />
         }
       >
         <DataTable
-          label="Sessions en erreur"
+          label={t("Sessions en erreur")}
           rows={rows}
           columns={columns}
           rowKey={(session) => String(session.id)}

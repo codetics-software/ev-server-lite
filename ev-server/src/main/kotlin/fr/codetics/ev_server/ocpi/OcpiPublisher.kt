@@ -2,6 +2,7 @@ package fr.codetics.ev_server.ocpi
 
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.ChargingTokenEntity
 import fr.codetics.ev_server.models.entities.OcpiObjectEntity
 import fr.codetics.ev_server.models.entities.OcpiObjectKey
@@ -300,7 +301,7 @@ class OcpiPublisher(
                 val url =
                     entry.url
                         ?: transport.endpoint(partner, entry.module)?.let { it + entry.path }
-                        ?: throw OcpiFault(3001, "Le partenaire ne publie pas le module ${entry.module}.")
+                        ?: throw OcpiFault(3001, msg("ocpi.partner.module_missing", entry.module))
                 val body: JsonNode? = if (entry.method == "GET" || entry.method == "DELETE") null else db.decode(entry.body)
                 transport.request(partner, url, entry.method, body)
                 null

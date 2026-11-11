@@ -27,6 +27,7 @@ import { useState } from "react";
 import { groups, sectionHref, type Section } from "./navigation";
 import { homeFor, sectionLabel } from "./navigation-access";
 import { workspaceLogo } from "./workspace-context";
+import { t } from "@/lib/i18n";
 
 export function WorkspaceSidebar({
   user,
@@ -55,7 +56,7 @@ export function WorkspaceSidebar({
       await api("auth/signout", { method: "POST" });
       router.replace("/auth/login");
     } catch {
-      setError("La déconnexion a échoué. Réessayez.");
+      setError(t("La déconnexion a échoué. Réessayez."));
       setSigningOut(false);
     }
   }
@@ -66,7 +67,7 @@ export function WorkspaceSidebar({
         <Link
           href={homeFor(user)}
           className="flex min-w-0 items-center gap-3"
-          aria-label={workspace?.name ?? "Codetics Supervision"}
+          aria-label={workspace?.name ?? t("Codetics Supervision")}
         >
           {logo ? (
             <Image
@@ -85,7 +86,7 @@ export function WorkspaceSidebar({
               {logo && workspace ? workspace.name : "Codetics"}
             </span>
             <span className="block truncate text-xs text-sidebar-foreground/70">
-              {logo ? "Supervision · Codetics" : (workspace?.name ?? "Supervision")}
+              {logo ? t("Supervision · Codetics") : (workspace?.name ?? t("Supervision"))}
             </span>
           </span>
         </Link>
@@ -93,7 +94,7 @@ export function WorkspaceSidebar({
       <SidebarContent>
         {visibleGroups.map((group) => (
           <SidebarGroup key={group}>
-            <SidebarGroupLabel>{group}</SidebarGroupLabel>
+            <SidebarGroupLabel>{t(group)}</SidebarGroupLabel>
             <SidebarMenu>
               {items
                 .filter((item) => item.group === group)
@@ -137,7 +138,7 @@ export function WorkspaceSidebar({
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Se déconnecter"
+            aria-label={t("Se déconnecter")}
             disabled={signingOut}
             onClick={signOut}
           >

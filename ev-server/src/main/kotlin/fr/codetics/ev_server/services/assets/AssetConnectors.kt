@@ -1,6 +1,7 @@
 package fr.codetics.ev_server.services.assets
 
 import fr.codetics.ev_server.core.InvalidRequest
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.organization.AssetConnectionData
 import fr.codetics.ev_server.models.organization.AssetData
 import java.math.BigDecimal
@@ -44,13 +45,13 @@ class AssetHttp(private val json: ObjectMapper) {
     fun uri(base: String, path: String = ""): URI {
         val uri = URI(base.trimEnd('/') + path)
         if (uri.scheme != "https" || uri.host.isNullOrBlank() || uri.userInfo != null) {
-            throw InvalidRequest("L’adresse de connexion doit utiliser HTTPS.")
+            throw InvalidRequest(msg("records.connection_https"))
         }
         val addresses = runCatching { InetAddress.getAllByName(uri.host).toList() }.getOrElse {
-            throw AssetConnectionError("Le serveur de l’équipement est introuvable.")
+            throw AssetConnectionError(msg("assets.host_not_found"))
         }
         if (addresses.any { it.isLoopbackAddress || it.isSiteLocalAddress || it.isLinkLocalAddress || it.isAnyLocalAddress }) {
-            throw InvalidRequest("L’adresse de connexion doit être publique.")
+            throw InvalidRequest(msg("assets.public_url"))
         }
         return uri
     }
@@ -65,15 +66,15 @@ class AssetHttp(private val json: ObjectMapper) {
             try {
                 client.send(request.timeout(Duration.ofSeconds(10)).build(), HttpResponse.BodyHandlers.ofInputStream())
             } catch (_: Exception) {
-                throw AssetConnectionError("Le service de l’équipement n’a pas pu être contacté.")
+                throw AssetConnectionError(msg("assets.unreachable"))
             }
         val bytes = response.body().use { it.readNBytes(2_097_153) }
         if (response.statusCode() !in 200..299) {
-            throw AssetConnectionError("Le service de l’équipement a répondu ${response.statusCode()}.")
+            throw AssetConnectionError(msg("assets.http_status", response.statusCode()))
         }
-        if (bytes.size > 2_097_152) throw AssetConnectionError("La réponse de l’équipement est trop volumineuse.")
+        if (bytes.size > 2_097_152) throw AssetConnectionError(msg("assets.response_too_large"))
         if (bytes.isEmpty()) return json.createObjectNode()
-        return runCatching { json.readTree(bytes) }.getOrElse { throw AssetConnectionError("La réponse de l’équipement est illisible.") }
+        return runCatching { json.readTree(bytes) }.getOrElse { throw AssetConnectionError(msg("assets.response_unreadable")) }
     }
 
     fun token(key: String, fetch: () -> Pair<String, Long>): String {
@@ -92,7 +93,7 @@ private fun JsonNode.decimal(field: String): BigDecimal? =
     get(field)?.takeIf { it.isNumber || it.isString }?.asText()?.replace(',', '.')?.toBigDecimalOrNull()
 
 private fun required(value: String?, label: String) =
-    value?.takeIf(String::isNotBlank) ?: throw InvalidRequest("$label est requis pour cette connexion.")
+    value?.takeIf(String::isNotBlank) ?: throw InvalidRequest(msg("assets.field_required", label))
 
 private fun direction(asset: AssetData) = if (asset.producing()) BigDecimal.ONE.negate() else BigDecimal.ONE
 
@@ -101,7 +102,7 @@ class SchneiderConnector(private val http: AssetHttp) : AssetConnector {
     override val type = "SCHNEIDER"
 
     private fun token(connection: AssetConnectionData, secrets: AssetSecrets): String {
-        val url = required(connection.url, "L’adresse")
+        val url = required(connection.url, msg("field.address"))
         return http.token("schneider:$url:${connection.user}") {
             val response =
                 http.send(
@@ -112,14 +113,14 @@ class SchneiderConnector(private val http: AssetHttp) : AssetConnector {
                                 http.form(
                                     mapOf(
                                         "grant_type" to "password",
-                                        "username" to required(connection.user, "L’utilisateur"),
-                                        "password" to required(secrets.password, "Le mot de passe"),
+                                        "username" to required(connection.user, msg("field.user")),
+                                        "password" to required(secrets.password, msg("field.password")),
                                     )
                                 )
                             )
                         )
                 )
-            (response.path("access_token").asText().ifBlank { throw AssetConnectionError("Identifiants Schneider refusés.") }) to
+            (response.path("access_token").asText().ifBlank { throw AssetConnectionError(msg("assets.schneider_refused")) }) to
                 response.path("expires_in").asLong(600)
         }
     }
@@ -132,7 +133,7 @@ class SchneiderConnector(private val http: AssetHttp) : AssetConnector {
         val token = token(connection, secrets)
         val data =
             http.send(
-                HttpRequest.newBuilder(http.uri(required(connection.url, "L’adresse"), "/${required(connection.meterId, "Le compteur")}"))
+                HttpRequest.newBuilder(http.uri(required(connection.url, msg("field.address")), "/${required(connection.meterId, msg("field.meter"))}"))
                     .header("Authorization", "Bearer $token")
                     .GET()
             )
@@ -152,15 +153,15 @@ class GreencomConnector(private val http: AssetHttp, private val json: ObjectMap
     override val type = "GREENCOM"
 
     private fun token(connection: AssetConnectionData, secrets: AssetSecrets): String {
-        val url = required(connection.url, "L’adresse")
-        val client = required(connection.clientId ?: connection.user, "L’identifiant client")
+        val url = required(connection.url, msg("field.address"))
+        val client = required(connection.clientId ?: connection.user, msg("field.client_id"))
         return http.token("greencom:$url:$client") {
             val body =
                 json.writeValueAsString(
                     mapOf(
                         "grant_type" to "client_credentials",
                         "client_id" to client,
-                        "client_secret" to required(secrets.clientSecret ?: secrets.password, "Le secret client"),
+                        "client_secret" to required(secrets.clientSecret ?: secrets.password, msg("field.client_secret")),
                     )
                 )
             val response =
@@ -169,7 +170,7 @@ class GreencomConnector(private val http: AssetHttp, private val json: ObjectMap
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(body))
                 )
-            (response.path("access_token").asText().ifBlank { throw AssetConnectionError("Identifiants GreenCom refusés.") }) to
+            (response.path("access_token").asText().ifBlank { throw AssetConnectionError(msg("assets.greencom_refused")) }) to
                 response.path("expires_in").asLong(600)
         }
     }
@@ -186,8 +187,8 @@ class GreencomConnector(private val http: AssetHttp, private val json: ObjectMap
             http.send(
                 HttpRequest.newBuilder(
                         http.uri(
-                            required(connection.url, "L’adresse"),
-                            "/site-api/${required(connection.meterId, "Le compteur")}?withEnergy=true&withPower=true&from=$from&to=$now&step=PT1M",
+                            required(connection.url, msg("field.address")),
+                            "/site-api/${required(connection.meterId, msg("field.meter"))}?withEnergy=true&withPower=true&from=$from&to=$now&step=PT1M",
                         )
                     )
                     .header("Authorization", "Bearer $token")
@@ -227,7 +228,7 @@ class IothinkConnector(private val http: AssetHttp) : AssetConnector {
     private val reference = LocalDate.of(2000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC)
 
     private fun token(connection: AssetConnectionData, secrets: AssetSecrets): String {
-        val url = required(connection.url, "L’adresse")
+        val url = required(connection.url, msg("field.address"))
         return http.token("iothink:$url:${connection.user}") {
             val response =
                 http.send(
@@ -238,14 +239,14 @@ class IothinkConnector(private val http: AssetHttp) : AssetConnector {
                                 http.form(
                                     mapOf(
                                         "grant_type" to "password",
-                                        "username" to required(connection.user, "L’utilisateur"),
-                                        "password" to required(secrets.password, "Le mot de passe"),
+                                        "username" to required(connection.user, msg("field.user")),
+                                        "password" to required(secrets.password, msg("field.password")),
                                     )
                                 )
                             )
                         )
                 )
-            (response.path("access_token").asText().ifBlank { throw AssetConnectionError("Identifiants IoThink refusés.") }) to
+            (response.path("access_token").asText().ifBlank { throw AssetConnectionError(msg("assets.iothink_refused")) }) to
                 response.path("expires_in").asLong(600)
         }
     }
@@ -261,7 +262,7 @@ class IothinkConnector(private val http: AssetHttp) : AssetConnector {
         val data =
             http.send(
                 HttpRequest.newBuilder(
-                        http.uri(required(connection.url, "L’adresse"), "/${required(connection.meterId, "Le compteur")}&startTime=$seconds")
+                        http.uri(required(connection.url, msg("field.address")), "/${required(connection.meterId, msg("field.meter"))}&startTime=$seconds")
                     )
                     .header("Authorization", "Bearer $token")
                     .GET()
@@ -301,15 +302,15 @@ class LacroixConnector(private val http: AssetHttp) : AssetConnector {
     private fun basic(connection: AssetConnectionData, secrets: AssetSecrets) =
         "Basic " +
             Base64.getEncoder()
-                .encodeToString("${required(connection.user, "L’utilisateur")}:${required(secrets.password, "Le mot de passe")}".toByteArray())
+                .encodeToString("${required(connection.user, msg("field.user"))}:${required(secrets.password, msg("field.password"))}".toByteArray())
 
     override fun check(connection: AssetConnectionData, secrets: AssetSecrets) {
         http.send(
-            HttpRequest.newBuilder(http.uri(required(connection.url, "L’adresse"), "/login"))
+            HttpRequest.newBuilder(http.uri(required(connection.url, msg("field.address")), "/login"))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(
                     HttpRequest.BodyPublishers.ofString(
-                        http.form(mapOf("email" to connection.user, "plainPassword" to required(secrets.password, "Le mot de passe")))
+                        http.form(mapOf("email" to connection.user, "plainPassword" to required(secrets.password, msg("field.password"))))
                     )
                 )
         )
@@ -327,7 +328,7 @@ class LacroixConnector(private val http: AssetHttp) : AssetConnector {
         val data =
             http.send(
                 HttpRequest.newBuilder(
-                        http.uri(required(connection.url, "L’adresse"), "/${required(connection.meterId, "Le compteur")}/getPowerData?period=$period&group_by=1m")
+                        http.uri(required(connection.url, msg("field.address")), "/${required(connection.meterId, msg("field.meter"))}/getPowerData?period=$period&group_by=1m")
                     )
                     .header("Authorization", basic(connection, secrets))
                     .GET()
@@ -348,7 +349,7 @@ class WitConnector(private val http: AssetHttp) : AssetConnector {
     override val type = "WIT"
 
     private fun token(connection: AssetConnectionData, secrets: AssetSecrets): String {
-        val authentication = required(connection.authenticationUrl, "L’adresse d’authentification")
+        val authentication = required(connection.authenticationUrl, msg("field.auth_url"))
         return http.token("wit:$authentication:${connection.user}") {
             val response =
                 http.send(
@@ -358,18 +359,18 @@ class WitConnector(private val http: AssetHttp) : AssetConnector {
                             HttpRequest.BodyPublishers.ofString(
                                 http.form(
                                     mapOf(
-                                        "client_id" to required(connection.clientId, "L’identifiant client"),
-                                        "client_secret" to required(secrets.clientSecret, "Le secret client"),
+                                        "client_id" to required(connection.clientId, msg("field.client_id")),
+                                        "client_secret" to required(secrets.clientSecret, msg("field.client_secret")),
                                         "grant_type" to "password",
-                                        "username" to required(connection.user, "L’utilisateur"),
-                                        "password" to required(secrets.password, "Le mot de passe"),
+                                        "username" to required(connection.user, msg("field.user")),
+                                        "password" to required(secrets.password, msg("field.password")),
                                         "scope" to "https://api.wit-datacenter.com",
                                     )
                                 )
                             )
                         )
                 )
-            (response.path("access_token").asText().ifBlank { throw AssetConnectionError("Identifiants WIT refusés.") }) to
+            (response.path("access_token").asText().ifBlank { throw AssetConnectionError(msg("assets.wit_refused")) }) to
                 response.path("expires_in").asLong(600)
         }
     }
@@ -380,7 +381,7 @@ class WitConnector(private val http: AssetHttp) : AssetConnector {
 
     override fun fetch(asset: AssetData, connection: AssetConnectionData, secrets: AssetSecrets, since: Instant?, manual: Boolean): List<AssetSample> {
         if (asset.type == "CONSUMPTION_AND_PRODUCTION") {
-            throw AssetConnectionError("La connexion WIT ne prend pas en charge les équipements mixtes.")
+            throw AssetConnectionError(msg("assets.wit_mixed"))
         }
         val token = token(connection, secrets)
         val from =
@@ -388,7 +389,7 @@ class WitConnector(private val http: AssetHttp) : AssetConnector {
             else since
         val data =
             http.send(
-                HttpRequest.newBuilder(http.uri(required(connection.url, "L’adresse"), "/${required(connection.meterId, "Le compteur")}?From=$from"))
+                HttpRequest.newBuilder(http.uri(required(connection.url, msg("field.address")), "/${required(connection.meterId, msg("field.meter"))}?From=$from"))
                     .header("Authorization", "Bearer $token")
                     .GET()
             )

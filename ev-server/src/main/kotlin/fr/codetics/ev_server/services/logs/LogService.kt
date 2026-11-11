@@ -3,6 +3,7 @@ package fr.codetics.ev_server.services.logs
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Csv
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.models.api.PageResponse
 import fr.codetics.ev_server.models.audit.AuditEventResponse
@@ -48,7 +49,7 @@ class LogService(private val queries: Queries) {
 
     private fun conditions(user: AppPrincipal, filter: LogFilter): List<Condition> {
         ensure(listOfNotNull(filter.action, filter.actor, filter.target, filter.search).all { it.length <= 200 }) {
-            "Le filtre est trop long."
+            msg("logs.filter_too_long")
         }
         val conditions = mutableListOf<Condition>(eq("tenantId", user.tenantId))
         filter.action?.takeIf(String::isNotBlank)?.let { conditions += eq("action", it) }

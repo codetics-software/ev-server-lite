@@ -24,6 +24,7 @@ import {
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 type ConnectorDraft = { connectorId: string; type: string; maximumPowerKw: string; phases: string };
 type ParameterDraft = { key: string; value: string };
@@ -36,7 +37,7 @@ const pattern = ({ value }: { value: string }) => {
     new RegExp(value);
     return undefined;
   } catch {
-    return { message: "Expression régulière invalide." };
+    return { message: t("Expression régulière invalide.") };
   }
 };
 
@@ -90,10 +91,10 @@ export function TemplateForm({
             .filter((parameter) => parameter.key.trim())
             .map((parameter) => ({ key: parameter.key.trim(), value: parameter.value })),
         });
-        notify(record ? "Modèle enregistré." : "Modèle créé.");
+        notify(record ? t("Modèle enregistré.") : t("Modèle créé."));
         onSaved();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer le modèle."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer le modèle.")));
       }
     },
   });
@@ -120,28 +121,31 @@ export function TemplateForm({
       <FieldGroup>
         <form.Field
           name="name"
-          validators={{ onDynamic: rules(required("Renseignez un nom."), maxLength(200)) }}
+          validators={{ onDynamic: rules(required(t("Renseignez un nom.")), maxLength(200)) }}
         >
-          {(field) => <FormText field={field} label="Nom du modèle de configuration" required />}
+          {(field) => (
+            <FormText field={field} label={t("Nom du modèle de configuration")} required />
+          )}
         </form.Field>
         <FieldSet>
-          <FieldLegend>Bornes concernées</FieldLegend>
+          <FieldLegend>{t("Bornes concernées")}</FieldLegend>
           <FieldDescription>
-            Expressions régulières comparées au fabricant, au modèle et à la version annoncés au
-            démarrage de la borne.
+            {t(
+              "Expressions régulières comparées au fabricant, au modèle et à la version annoncés au démarrage de la borne.",
+            )}
           </FieldDescription>
           <div className="grid gap-4 sm:grid-cols-3">
             <form.Field
               name="vendor"
               validators={{
-                onDynamic: rules(required("Requis."), maxLength(200)),
+                onDynamic: rules(required(t("Requis.")), maxLength(200)),
                 onBlur: pattern,
               }}
             >
               {(field) => (
                 <FormText
                   field={field}
-                  label="Fabricant"
+                  label={t("Fabricant")}
                   placeholder="ABB|Schneider.*"
                   className="font-mono"
                   required
@@ -151,15 +155,15 @@ export function TemplateForm({
             <form.Field
               name="model"
               validators={{
-                onDynamic: rules(required("Requis."), maxLength(200)),
+                onDynamic: rules(required(t("Requis.")), maxLength(200)),
                 onBlur: pattern,
               }}
             >
               {(field) => (
                 <FormText
                   field={field}
-                  label="Modèle"
-                  placeholder="Terra AC.*"
+                  label={t("Modèle")}
+                  placeholder={t("Terra AC.*")}
                   className="font-mono"
                   required
                 />
@@ -169,7 +173,7 @@ export function TemplateForm({
               {(field) => (
                 <FormText
                   field={field}
-                  label="Version (facultative)"
+                  label={t("Version (facultative)")}
                   placeholder="1\.2\..*"
                   className="font-mono"
                 />
@@ -183,14 +187,14 @@ export function TemplateForm({
               return (
                 <div className="grid items-end gap-3 rounded-lg border border-dashed p-3 sm:grid-cols-[1fr_1fr_auto]">
                   <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                    Fabricant à tester
+                    {t("Fabricant à tester")}
                     <Input
                       value={sample.vendor}
                       onChange={(event) => setSample({ ...sample, vendor: event.target.value })}
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                    Modèle à tester
+                    {t("Modèle à tester")}
                     <Input
                       value={sample.model}
                       onChange={(event) => setSample({ ...sample, model: event.target.value })}
@@ -198,10 +202,10 @@ export function TemplateForm({
                   </label>
                   <span className="text-sm" aria-live="polite">
                     {vendorMatch === null && modelMatch === null
-                      ? "Saisissez une borne pour tester"
+                      ? t("Saisissez une borne pour tester")
                       : vendorMatch !== false && modelMatch !== false
-                        ? "Correspond"
-                        : "Ne correspond pas"}
+                        ? t("Correspond")
+                        : t("Ne correspond pas")}
                   </span>
                 </div>
               );
@@ -209,12 +213,12 @@ export function TemplateForm({
           </form.Subscribe>
           <form.Field
             name="maximumPowerKw"
-            validators={{ onDynamic: rules(optionalNumber(0, 10000, "Puissance invalide.")) }}
+            validators={{ onDynamic: rules(optionalNumber(0, 10000, t("Puissance invalide."))) }}
           >
             {(field) => (
               <FormText
                 field={field}
-                label="Puissance maximale (kW)"
+                label={t("Puissance maximale (kW)")}
                 type="number"
                 className="sm:max-w-48"
               />
@@ -224,7 +228,7 @@ export function TemplateForm({
         <form.Field name="connectors" mode="array">
           {(connectors) => (
             <FieldSet>
-              <FieldLegend>Connecteurs</FieldLegend>
+              <FieldLegend>{t("Connecteurs")}</FieldLegend>
               {connectors.state.value.map((_, index) => (
                 <div
                   key={index}
@@ -232,27 +236,31 @@ export function TemplateForm({
                 >
                   <form.Field
                     name={`connectors[${index}].connectorId`}
-                    validators={{ onDynamic: rules(integerBetween(1, 100, "1 à 100.")) }}
+                    validators={{ onDynamic: rules(integerBetween(1, 100, t("1 à 100."))) }}
                   >
-                    {(field) => <FormText field={field} label="N°" type="number" min={1} />}
+                    {(field) => <FormText field={field} label={t("N°")} type="number" min={1} />}
                   </form.Field>
                   <form.Field name={`connectors[${index}].type`}>
-                    {(field) => <FormSelect field={field} label="Type" options={connectorTypes} />}
+                    {(field) => (
+                      <FormSelect field={field} label={t("Type")} options={connectorTypes()} />
+                    )}
                   </form.Field>
                   <form.Field
                     name={`connectors[${index}].maximumPowerKw`}
-                    validators={{ onDynamic: rules(optionalNumber(0, 1000, "Invalide.")) }}
+                    validators={{ onDynamic: rules(optionalNumber(0, 1000, t("Invalide."))) }}
                   >
-                    {(field) => <FormText field={field} label="Puissance (kW)" type="number" />}
+                    {(field) => (
+                      <FormText field={field} label={t("Puissance (kW)")} type="number" />
+                    )}
                   </form.Field>
                   <form.Field name={`connectors[${index}].phases`}>
                     {(field) => (
                       <FormSelect
                         field={field}
-                        label="Phases"
+                        label={t("Phases")}
                         options={[
-                          { value: "3", label: "Triphasé" },
-                          { value: "1", label: "Monophasé" },
+                          { value: "3", label: t("Triphasé") },
+                          { value: "1", label: t("Monophasé") },
                         ]}
                       />
                     )}
@@ -261,7 +269,7 @@ export function TemplateForm({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    aria-label={`Retirer le connecteur ${index + 1}`}
+                    aria-label={t("Retirer le connecteur {number}", { number: index + 1 })}
                     onClick={() => connectors.removeValue(index)}
                   >
                     <IconTrash />
@@ -282,7 +290,7 @@ export function TemplateForm({
                 }
               >
                 <IconPlus data-icon="inline-start" />
-                Ajouter un connecteur
+                {t("Ajouter un connecteur")}
               </Button>
             </FieldSet>
           )}
@@ -290,9 +298,9 @@ export function TemplateForm({
         <form.Field name="parameters" mode="array">
           {(parameters) => (
             <FieldSet>
-              <FieldLegend>Paramètres OCPP appliqués</FieldLegend>
+              <FieldLegend>{t("Paramètres OCPP appliqués")}</FieldLegend>
               <FieldDescription>
-                Envoyés par ChangeConfiguration lorsque le modèle est appliqué à une borne.
+                {t("Envoyés par ChangeConfiguration lorsque le modèle est appliqué à une borne.")}
               </FieldDescription>
               {parameters.state.value.map((_, index) => (
                 <div key={index} className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
@@ -300,15 +308,16 @@ export function TemplateForm({
                     name={`parameters[${index}].key`}
                     validators={{
                       onDynamic: rules(
-                        matches(/^[A-Za-z0-9_.:-]{1,100}$/, "Nom de paramètre invalide."),
-                        (value: string) => (isProtectedKey(value) ? templateKeyMessage : undefined),
+                        matches(/^[A-Za-z0-9_.:-]{1,100}$/, t("Nom de paramètre invalide.")),
+                        (value: string) =>
+                          isProtectedKey(value) ? templateKeyMessage() : undefined,
                       ),
                     }}
                   >
                     {(field) => (
                       <FormText
                         field={field}
-                        label="Paramètre"
+                        label={t("Paramètre")}
                         className="font-mono"
                         placeholder="HeartbeatInterval"
                       />
@@ -318,13 +327,15 @@ export function TemplateForm({
                     name={`parameters[${index}].value`}
                     validators={{ onDynamic: rules(maxLength(500)) }}
                   >
-                    {(field) => <FormText field={field} label="Valeur" className="font-mono" />}
+                    {(field) => (
+                      <FormText field={field} label={t("Valeur")} className="font-mono" />
+                    )}
                   </form.Field>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    aria-label={`Retirer le paramètre ${index + 1}`}
+                    aria-label={t("Retirer le paramètre {number}", { number: index + 1 })}
                     onClick={() => parameters.removeValue(index)}
                   >
                     <IconTrash />
@@ -338,7 +349,7 @@ export function TemplateForm({
                 onClick={() => parameters.pushValue({ key: "", value: "" })}
               >
                 <IconPlus data-icon="inline-start" />
-                Ajouter un paramètre
+                {t("Ajouter un paramètre")}
               </Button>
             </FieldSet>
           )}

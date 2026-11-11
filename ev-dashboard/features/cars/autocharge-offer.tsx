@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { CandidateSummary, enrollWarning } from "./autocharge-panel";
 import { autoChargePath, type AutoChargeCandidate, type VehicleId } from "./autocharge-types";
+import { t } from "@/lib/i18n";
 
 export function AutoChargeOffer({
   vid,
@@ -46,24 +47,31 @@ export function AutoChargeOffer({
     <>
       <Alert>
         <IconCar />
-        <AlertTitle>Recharge automatique disponible</AlertTitle>
+        <AlertTitle>{t("Recharge automatique disponible")}</AlertTitle>
         <AlertDescription>
           {candidates.length > 1
-            ? `${candidates.length} véhicules se sont identifiés lors de vos dernières sessions.`
-            : `Votre véhicule s’est identifié auprès de la borne ${latest.station_id} le ${date(latest.started_at)}.`}{" "}
-          Associez-le à l’un de vos véhicules pour démarrer vos prochaines recharges sans badge.
+            ? t("{count} véhicules se sont identifiés lors de vos dernières sessions.", {
+                count: candidates.length,
+              })
+            : t("Votre véhicule s’est identifié auprès de la borne {station} le {date}.", {
+                station: latest.station_id,
+                date: date(latest.started_at),
+              })}{" "}
+          {t(
+            "Associez-le à l’un de vos véhicules pour démarrer vos prochaines recharges sans badge.",
+          )}
         </AlertDescription>
         <AlertAction>
           <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-            Activer
+            {t("Activer")}
           </Button>
         </AlertAction>
       </Alert>
       <FormDialog
         open={open}
         onOpenChange={setOpen}
-        title="Activer la recharge automatique"
-        description="Associez l’identifiant transmis par la borne à l’un de vos véhicules."
+        title={t("Activer la recharge automatique")}
+        description={t("Associez l’identifiant transmis par la borne à l’un de vos véhicules.")}
       >
         <OfferBody
           candidates={candidates}
@@ -97,10 +105,10 @@ function OfferBody({
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
-          Ajoutez d’abord votre véhicule, puis associez-lui cet identifiant depuis sa fiche.
+          {t("Ajoutez d’abord votre véhicule, puis associez-lui cet identifiant depuis sa fiche.")}
         </p>
         <Link href="/cars" className={buttonVariants({ className: "w-fit" })}>
-          Mes véhicules
+          {t("Mes véhicules")}
         </Link>
       </div>
     );
@@ -131,10 +139,10 @@ function OfferForm({
           method: "POST",
           body: JSON.stringify({ transactionId: Number(value.transactionId) }),
         });
-        notify("Recharge automatique activée pour ce véhicule.");
+        notify(t("Recharge automatique activée pour ce véhicule."));
         onEnrolled();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’activer la recharge automatique."));
+        setError(errorMessage(failure, t("Impossible d’activer la recharge automatique.")));
       }
     },
   });
@@ -152,7 +160,7 @@ function OfferForm({
             {(field) => (
               <FormSelect
                 field={field}
-                label="Session"
+                label={t("Session")}
                 options={candidates.map((candidate) => ({
                   value: String(candidate.transaction_id),
                   label: `${candidate.station_id} · ${date(candidate.started_at)} · ${candidate.vid}`,
@@ -167,19 +175,21 @@ function OfferForm({
         )}
         <form.Field
           name="carId"
-          validators={{ onDynamic: rules(required("Choisissez un véhicule.")) }}
+          validators={{ onDynamic: rules(required(t("Choisissez un véhicule."))) }}
         >
           {(field) => (
             <FormSelect
               field={field}
-              label="Véhicule"
+              label={t("Véhicule")}
               options={owned.map((car) => ({ value: car.id, label: car.name }))}
             />
           )}
         </form.Field>
-        <p className="text-sm text-muted-foreground">{enrollWarning}</p>
+        <p className="text-sm text-muted-foreground">{enrollWarning()}</p>
         <form.Subscribe selector={(state) => state.isSubmitting}>
-          {(submitting) => <FormFooter error={error} submitting={submitting} label="Activer" />}
+          {(submitting) => (
+            <FormFooter error={error} submitting={submitting} label={t("Activer")} />
+          )}
         </form.Subscribe>
       </FieldGroup>
     </form>

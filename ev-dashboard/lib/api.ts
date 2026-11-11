@@ -1,4 +1,5 @@
 import type { ProblemDetail } from "./api-types";
+import { getLocale, t, translated } from "./i18n";
 
 export type { PageData, ProblemDetail, Row, User } from "./api-types";
 export { date, display } from "./format";
@@ -16,7 +17,7 @@ export class ApiError extends Error {
   }
 }
 
-const fallbackMessages: Record<number, string> = {
+const fallbackMessages: Record<number, string> = translated({
   [NETWORK_ERROR_STATUS]: "Le serveur est injoignable. Vérifiez votre connexion et réessayez.",
   400: "La demande est invalide.",
   401: "Votre session a expiré. Reconnectez-vous.",
@@ -28,14 +29,14 @@ const fallbackMessages: Record<number, string> = {
   502: "Un service externe est momentanément indisponible. Réessayez dans quelques instants.",
   503: "Le service est momentanément indisponible. Réessayez dans quelques instants.",
   504: "Le serveur a mis trop de temps à répondre. Réessayez dans quelques instants.",
-};
+});
 
 function fallbackMessage(status: number) {
   return (
     fallbackMessages[status] ??
     (status >= 500
-      ? "Le serveur a rencontré une erreur. Réessayez plus tard."
-      : "La demande n’a pas pu aboutir.")
+      ? t("Le serveur a rencontré une erreur. Réessayez plus tard.")
+      : t("La demande n’a pas pu aboutir."))
   );
 }
 
@@ -93,8 +94,12 @@ function isAbort(error: unknown) {
   return error instanceof DOMException && error.name === "AbortError";
 }
 async function send(input: string, init: RequestInit) {
+  const headers = new Headers(init.headers);
+  if (!headers.has("Accept-Language")) {
+    headers.set("Accept-Language", getLocale());
+  }
   try {
-    return await fetch(input, init);
+    return await fetch(input, { ...init, headers });
   } catch (error) {
     if (isAbort(error)) {
       throw error;
@@ -111,7 +116,7 @@ async function csrfHeader(signal: AbortSignal | null | undefined) {
   });
   const body: unknown = response.ok ? await response.json().catch(() => null) : null;
   if (!isRecord(body) || typeof body.headerName !== "string" || typeof body.token !== "string") {
-    throw new ApiError(response.status, "Impossible d’établir une session sécurisée.");
+    throw new ApiError(response.status, t("Impossible d’établir une session sécurisée."));
   }
   return { name: body.headerName, token: body.token };
 }
@@ -147,7 +152,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   try {
     return JSON.parse(text) as T;
   } catch {
-    throw new ApiError(response.status, "La réponse du serveur est illisible.");
+    throw new ApiError(response.status, t("La réponse du serveur est illisible."));
   }
 }
 

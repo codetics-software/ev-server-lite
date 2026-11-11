@@ -12,11 +12,12 @@ import { isAdmin, useWorkspace } from "@/features/workspace/workspace-context";
 import { useRevision } from "@/hooks/use-api";
 import type { RecordItem } from "@/lib/api-types";
 import { date, kw } from "@/lib/format";
+import { t, translated } from "@/lib/i18n";
 import { IconFileSettings, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 import { TemplateForm } from "./template-form";
 
-const columns: Column<RecordItem>[] = [
+const columns: Column<RecordItem>[] = translated([
   {
     id: "name",
     header: "Modèle",
@@ -57,7 +58,7 @@ const columns: Column<RecordItem>[] = [
     sort: (record) => record.updated_at,
     cell: (record) => <span className="text-muted-foreground">{date(record.updated_at)}</span>,
   },
-];
+]);
 
 export function TemplatesScreen() {
   const user = useWorkspace();
@@ -68,31 +69,35 @@ export function TemplatesScreen() {
   return (
     <>
       <PageHeader
-        title="Modèles de bornes"
-        description="Caractéristiques et paramètres OCPP appliqués automatiquement aux bornes correspondantes."
+        title={t("Modèles de bornes")}
+        description={t(
+          "Caractéristiques et paramètres OCPP appliqués automatiquement aux bornes correspondantes.",
+        )}
         actions={
           admin && (
             <Button onClick={() => setEditing(null)}>
               <IconPlus data-icon="inline-start" />
-              Ajouter un modèle
+              {t("Ajouter un modèle")}
             </Button>
           )
         }
       />
       <RecordList
         kind="charging-station-templates"
-        label="Modèles de bornes"
+        label={t("Modèles de bornes")}
         revision={revision}
         columns={columns}
         onSelect={admin ? setEditing : undefined}
         emptyIcon={<IconFileSettings />}
-        emptyTitle="Aucun modèle"
-        emptyDescription="Décrivez un fabricant et un modèle pour configurer automatiquement leurs connecteurs."
+        emptyTitle={t("Aucun modèle")}
+        emptyDescription={t(
+          "Décrivez un fabricant et un modèle pour configurer automatiquement leurs connecteurs.",
+        )}
       />
       <FormDialog
         open={editing !== undefined}
         onOpenChange={(open) => !open && setEditing(undefined)}
-        title={editing ? `Modifier ${editing.name}` : "Ajouter un modèle"}
+        title={editing ? t("Modifier {name}", { name: editing.name }) : t("Ajouter un modèle")}
         wide
       >
         <TemplateForm
@@ -105,12 +110,12 @@ export function TemplatesScreen() {
         {editing && (
           <div className="border-t pt-4">
             <ConfirmButton
-              title={`Supprimer ${editing.name} ?`}
-              description="Les bornes déjà configurées conservent leurs paramètres."
-              confirmLabel="Supprimer"
+              title={t("Supprimer {name} ?", { name: editing.name })}
+              description={t("Les bornes déjà configurées conservent leurs paramètres.")}
+              confirmLabel={t("Supprimer")}
               onConfirm={() =>
                 action.run("delete", () => deleteRecord("charging-station-templates", editing.id), {
-                  success: "Modèle supprimé.",
+                  success: t("Modèle supprimé."),
                   onDone: () => {
                     setEditing(undefined);
                     refresh();
@@ -118,7 +123,7 @@ export function TemplatesScreen() {
                 })
               }
             >
-              Supprimer le modèle
+              {t("Supprimer le modèle")}
             </ConfirmButton>
           </div>
         )}

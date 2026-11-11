@@ -27,6 +27,7 @@ import { IconServer2 } from "@tabler/icons-react";
 import { useState } from "react";
 import { componentsInput, ComponentToggles } from "./workspace-settings";
 import { resolveComponents } from "./workspace-context";
+import { t } from "@/lib/i18n";
 
 type PlatformWorkspace = {
   id: string;
@@ -47,7 +48,7 @@ function Editor({ workspace, onSaved }: { workspace: PlatformWorkspace; onSaved:
   return (
     <FieldGroup>
       <Field>
-        <FieldLabel htmlFor="platform-name">Nom</FieldLabel>
+        <FieldLabel htmlFor="platform-name">{t("Nom")}</FieldLabel>
         <Input
           id="platform-name"
           value={name}
@@ -62,11 +63,11 @@ function Editor({ workspace, onSaved }: { workspace: PlatformWorkspace; onSaved:
           onCheckedChange={(checked) => setActive(checked === true)}
         />
         <FieldContent>
-          <FieldLabel htmlFor="platform-active">Espace actif</FieldLabel>
+          <FieldLabel htmlFor="platform-active">{t("Espace actif")}</FieldLabel>
         </FieldContent>
       </Field>
       <FieldSet>
-        <FieldLegend>Fonctionnalités</FieldLegend>
+        <FieldLegend>{t("Fonctionnalités")}</FieldLegend>
         <ComponentToggles value={components} onChange={setComponents} />
       </FieldSet>
       <Button
@@ -84,11 +85,11 @@ function Editor({ workspace, onSaved }: { workspace: PlatformWorkspace; onSaved:
                   components: componentsInput(components),
                 }),
               }),
-            { success: "Espace enregistré.", onDone: onSaved },
+            { success: t("Espace enregistré."), onDone: onSaved },
           )
         }
       >
-        Enregistrer
+        {t("Enregistrer")}
       </Button>
     </FieldGroup>
   );
@@ -101,7 +102,7 @@ export function PlatformScreen() {
   const columns: Column<PlatformWorkspace>[] = [
     {
       id: "name",
-      header: "Espace",
+      header: t("Espace"),
       sort: (workspace) => workspace.name,
       cell: (workspace) => (
         <span className="flex flex-col">
@@ -112,37 +113,37 @@ export function PlatformScreen() {
     },
     {
       id: "state",
-      header: "État",
+      header: t("État"),
       sort: (workspace) => (workspace.active ? 1 : 0),
       cell: (workspace) => (
         <ToneBadge tone={workspace.active ? "success" : "neutral"}>
-          {workspace.active ? "Actif" : "Suspendu"}
+          {workspace.active ? t("Actif") : t("Suspendu")}
         </ToneBadge>
       ),
     },
     {
       id: "users",
-      header: "Utilisateurs",
+      header: t("Utilisateurs"),
       align: "right",
       sort: (workspace) => workspace.users,
       cell: (workspace) => number(workspace.users),
     },
     {
       id: "stations",
-      header: "Bornes",
+      header: t("Bornes"),
       align: "right",
       sort: (workspace) => workspace.stations,
       cell: (workspace) => number(workspace.stations),
     },
     {
       id: "components",
-      header: "Fonctionnalités",
+      header: t("Fonctionnalités"),
       cell: (workspace) =>
         `${Object.values(resolveComponents(workspace)).filter(Boolean).length} actives`,
     },
     {
       id: "created",
-      header: "Création",
+      header: t("Création"),
       sort: (workspace) => workspace.created_at,
       cell: (workspace) => day(workspace.created_at),
     },
@@ -150,10 +151,10 @@ export function PlatformScreen() {
   return (
     <>
       <PageHeader
-        title="Plateforme"
-        description="Espaces clients hébergés sur cette installation."
+        title={t("Plateforme")}
+        description={t("Espaces clients hébergés sur cette installation.")}
       />
-      <SearchInput value={search} onChange={setSearch} label="Rechercher un espace" />
+      <SearchInput value={search} onChange={setSearch} label={t("Rechercher un espace")} />
       {list.error && list.data && <ErrorState error={list.error} onRetry={list.refresh} />}
       <ListState
         data={list.data}
@@ -161,10 +162,10 @@ export function PlatformScreen() {
         loading={list.loading}
         error={list.error}
         onRetry={list.refresh}
-        empty={<EmptyState icon={<IconServer2 />} title="Aucun espace" />}
+        empty={<EmptyState icon={<IconServer2 />} title={t("Aucun espace")} />}
       >
         <DataTable
-          label="Espaces"
+          label={t("Espaces")}
           rows={list.items}
           columns={columns}
           rowKey={(workspace) => workspace.id}

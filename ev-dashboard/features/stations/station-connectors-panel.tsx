@@ -11,6 +11,7 @@ import Link from "next/link";
 import { inactivitySeconds } from "./connector-summary";
 import type { ActionRequest } from "./station-actions";
 import type { Station } from "./station-types";
+import { t, tp } from "@/lib/i18n";
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
@@ -35,8 +36,8 @@ export function StationConnectorsPanel({
     return (
       <EmptyState
         icon={<IconPlug />}
-        title="Aucun connecteur déclaré"
-        description="Les connecteurs apparaissent lorsque la borne envoie leur état."
+        title={t("Aucun connecteur déclaré")}
+        description={t("Les connecteurs apparaissent lorsque la borne envoie leur état.")}
       />
     );
   }
@@ -49,7 +50,7 @@ export function StationConnectorsPanel({
         return (
           <Card key={connector.connector_id} size="sm">
             <CardHeader>
-              <CardTitle>Connecteur {connector.connector_id}</CardTitle>
+              <CardTitle>{t("Connecteur {id}", { id: connector.connector_id })}</CardTitle>
               <CardAction>
                 <ConnectorStatusBadge status={connector.status} />
               </CardAction>
@@ -57,32 +58,33 @@ export function StationConnectorsPanel({
                 {[
                   connector.type ? display(connector.type) : null,
                   connector.maximum_power_kw != null ? kw(connector.maximum_power_kw) : null,
-                  connector.phases
-                    ? `${connector.phases} phase${connector.phases > 1 ? "s" : ""}`
-                    : null,
+                  connector.phases ? tp(connector.phases, "{count} phase", "{count} phases") : null,
                 ]
                   .filter(Boolean)
-                  .join(" · ") || "Caractéristiques non renseignées"}
+                  .join(" · ") || t("Caractéristiques non renseignées")}
               </p>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {charging ? (
                 <>
                   <dl className="grid grid-cols-2 gap-3">
-                    <Metric label="Puissance" value={kw(connector.current_power_kw)} />
-                    <Metric label="Énergie" value={kwh(connector.current_energy_kwh)} />
-                    <Metric label="Inactivité" value={inactive ? duration(inactive) : "Aucune"} />
-                    <Metric label="Conducteur" value={connector.current_user_name ?? "—"} />
+                    <Metric label={t("Puissance")} value={kw(connector.current_power_kw)} />
+                    <Metric label={t("Énergie")} value={kwh(connector.current_energy_kwh)} />
+                    <Metric
+                      label={t("Inactivité")}
+                      value={inactive ? duration(inactive) : t("Aucune")}
+                    />
+                    <Metric label={t("Conducteur")} value={connector.current_user_name ?? "—"} />
                   </dl>
                   {connector.current_soc != null && (
                     <div className="flex flex-col gap-1.5">
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Batterie</span>
+                        <span>{t("Batterie")}</span>
                         <span className="tabular-nums">{number(connector.current_soc)} %</span>
                       </div>
                       <Progress
                         value={connector.current_soc}
-                        aria-label="Niveau de batterie du véhicule"
+                        aria-label={t("Niveau de batterie du véhicule")}
                       />
                     </div>
                   )}
@@ -90,18 +92,18 @@ export function StationConnectorsPanel({
                     href={`/transactions/${connector.current_transaction_id}`}
                     className="text-sm text-primary underline-offset-4 dark:text-sidebar-primary hover:underline"
                   >
-                    Session n° {connector.current_transaction_id}
+                    {t("Session n° {id}", { id: connector.current_transaction_id ?? "" })}
                   </Link>
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">
                   {connector.error_code && connector.error_code !== "NoError"
-                    ? `Erreur : ${display(connector.error_code)}`
-                    : "Aucune session en cours."}
+                    ? t("Erreur : {error}", { error: display(connector.error_code) })
+                    : t("Aucune session en cours.")}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                État reçu {relative(connector.status_at)}
+                {t("État reçu {time}", { time: relative(connector.status_at) })}
               </p>
               {canOperate && (
                 <div className="flex flex-wrap gap-2">
@@ -117,7 +119,7 @@ export function StationConnectorsPanel({
                       }
                     >
                       <IconBoltOff data-icon="inline-start" />
-                      Arrêter
+                      {t("Arrêter")}
                     </Button>
                   ) : (
                     <Button
@@ -126,7 +128,7 @@ export function StationConnectorsPanel({
                       onClick={() => onAction({ id: "start", initial: { connectorId: id } })}
                     >
                       <IconPlayerPlay data-icon="inline-start" />
-                      Démarrer
+                      {t("Démarrer")}
                     </Button>
                   )}
                   <Button
@@ -135,7 +137,7 @@ export function StationConnectorsPanel({
                     onClick={() => onAction({ id: "unlock", initial: { connectorId: id } })}
                   >
                     <IconLockOpen data-icon="inline-start" />
-                    Déverrouiller
+                    {t("Déverrouiller")}
                   </Button>
                   <Button
                     size="sm"
@@ -151,8 +153,8 @@ export function StationConnectorsPanel({
                     }
                   >
                     {connector.status === "Unavailable"
-                      ? "Remettre en service"
-                      : "Mettre hors service"}
+                      ? t("Remettre en service")
+                      : t("Mettre hors service")}
                   </Button>
                 </div>
               )}

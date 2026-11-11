@@ -1,5 +1,7 @@
 "use client";
 
+import { translated } from "@/lib/i18n";
+
 import {
   ChartContainer,
   ChartLegend,
@@ -12,11 +14,11 @@ import { number, time } from "@/lib/format";
 import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
 import type { Consumption } from "./session-types";
 
-const config = {
+const config = translated({
   power_kw: { label: "Puissance (kW)", color: "var(--chart-3)" },
   energy_kwh: { label: "Énergie (kWh)", color: "var(--chart-5)" },
   soc: { label: "Batterie (%)", color: "var(--chart-2)" },
-} satisfies ChartConfig;
+}) satisfies ChartConfig;
 
 export function ConsumptionChart({ points }: { points: Consumption[] }) {
   const data = points.map((point) => ({ ...point, time: new Date(point.at).valueOf() }));

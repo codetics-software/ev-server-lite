@@ -16,6 +16,7 @@ import { saveBlob } from "@/lib/api";
 import { IconCheck, IconCopy, IconDownload } from "@tabler/icons-react";
 import { useState } from "react";
 import type { SignedMeterData } from "./session-types";
+import { t } from "@/lib/i18n";
 
 function escapeXml(value: string) {
   return value
@@ -90,7 +91,7 @@ function Reading({ label, value }: { label: string; value: string | null }) {
             ) : (
               <IconCopy data-icon="inline-start" />
             )}
-            {copied ? "Copié" : "Copier"}
+            {copied ? t("Copié") : t("Copier")}
           </Button>
         )}
       </div>
@@ -99,7 +100,7 @@ function Reading({ label, value }: { label: string; value: string | null }) {
           {value}
         </pre>
       ) : (
-        <p className="text-sm text-muted-foreground">Relevé de fin signé non reçu</p>
+        <p className="text-sm text-muted-foreground">{t("Relevé de fin signé non reçu")}</p>
       )}
     </div>
   );
@@ -114,9 +115,11 @@ export function SignedMeterDataCard({ sessionId }: { sessionId: number }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Données signées (Eichrecht)</CardTitle>
+        <CardTitle>{t("Données signées (Eichrecht)")}</CardTitle>
         <CardDescription>
-          Relevés signés par le compteur, à vérifier avec un logiciel de transparence (S.A.F.E.).
+          {t(
+            "Relevés signés par le compteur, à vérifier avec un logiciel de transparence (S.A.F.E.).",
+          )}
         </CardDescription>
         {data && (
           <CardAction>
@@ -128,7 +131,7 @@ export function SignedMeterDataCard({ sessionId }: { sessionId: number }) {
               }}
             >
               <IconDownload data-icon="inline-start" />
-              Télécharger les relevés signés
+              {t("Télécharger les relevés signés")}
             </Button>
           </CardAction>
         )}
@@ -142,15 +145,17 @@ export function SignedMeterDataCard({ sessionId }: { sessionId: number }) {
           data && (
             <>
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Format</span>
-                <ToneBadge tone="neutral">{format ?? data.format ?? "Inconnu"}</ToneBadge>
+                <span className="text-muted-foreground">{t("Format")}</span>
+                <ToneBadge tone="neutral">{format ?? data.format ?? t("Inconnu")}</ToneBadge>
               </div>
               {data.start ? (
-                <Reading label="Relevé de début" value={data.start} />
+                <Reading label={t("Relevé de début")} value={data.start} />
               ) : (
-                <p className="text-sm text-muted-foreground">Relevé de début signé non reçu</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("Relevé de début signé non reçu")}
+                </p>
               )}
-              <Reading label="Relevé de fin" value={data.stop} />
+              <Reading label={t("Relevé de fin")} value={data.stop} />
             </>
           )
         )}

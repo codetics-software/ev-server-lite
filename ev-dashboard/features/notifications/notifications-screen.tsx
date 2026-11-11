@@ -14,6 +14,7 @@ import { date, display } from "@/lib/format";
 import { notificationLabels } from "@/lib/labels";
 import { IconBell } from "@tabler/icons-react";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 type NotificationItem = {
   id: string;
@@ -41,19 +42,19 @@ export function NotificationsScreen() {
   const columns: Column<NotificationItem>[] = [
     {
       id: "date",
-      header: "Date",
+      header: t("Date"),
       sort: (item) => item.created_at,
       cell: (item) => <span className="whitespace-nowrap">{date(item.created_at)}</span>,
     },
     {
       id: "type",
-      header: "Notification",
+      header: t("Notification"),
       sort: (item) => item.type,
       cell: (item) => label(item.type),
     },
     {
       id: "recipient",
-      header: "Destinataire",
+      header: t("Destinataire"),
       sort: (item) => item.recipient,
       cell: (item) => (
         <span className="flex flex-col">
@@ -64,35 +65,35 @@ export function NotificationsScreen() {
     },
     {
       id: "subject",
-      header: "Objet",
+      header: t("Objet"),
       cell: (item) => <span className="block max-w-96 truncate">{item.subject}</span>,
     },
     {
       id: "sent",
-      header: "Envoi",
+      header: t("Envoi"),
       sort: (item) => item.sent_at ?? "",
       cell: (item) =>
         item.sent_at ? (
-          <ToneBadge tone="success">Envoyée</ToneBadge>
+          <ToneBadge tone="success">{t("Envoyée")}</ToneBadge>
         ) : (
-          <ToneBadge tone="progress">En attente</ToneBadge>
+          <ToneBadge tone="progress">{t("En attente")}</ToneBadge>
         ),
     },
   ];
   return (
     <>
       <PageHeader
-        title="Notifications"
-        description="Courriels envoyés aux utilisateurs et aux administrateurs du réseau."
+        title={t("Notifications")}
+        description={t("Courriels envoyés aux utilisateurs et aux administrateurs du réseau.")}
       />
       <div className="flex flex-wrap items-end gap-3">
         <OptionSelect
           value={type}
           onChange={setType}
-          label="Type de notification"
+          label={t("Type de notification")}
           className="w-full sm:w-72"
           options={[
-            { value: "all", label: "Toutes les notifications" },
+            { value: "all", label: t("Toutes les notifications") },
             ...(
               types.data ??
               Object.keys(notificationLabels).map((key) => ({
@@ -107,14 +108,14 @@ export function NotificationsScreen() {
         />
         <Field className="w-full sm:w-64">
           <FieldLabel htmlFor="notifications-user" className="sr-only">
-            Utilisateur
+            {t("Utilisateur")}
           </FieldLabel>
           <EntityPicker
             id="notifications-user"
             source="users"
             value={userId}
             onChange={setUserId}
-            placeholder="Tous les utilisateurs"
+            placeholder={t("Tous les utilisateurs")}
           />
         </Field>
       </div>
@@ -128,13 +129,13 @@ export function NotificationsScreen() {
         empty={
           <EmptyState
             icon={<IconBell />}
-            title="Aucune notification"
-            description="Les courriels envoyés par la supervision apparaîtront ici."
+            title={t("Aucune notification")}
+            description={t("Les courriels envoyés par la supervision apparaîtront ici.")}
           />
         }
       >
         <DataTable
-          label="Notifications"
+          label={t("Notifications")}
           rows={list.items}
           columns={columns}
           rowKey={(item) => item.id}

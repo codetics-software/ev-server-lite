@@ -1,6 +1,7 @@
 package fr.codetics.ev_server.security
 
 import fr.codetics.ev_server.core.AppProperties
+import fr.codetics.ev_server.core.msg
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -103,10 +104,10 @@ class SecurityConfiguration {
         }
         http.exceptionHandling { exceptions ->
             exceptions.authenticationEntryPoint { _, response, _ ->
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                problem(response, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized", msg("error.unauthorized"))
             }
             exceptions.accessDeniedHandler { _, response, _ ->
-                response.sendError(HttpServletResponse.SC_FORBIDDEN)
+                problem(response, HttpServletResponse.SC_FORBIDDEN, "Forbidden", msg("error.forbidden"))
             }
         }
         http.requestCache { cache -> cache.disable() }
@@ -123,6 +124,14 @@ class SecurityConfiguration {
         }
 
         return http.build()
+    }
+
+    private fun problem(response: HttpServletResponse, status: Int, title: String, detail: String) {
+        if (response.isCommitted) return
+        val escaped = detail.replace("\\", "\\\\").replace("\"", "\\\"")
+        response.status = status
+        response.contentType = "application/problem+json;charset=UTF-8"
+        response.writer.write("""{"type":"about:blank","title":"$title","status":$status,"detail":"$escaped"}""")
     }
 
     private fun configureOAuth(

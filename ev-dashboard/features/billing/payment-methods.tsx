@@ -12,6 +12,7 @@ import { IconCreditCard, IconPlus } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { brandLabels, type PaymentMethod } from "./billing-types";
+import { t } from "@/lib/i18n";
 
 const CardSetup = dynamic(() => import("./card-setup").then((module) => module.CardSetup), {
   ssr: false,
@@ -51,14 +52,16 @@ export function PaymentMethodsList({ path, manage }: { path: string; manage: boo
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <IconCreditCard className="size-4" />
-                    {brandLabels[method.brand ?? ""] ?? method.brand ?? "Carte"} ••••{" "}
+                    {brandLabels[method.brand ?? ""] ?? method.brand ?? t("Carte")} ••••{" "}
                     {method.last4 ?? "????"}
                   </CardTitle>
                   <CardDescription className="flex flex-wrap items-center gap-2">
-                    Expire fin {String(method.exp_month ?? "").padStart(2, "0")}/
-                    {method.exp_year ?? "—"}
-                    {method.default && <ToneBadge tone="success">Par défaut</ToneBadge>}
-                    {expired(method) && <ToneBadge tone="danger">Expirée</ToneBadge>}
+                    {t("Expire fin {month}/{year}", {
+                      month: String(method.exp_month ?? "").padStart(2, "0"),
+                      year: method.exp_year ?? "—",
+                    })}
+                    {method.default && <ToneBadge tone="success">{t("Par défaut")}</ToneBadge>}
+                    {expired(method) && <ToneBadge tone="danger">{t("Expirée")}</ToneBadge>}
                   </CardDescription>
                 </CardHeader>
                 {manage && (
@@ -76,19 +79,21 @@ export function PaymentMethodsList({ path, manage }: { path: string; manage: boo
                                 method: "POST",
                               }),
                             {
-                              success: "Moyen de paiement par défaut modifié.",
+                              success: t("Moyen de paiement par défaut modifié."),
                               onDone: refresh,
                             },
                           )
                         }
                       >
-                        Utiliser par défaut
+                        {t("Utiliser par défaut")}
                       </Button>
                     )}
                     <ConfirmButton
-                      title="Supprimer cette carte ?"
-                      description="Elle ne pourra plus être utilisée pour régler vos recharges."
-                      confirmLabel="Supprimer"
+                      title={t("Supprimer cette carte ?")}
+                      description={t(
+                        "Elle ne pourra plus être utilisée pour régler vos recharges.",
+                      )}
+                      confirmLabel={t("Supprimer")}
                       variant="ghost"
                       size="sm"
                       onConfirm={() =>
@@ -96,13 +101,13 @@ export function PaymentMethodsList({ path, manage }: { path: string; manage: boo
                           "delete",
                           () => api(`account/payment-methods/${method.id}`, { method: "DELETE" }),
                           {
-                            success: "Carte supprimée.",
+                            success: t("Carte supprimée."),
                             onDone: refresh,
                           },
                         )
                       }
                     >
-                      Supprimer
+                      {t("Supprimer")}
                     </ConfirmButton>
                   </CardContent>
                 )}
@@ -113,11 +118,11 @@ export function PaymentMethodsList({ path, manage }: { path: string; manage: boo
       ) : (
         <EmptyState
           icon={<IconCreditCard />}
-          title="Aucun moyen de paiement"
+          title={t("Aucun moyen de paiement")}
           description={
             manage
-              ? "Ajoutez une carte bancaire pour régler vos recharges."
-              : "Cet utilisateur n’a enregistré aucune carte."
+              ? t("Ajoutez une carte bancaire pour régler vos recharges.")
+              : t("Cet utilisateur n’a enregistré aucune carte.")
           }
         />
       )}
@@ -125,9 +130,9 @@ export function PaymentMethodsList({ path, manage }: { path: string; manage: boo
         (adding ? (
           <Card>
             <CardHeader>
-              <CardTitle>Ajouter une carte</CardTitle>
+              <CardTitle>{t("Ajouter une carte")}</CardTitle>
               <CardDescription>
-                Vos données bancaires sont transmises directement à Stripe.
+                {t("Vos données bancaires sont transmises directement à Stripe.")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -143,7 +148,7 @@ export function PaymentMethodsList({ path, manage }: { path: string; manage: boo
         ) : (
           <Button className="w-fit" onClick={() => setAdding(true)}>
             <IconPlus data-icon="inline-start" />
-            Ajouter une carte
+            {t("Ajouter une carte")}
           </Button>
         ))}
     </div>

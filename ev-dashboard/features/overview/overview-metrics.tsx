@@ -1,25 +1,30 @@
 import type { NetworkOverview } from "./overview-types";
+import { getIntlLocale, t, tp } from "@/lib/i18n";
 
 export function OverviewMetrics({ data }: { data: NetworkOverview }) {
-  const energy = Number(data.transactions.energy_kwh).toLocaleString("fr-FR", {
+  const energy = Number(data.transactions.energy_kwh).toLocaleString(getIntlLocale(), {
     maximumFractionDigits: 1,
   });
   const metrics = [
     {
-      label: "Bornes de recharge",
+      label: t("Bornes de recharge"),
       value: data.stations.total,
-      detail: `${data.stations.online} connectées`,
+      detail: t("{count} connectées", { count: data.stations.online }),
     },
     {
-      label: "Sessions en cours",
+      label: t("Sessions en cours"),
       value: data.transactions.active,
-      detail: `${data.transactions.total} sessions enregistrées`,
+      detail: tp(
+        data.transactions.total,
+        "{count} session enregistrée",
+        "{count} sessions enregistrées",
+      ),
     },
     {
-      label: "Énergie délivrée",
+      label: t("Énergie délivrée"),
       value: energy,
       unit: "kWh",
-      detail: "Sessions terminées · depuis l’origine",
+      detail: t("Sessions terminées · depuis l’origine"),
     },
   ];
 

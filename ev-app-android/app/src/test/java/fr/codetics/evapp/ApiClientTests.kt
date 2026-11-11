@@ -76,6 +76,18 @@ class ApiClientTests {
     }
 
     @Test
+    fun sendsTheAppLanguageAndReadsProblemCodes() {
+        val spanish = EvServerApi(ApiClient(server.url("/").toString(), language = { "es" }))
+        server.enqueue(json("""{"status":401,"detail":"Verifique su dirección de correo electrónico antes de iniciar sesión.","code":"email_not_verified"}""", 401))
+        val failure = assertThrows(ApiError.Server::class.java) { runBlocking { spanish.me() } }
+        assertEquals("email_not_verified", failure.code)
+        assertEquals("es", server.takeRequest().headers["Accept-Language"])
+        server.enqueue(json("{}"))
+        runCatching { runBlocking { api.workspace() } }
+        assertTrue(server.takeRequest().headers["Accept-Language"] in setOf("en", "fr", "es"))
+    }
+
+    @Test
     fun malformedResponsesAreReportedAndGuestTokenIsSent() = runBlocking {
         server.enqueue(json("not json"))
         val failure = runCatching { api.configuration() }.exceptionOrNull()

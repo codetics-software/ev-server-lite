@@ -1,5 +1,6 @@
 package fr.codetics.ev_server.models.stations
 
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.entities.ConnectorEntity
 import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationEventEntity
@@ -219,7 +220,7 @@ data class ProvisionedStation(
     val id: String,
     val secret: String,
     val message: String =
-        "Conservez le mot de passe de la borne : il n’est affiché qu’une seule fois.",
+        msg("stations.provisioned.message"),
 )
 
 data class SecurityProfileInput(

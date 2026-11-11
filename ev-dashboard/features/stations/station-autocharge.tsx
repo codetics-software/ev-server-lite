@@ -21,6 +21,7 @@ import type { CommandReceipt } from "@/lib/api-types";
 import { IconHistory } from "@tabler/icons-react";
 import { useState } from "react";
 import type { Station } from "./station-types";
+import { t } from "@/lib/i18n";
 
 export function StationAutoCharge({
   station,
@@ -41,10 +42,11 @@ export function StationAutoCharge({
   return (
     <Card className="max-w-3xl">
       <CardHeader>
-        <CardTitle>Recharge automatique</CardTitle>
+        <CardTitle>{t("Recharge automatique")}</CardTitle>
         <CardDescription>
-          La recharge démarre dès le branchement d’un véhicule enregistré, sans badge : la borne
-          transmet l’identifiant du véhicule (AutoCharge).
+          {t(
+            "La recharge démarre dès le branchement d’un véhicule enregistré, sans badge : la borne transmet l’identifiant du véhicule (AutoCharge).",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -56,25 +58,29 @@ export function StationAutoCharge({
             onCheckedChange={(checked) => setRequested(checked === true)}
           />
           <FieldContent>
-            <FieldLabel htmlFor="station-autocharge">Recharge automatique activée</FieldLabel>
+            <FieldLabel htmlFor="station-autocharge">
+              {t("Recharge automatique activée")}
+            </FieldLabel>
             <FieldDescription>
-              L’identifiant du véhicule n’est pas un secret : n’activez la recharge automatique que
-              sur des bornes dont l’accès est maîtrisé.
-              {!canEdit && " Seul un administrateur peut modifier ce réglage."}
+              {t(
+                "L’identifiant du véhicule n’est pas un secret : n’activez la recharge automatique que sur des bornes dont l’accès est maîtrisé.",
+              )}
+              {!canEdit && ` ${t("Seul un administrateur peut modifier ce réglage.")}`}
             </FieldDescription>
           </FieldContent>
         </Field>
         {queued && (
           <Alert>
             <IconHistory />
-            <AlertTitle>Commande en file d’attente</AlertTitle>
+            <AlertTitle>{t("Commande en file d’attente")}</AlertTitle>
             <AlertDescription>
-              Le réglage AutoChargeEnabled est envoyé à la borne ; il s’applique dès qu’elle accepte
-              la modification.
+              {t(
+                "Le réglage AutoChargeEnabled est envoyé à la borne ; il s’applique dès qu’elle accepte la modification.",
+              )}
             </AlertDescription>
             <AlertAction>
               <Button size="sm" variant="outline" onClick={onShowCommands}>
-                Voir les commandes
+                {t("Voir les commandes")}
               </Button>
             </AlertAction>
           </Alert>
@@ -85,17 +91,21 @@ export function StationAutoCharge({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {requested
-                ? "Activer la recharge automatique ?"
-                : "Désactiver la recharge automatique ?"}
+                ? t("Activer la recharge automatique ?")
+                : t("Désactiver la recharge automatique ?")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {requested
-                ? "Tout véhicule enregistré pourra démarrer une recharge sur cette borne simplement en se branchant. L’identifiant d’un véhicule peut être imité : réservez ce réglage aux bornes dont l’accès est contrôlé."
-                : "Les véhicules enregistrés devront de nouveau utiliser un badge ou l’application sur cette borne."}
+                ? t(
+                    "Tout véhicule enregistré pourra démarrer une recharge sur cette borne simplement en se branchant. L’identifiant d’un véhicule peut être imité : réservez ce réglage aux bornes dont l’accès est contrôlé.",
+                  )
+                : t(
+                    "Les véhicules enregistrés devront de nouveau utiliser un badge ou l’application sur cette borne.",
+                  )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={action.busy}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={action.busy}>{t("Annuler")}</AlertDialogCancel>
             <AlertDialogAction
               variant={requested ? "default" : "destructive"}
               disabled={action.busy}
@@ -113,9 +123,9 @@ export function StationAutoCharge({
                     }),
                   {
                     success: requested
-                      ? "Recharge automatique activée."
-                      : "Recharge automatique désactivée.",
-                    failure: "Le réglage n’a pas pu être modifié",
+                      ? t("Recharge automatique activée.")
+                      : t("Recharge automatique désactivée."),
+                    failure: t("Le réglage n’a pas pu être modifié"),
                   },
                 );
                 setRequested(null);
@@ -125,7 +135,7 @@ export function StationAutoCharge({
                 }
               }}
             >
-              {action.busy ? "Veuillez patienter…" : requested ? "Activer" : "Désactiver"}
+              {action.busy ? t("Veuillez patienter…") : requested ? t("Activer") : t("Désactiver")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

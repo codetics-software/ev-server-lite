@@ -18,14 +18,13 @@ import {
   rules,
   toNumber,
 } from "@/lib/form";
+import { t } from "@/lib/i18n";
 import { IconCurrentLocation } from "@tabler/icons-react";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
 
-const countryRule = matches(
-  /^[A-Z]{2}$/,
-  "Code pays ISO à deux lettres majuscules, par exemple FR.",
-);
+const countryRule = (value: string) =>
+  matches(/^[A-Z]{2}$/, t("Code pays ISO à deux lettres majuscules, par exemple FR."))(value);
 
 export type FormProps = {
   record: RecordItem | null;
@@ -39,10 +38,10 @@ function useSubmit(kind: string, record: RecordItem | null, onSaved: (id: string
     setError("");
     try {
       const saved = await saveRecord(kind, record, name, data);
-      notify(record ? "Modifications enregistrées." : "Élément créé.");
+      notify(record ? t("Modifications enregistrées.") : t("Élément créé."));
       onSaved(saved?.id ?? record?.id ?? "");
     } catch (failure) {
-      setError(errorMessage(failure, "Impossible d’enregistrer."));
+      setError(errorMessage(failure, t("Impossible d’enregistrer.")));
     }
   }
   return { error, submit };
@@ -79,36 +78,38 @@ export function CompanyForm({ record, onSaved }: FormProps) {
         <form.Field
           name="name"
           validators={{
-            onDynamic: rules(required("Renseignez le nom de l’entreprise."), maxLength(200)),
+            onDynamic: rules(required(t("Renseignez le nom de l’entreprise.")), maxLength(200)),
           }}
         >
           {(field) => (
-            <FormText field={field} label="Nom de l’entreprise" maxLength={200} required />
+            <FormText field={field} label={t("Nom de l’entreprise")} maxLength={200} required />
           )}
         </form.Field>
         <form.Field name="address" validators={{ onDynamic: rules(maxLength(200)) }}>
-          {(field) => <FormText field={field} label="Adresse" autoComplete="street-address" />}
+          {(field) => <FormText field={field} label={t("Adresse")} autoComplete="street-address" />}
         </form.Field>
         <div className="grid gap-4 sm:grid-cols-[8rem_1fr_6rem]">
           <form.Field name="postalCode" validators={{ onDynamic: rules(maxLength(20)) }}>
-            {(field) => <FormText field={field} label="Code postal" autoComplete="postal-code" />}
+            {(field) => (
+              <FormText field={field} label={t("Code postal")} autoComplete="postal-code" />
+            )}
           </form.Field>
           <form.Field name="city" validators={{ onDynamic: rules(maxLength(100)) }}>
-            {(field) => <FormText field={field} label="Ville" autoComplete="address-level2" />}
+            {(field) => <FormText field={field} label={t("Ville")} autoComplete="address-level2" />}
           </form.Field>
           <form.Field name="country" validators={{ onDynamic: rules(countryRule) }}>
-            {(field) => <FormText field={field} label="Pays" maxLength={2} />}
+            {(field) => <FormText field={field} label={t("Pays")} maxLength={2} />}
           </form.Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <form.Field name="vatNumber" validators={{ onDynamic: rules(maxLength(40)) }}>
-            {(field) => <FormText field={field} label="Numéro de TVA" />}
+            {(field) => <FormText field={field} label={t("Numéro de TVA")} />}
           </form.Field>
           <form.Field name="email" validators={{ onDynamic: rules(email()) }}>
-            {(field) => <FormText field={field} label="Courriel" type="email" />}
+            {(field) => <FormText field={field} label={t("Courriel")} type="email" />}
           </form.Field>
           <form.Field name="phone" validators={{ onDynamic: rules(maxLength(40)) }}>
-            {(field) => <FormText field={field} label="Téléphone" type="tel" />}
+            {(field) => <FormText field={field} label={t("Téléphone")} type="tel" />}
           </form.Field>
         </div>
         <form.Subscribe selector={(state) => state.isSubmitting}>
@@ -191,66 +192,72 @@ export function SiteForm({ record, onSaved, defaults }: FormProps) {
       <FieldGroup>
         <form.Field
           name="name"
-          validators={{ onDynamic: rules(required("Renseignez le nom du site."), maxLength(200)) }}
+          validators={{
+            onDynamic: rules(required(t("Renseignez le nom du site.")), maxLength(200)),
+          }}
         >
-          {(field) => <FormText field={field} label="Nom du site" maxLength={200} required />}
+          {(field) => <FormText field={field} label={t("Nom du site")} maxLength={200} required />}
         </form.Field>
         <form.Field
           name="companyId"
-          validators={{ onDynamic: rules(required("Choisissez l’entreprise du site.")) }}
+          validators={{ onDynamic: rules(required(t("Choisissez l’entreprise du site."))) }}
         >
-          {(field) => <FormPicker field={field} source="companies" label="Entreprise" />}
+          {(field) => <FormPicker field={field} source="companies" label={t("Entreprise")} />}
         </form.Field>
         <FieldSet>
-          <FieldLegend variant="label">Adresse</FieldLegend>
+          <FieldLegend variant="label">{t("Adresse")}</FieldLegend>
           <form.Field name="address" validators={{ onDynamic: rules(maxLength(200)) }}>
-            {(field) => <FormText field={field} label="Rue" autoComplete="street-address" />}
+            {(field) => <FormText field={field} label={t("Rue")} autoComplete="street-address" />}
           </form.Field>
           <div className="grid gap-4 sm:grid-cols-[8rem_1fr_6rem]">
             <form.Field name="postalCode" validators={{ onDynamic: rules(maxLength(20)) }}>
-              {(field) => <FormText field={field} label="Code postal" />}
+              {(field) => <FormText field={field} label={t("Code postal")} />}
             </form.Field>
             <form.Field name="city" validators={{ onDynamic: rules(maxLength(100)) }}>
-              {(field) => <FormText field={field} label="Ville" />}
+              {(field) => <FormText field={field} label={t("Ville")} />}
             </form.Field>
             <form.Field name="country" validators={{ onDynamic: rules(countryRule) }}>
-              {(field) => <FormText field={field} label="Pays" maxLength={2} />}
+              {(field) => <FormText field={field} label={t("Pays")} maxLength={2} />}
             </form.Field>
           </div>
           <div className="grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto]">
             <form.Field
               name="latitude"
               validators={{
-                onDynamic: rules(optionalNumber(-90, 90, "Latitude entre -90 et 90.")),
+                onDynamic: rules(optionalNumber(-90, 90, t("Latitude entre -90 et 90."))),
               }}
             >
-              {(field) => <FormText field={field} label="Latitude" type="number" />}
+              {(field) => <FormText field={field} label={t("Latitude")} type="number" />}
             </form.Field>
             <form.Field
               name="longitude"
               validators={{
-                onDynamic: rules(optionalNumber(-180, 180, "Longitude entre -180 et 180.")),
+                onDynamic: rules(optionalNumber(-180, 180, t("Longitude entre -180 et 180."))),
               }}
             >
-              {(field) => <FormText field={field} label="Longitude" type="number" />}
+              {(field) => <FormText field={field} label={t("Longitude")} type="number" />}
             </form.Field>
             <Button type="button" variant="outline" onClick={locate} disabled={locating}>
               <IconCurrentLocation data-icon="inline-start" />
-              {locating ? "Localisation…" : "Ma position"}
+              {locating ? t("Localisation…") : t("Ma position")}
             </Button>
           </div>
           <form.Field name="timezone">
-            {(field) => <FormSelect field={field} label="Fuseau horaire" options={timezones} />}
+            {(field) => (
+              <FormSelect field={field} label={t("Fuseau horaire")} options={timezones} />
+            )}
           </form.Field>
         </FieldSet>
         <FieldSet>
-          <FieldLegend variant="label">Accès</FieldLegend>
+          <FieldLegend variant="label">{t("Accès")}</FieldLegend>
           <form.Field name="accessControl">
             {(field) => (
               <FormSwitch
                 field={field}
-                label="Contrôle d’accès"
-                description="Seuls les utilisateurs affectés au site peuvent recharger. Sinon, tout badge valide est accepté."
+                label={t("Contrôle d’accès")}
+                description={t(
+                  "Seuls les utilisateurs affectés au site peuvent recharger. Sinon, tout badge valide est accepté.",
+                )}
               />
             )}
           </form.Field>
@@ -258,8 +265,8 @@ export function SiteForm({ record, onSaved, defaults }: FormProps) {
             {(field) => (
               <FormSwitch
                 field={field}
-                label="Affectation automatique"
-                description="Les nouveaux utilisateurs sont affectés à ce site."
+                label={t("Affectation automatique")}
+                description={t("Les nouveaux utilisateurs sont affectés à ce site.")}
               />
             )}
           </form.Field>
@@ -267,8 +274,8 @@ export function SiteForm({ record, onSaved, defaults }: FormProps) {
             {(field) => (
               <FormSwitch
                 field={field}
-                label="Site public"
-                description="Publié aux partenaires d’itinérance avec ses bornes publiques."
+                label={t("Site public")}
+                description={t("Publié aux partenaires d’itinérance avec ses bornes publiques.")}
               />
             )}
           </form.Field>
@@ -317,16 +324,18 @@ export function SiteAreaForm({ record, onSaved, defaults }: FormProps) {
         <form.Field
           name="name"
           validators={{
-            onDynamic: rules(required("Renseignez le nom de la zone."), maxLength(200)),
+            onDynamic: rules(required(t("Renseignez le nom de la zone.")), maxLength(200)),
           }}
         >
-          {(field) => <FormText field={field} label="Nom de la zone" maxLength={200} required />}
+          {(field) => (
+            <FormText field={field} label={t("Nom de la zone")} maxLength={200} required />
+          )}
         </form.Field>
         <form.Field
           name="siteId"
-          validators={{ onDynamic: rules(required("Choisissez le site.")) }}
+          validators={{ onDynamic: rules(required(t("Choisissez le site."))) }}
         >
-          {(field) => <FormPicker field={field} source="sites" label="Site" />}
+          {(field) => <FormPicker field={field} source="sites" label={t("Site")} />}
         </form.Field>
         <form.Subscribe selector={(state) => state.values.siteId}>
           {(siteId) => (
@@ -336,8 +345,10 @@ export function SiteAreaForm({ record, onSaved, defaults }: FormProps) {
                   field={field}
                   source="site-areas"
                   filters={{ siteId: siteId || undefined }}
-                  label="Zone parente (facultative)"
-                  description="La puissance de la zone parente plafonne celle de ses sous-zones."
+                  label={t("Zone parente (facultative)")}
+                  description={t(
+                    "La puissance de la zone parente plafonne celle de ses sous-zones.",
+                  )}
                 />
               )}
             </form.Field>
@@ -346,20 +357,25 @@ export function SiteAreaForm({ record, onSaved, defaults }: FormProps) {
         <div className="grid gap-4 sm:grid-cols-3">
           <form.Field
             name="maximumPowerKw"
-            validators={{ onDynamic: rules(optionalNumber(0, 100000, "Puissance invalide.")) }}
+            validators={{ onDynamic: rules(optionalNumber(0, 100000, t("Puissance invalide."))) }}
           >
             {(field) => (
-              <FormText field={field} label="Puissance disponible (kW)" type="number" min={0} />
+              <FormText
+                field={field}
+                label={t("Puissance disponible (kW)")}
+                type="number"
+                min={0}
+              />
             )}
           </form.Field>
           <form.Field name="numberOfPhases">
             {(field) => (
               <FormSelect
                 field={field}
-                label="Phases"
+                label={t("Phases")}
                 options={[
-                  { value: "3", label: "Triphasé" },
-                  { value: "1", label: "Monophasé" },
+                  { value: "3", label: t("Triphasé") },
+                  { value: "1", label: t("Monophasé") },
                 ]}
               />
             )}
@@ -367,10 +383,10 @@ export function SiteAreaForm({ record, onSaved, defaults }: FormProps) {
           <form.Field
             name="voltage"
             validators={{
-              onDynamic: rules(optionalNumber(100, 1000, "Tension entre 100 et 1 000 V.")),
+              onDynamic: rules(optionalNumber(100, 1000, t("Tension entre 100 et 1 000 V."))),
             }}
           >
-            {(field) => <FormText field={field} label="Tension (V)" type="number" />}
+            {(field) => <FormText field={field} label={t("Tension (V)")} type="number" />}
           </form.Field>
         </div>
         <form.Field
@@ -379,8 +395,9 @@ export function SiteAreaForm({ record, onSaved, defaults }: FormProps) {
             onDynamic: ({ value, fieldApi }) =>
               value && !fieldApi.form.getFieldValue("maximumPowerKw")
                 ? {
-                    message:
+                    message: t(
                       "Renseignez la puissance disponible pour activer la recharge intelligente.",
+                    ),
                   }
                 : undefined,
           }}
@@ -388,8 +405,10 @@ export function SiteAreaForm({ record, onSaved, defaults }: FormProps) {
           {(field) => (
             <FormSwitch
               field={field}
-              label="Recharge intelligente"
-              description="Répartit automatiquement la puissance disponible entre les bornes de la zone."
+              label={t("Recharge intelligente")}
+              description={t(
+                "Répartit automatiquement la puissance disponible entre les bornes de la zone.",
+              )}
             />
           )}
         </form.Field>

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/input-group";
 import { IconCheck, IconCopy, IconKey } from "@tabler/icons-react";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 export function CopyField({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
@@ -25,7 +26,11 @@ export function CopyField({ value, label }: { value: string; label: string }) {
     <InputGroup>
       <InputGroupInput aria-label={label} value={value} readOnly className="font-mono text-xs" />
       <InputGroupAddon align="inline-end">
-        <InputGroupButton size="icon-xs" aria-label={copied ? "Copié" : "Copier"} onClick={copy}>
+        <InputGroupButton
+          size="icon-xs"
+          aria-label={copied ? t("Copié") : t("Copier")}
+          onClick={copy}
+        >
           {copied ? <IconCheck /> : <IconCopy />}
         </InputGroupButton>
       </InputGroupAddon>
@@ -50,10 +55,10 @@ export function SecretReveal({
         <IconKey />
         <AlertTitle>{title}</AlertTitle>
         <AlertDescription>
-          {message ?? "Cette valeur n’est affichée qu’une seule fois. Conservez-la en lieu sûr."}
+          {message ?? t("Cette valeur n’est affichée qu’une seule fois. Conservez-la en lieu sûr.")}
         </AlertDescription>
       </Alert>
-      <CopyField value={secret} label="Valeur secrète" />
+      <CopyField value={secret} label={t("Valeur secrète")} />
       {extra?.map((item) => (
         <div key={item.label} className="flex flex-col gap-1.5 text-sm">
           <span className="text-muted-foreground">{item.label}</span>

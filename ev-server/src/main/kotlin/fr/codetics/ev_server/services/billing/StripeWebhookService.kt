@@ -3,6 +3,7 @@ package fr.codetics.ev_server.services.billing
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.billing.PaymentState
 import fr.codetics.ev_server.models.entities.ChargingPaymentEntity
 import fr.codetics.ev_server.models.entities.ChargingTokenKey
@@ -64,15 +65,15 @@ class StripeWebhookService(
             if (order.stripeAccountId != event.accountId)
                 throw ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Le compte Stripe ne correspond pas au paiement.",
+                    msg("stripe.webhook.account_mismatch_payment"),
                 )
             if (order.stripeCheckoutId == null)
                 throw ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Le paiement est en cours d’enregistrement. Réessayez.",
+                    msg("stripe.webhook.payment_pending"),
                 )
             ensure(order.stripeCheckoutId == event.data.path("id").asText()) {
-                "La session Stripe ne correspond pas au paiement."
+                msg("stripe.webhook.session_mismatch_payment")
             }
             if (events.existsById(event.id)) return@atomic
             if (
@@ -89,10 +90,10 @@ class StripeWebhookService(
                     event.data.path("amount_total").longValue() == order.prepaidMinor &&
                         event.data.path("currency").asText().equals(order.currency, true)
                 ) {
-                    "Le montant Stripe ne correspond pas au crédit demandé."
+                    msg("stripe.webhook.amount_mismatch_payment")
                 }
                 val intent = event.data.path("payment_intent").asText()
-                ensure(intent.startsWith("pi_")) { "Le paiement Stripe est incomplet." }
+                ensure(intent.startsWith("pi_")) { msg("stripe.webhook.incomplete") }
                 if (order.stripePaymentIntentId == null) {
                     order.stripePaymentIntentId = intent
                     val station =
@@ -105,7 +106,7 @@ class StripeWebhookService(
                     ) {
                         lifecycle.settleWithoutCharging(
                             order,
-                            "La recharge n’a pas pu démarrer. Le crédit est remboursé.",
+                            msg("checkout.start_failed_refunded"),
                         )
                     } else {
                         val token =
@@ -132,7 +133,7 @@ class StripeWebhookService(
                     }
                 } else
                     ensure(order.stripePaymentIntentId == intent) {
-                        "Le paiement Stripe a changé."
+                        msg("stripe.webhook.payment_changed")
                     }
             }
             payments.save(order)

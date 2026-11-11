@@ -11,7 +11,9 @@ import com.stripe.param.InvoiceItemCreateParams
 import com.stripe.param.SetupIntentCreateParams
 import com.stripe.param.TaxRateListParams
 import com.stripe.param.checkout.SessionCreateParams
+import fr.codetics.ev_server.core.I18n
 import fr.codetics.ev_server.core.NotFound
+import fr.codetics.ev_server.core.msg
 import java.time.Instant
 import java.util.UUID
 import org.springframework.beans.factory.annotation.Value
@@ -38,7 +40,7 @@ class StripeUserBilling(
             CustomerCreateParams.builder()
                 .setEmail(email)
                 .setName(name)
-                .addPreferredLocale("fr")
+                .addPreferredLocale(I18n.locale().language)
                 .putMetadata("user_id", userId.toString())
                 .build(),
             stripe.options(accountId, "user:$userId:customer"),
@@ -111,7 +113,7 @@ class StripeUserBilling(
 
     private fun owned(accountId: String, customerId: String, paymentMethodId: String) {
         val method = stripe.client.v1().paymentMethods().retrieve(paymentMethodId, stripe.options(accountId))
-        if (method.customer != customerId) throw NotFound("Moyen de paiement introuvable.")
+        if (method.customer != customerId) throw NotFound(msg("billing.payment_method_not_found"))
     }
 
     override fun taxRates(accountId: String): List<TaxRateInfo> =

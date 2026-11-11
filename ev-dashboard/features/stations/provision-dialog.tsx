@@ -21,6 +21,7 @@ import { useState } from "react";
 import { useApi } from "@/hooks/use-api";
 import { ocppUrl, profileLabel, type SecurityCapabilities } from "./station-security";
 import type { ProvisionedStation } from "./station-types";
+import { t } from "@/lib/i18n";
 
 export function ProvisionDialog({
   open,
@@ -49,32 +50,42 @@ export function ProvisionDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{receipt ? "Borne ajoutée" : "Ajouter une borne"}</DialogTitle>
+          <DialogTitle>{receipt ? t("Borne ajoutée") : t("Ajouter une borne")}</DialogTitle>
           <DialogDescription>
             {receipt
-              ? `Fiche de mise en service de la borne ${receipt.id} : configurez-la avec ces informations.`
-              : "La borne se connecte ensuite en OCPP 1.6 avec son identifiant et son mot de passe."}
+              ? t(
+                  "Fiche de mise en service de la borne {id} : configurez-la avec ces informations.",
+                  { id: receipt.id },
+                )
+              : t(
+                  "La borne se connecte ensuite en OCPP 1.6 avec son identifiant et son mot de passe.",
+                )}
           </DialogDescription>
         </DialogHeader>
         {receipt ? (
           <>
             <SecretReveal
-              title="Mot de passe de la borne"
+              title={t("Mot de passe de la borne")}
               message={receipt.message}
               secret={receipt.secret}
               extra={[
-                { label: "Adresse OCPP", value: ocppUrl(workspace?.slug, receipt.id, publicUrl) },
-                { label: "Identifiant de la borne", value: receipt.id },
+                {
+                  label: t("Adresse OCPP"),
+                  value: ocppUrl(workspace?.slug, receipt.id, publicUrl),
+                },
+                { label: t("Identifiant de la borne"), value: receipt.id },
               ]}
             />
             <p className="text-sm text-muted-foreground">
-              {profileLabel(1)} : OCPP 1.6 JSON, sous-protocole ocpp1.6, authentification Basic avec
-              l’identifiant et ce mot de passe.
+              {t(
+                "{profile} : OCPP 1.6 JSON, sous-protocole ocpp1.6, authentification Basic avec l’identifiant et ce mot de passe.",
+                { profile: profileLabel(1) },
+              )}
               {!publicUrl &&
-                " Adaptez le nom d’hôte si le serveur OCPP est publié à une autre adresse que ce tableau de bord."}
+                ` ${t("Adaptez le nom d’hôte si le serveur OCPP est publié à une autre adresse que ce tableau de bord.")}`}
             </p>
             <DialogFooter>
-              <Button onClick={() => onOpenChange(false)}>Terminer</Button>
+              <Button onClick={() => onOpenChange(false)}>{t("Terminer")}</Button>
             </DialogFooter>
           </>
         ) : (
@@ -112,7 +123,7 @@ function ProvisionForm({ onCreated }: { onCreated: (result: ProvisionedStation) 
           }),
         );
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’ajouter la borne."));
+        setError(errorMessage(failure, t("Impossible d’ajouter la borne.")));
       }
     },
   });
@@ -129,12 +140,12 @@ function ProvisionForm({ onCreated }: { onCreated: (result: ProvisionedStation) 
           name="id"
           validators={{
             onDynamic: rules(
-              required("Renseignez l’identifiant OCPP de la borne."),
+              required(t("Renseignez l’identifiant OCPP de la borne.")),
               maxLength(100),
-              matches(/^[A-Za-z0-9._:*-]{1,100}$/, "Lettres, chiffres et . _ : * - uniquement."),
+              matches(/^[A-Za-z0-9._:*-]{1,100}$/, t("Lettres, chiffres et . _ : * - uniquement.")),
               (value: string) =>
                 value.trim() === "." || value.trim() === ".."
-                  ? "Les identifiants « . » et « .. » sont réservés."
+                  ? t("Les identifiants « . » et « .. » sont réservés.")
                   : undefined,
             ),
           }}
@@ -142,8 +153,10 @@ function ProvisionForm({ onCreated }: { onCreated: (result: ProvisionedStation) 
           {(field) => (
             <FormText
               field={field}
-              label="Identifiant de la borne"
-              description="Identifiant annoncé par la borne dans l’adresse OCPP. Lettres, chiffres et . _ : * -"
+              label={t("Identifiant de la borne")}
+              description={t(
+                "Identifiant annoncé par la borne dans l’adresse OCPP. Lettres, chiffres et . _ : * -",
+              )}
               maxLength={100}
               autoComplete="off"
               required
@@ -152,14 +165,18 @@ function ProvisionForm({ onCreated }: { onCreated: (result: ProvisionedStation) 
         </form.Field>
         <form.Field
           name="name"
-          validators={{ onDynamic: rules(required("Renseignez un nom."), maxLength(200)) }}
+          validators={{ onDynamic: rules(required(t("Renseignez un nom.")), maxLength(200)) }}
         >
-          {(field) => <FormText field={field} label="Nom" maxLength={200} required />}
+          {(field) => <FormText field={field} label={t("Nom")} maxLength={200} required />}
         </form.Field>
         {organization && (
           <form.Field name="siteAreaId">
             {(field) => (
-              <FormPicker field={field} source="site-areas" label="Zone de recharge (facultatif)" />
+              <FormPicker
+                field={field}
+                source="site-areas"
+                label={t("Zone de recharge (facultatif)")}
+              />
             )}
           </form.Field>
         )}
@@ -171,7 +188,7 @@ function ProvisionForm({ onCreated }: { onCreated: (result: ProvisionedStation) 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Ajout…" : "Ajouter la borne"}
+              {submitting ? t("Ajout…") : t("Ajouter la borne")}
             </Button>
           )}
         </form.Subscribe>

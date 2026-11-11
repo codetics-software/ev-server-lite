@@ -12,6 +12,7 @@ import { ConnectorAvailability } from "./connector-availability";
 import { Anomalies, YearConsumption } from "./overview-insights";
 import { OverviewMetrics } from "./overview-metrics";
 import type { NetworkOverview } from "./overview-types";
+import { t } from "@/lib/i18n";
 
 export function Overview() {
   const [revision, setRevision] = useState(0);
@@ -23,11 +24,20 @@ export function Overview() {
     <>
       <div className="page-heading">
         <div>
-          <h1>Vue d’ensemble du réseau</h1>
+          <h1>{t("Vue d’ensemble du réseau")}</h1>
           <p>
             {data
-              ? `${data.stations.online} bornes connectées sur ${data.stations.total}${offline ? ` · ${offline} hors ligne` : ""}.`
-              : "Connexion des bornes, état des connecteurs et activité des sessions."}
+              ? offline
+                ? t("{online} bornes connectées sur {total} · {offline} hors ligne.", {
+                    online: data.stations.online,
+                    total: data.stations.total,
+                    offline,
+                  })
+                : t("{online} bornes connectées sur {total}.", {
+                    online: data.stations.online,
+                    total: data.stations.total,
+                  })
+              : t("Connexion des bornes, état des connecteurs et activité des sessions.")}
           </p>
         </div>
         <Button
@@ -36,12 +46,12 @@ export function Overview() {
           disabled={loading}
         >
           <IconRefresh data-icon="inline-start" />
-          Actualiser
+          {t("Actualiser")}
         </Button>
       </div>
       {error && (
         <Alert variant="destructive">
-          <AlertTitle>Impossible d’actualiser la vue du réseau</AlertTitle>
+          <AlertTitle>{t("Impossible d’actualiser la vue du réseau")}</AlertTitle>
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       )}
@@ -57,25 +67,25 @@ export function Overview() {
             </div>
             <div className="flex min-w-0 flex-col gap-8">
               <section className="operational-panel" aria-labelledby="operations-heading">
-                <h2 id="operations-heading">Exploitation</h2>
+                <h2 id="operations-heading">{t("Exploitation")}</h2>
                 <Link className="operation-link" href="/stations">
                   <div>
-                    <strong>Bornes de recharge</strong>
-                    <span>Consultez les connexions et commandez vos bornes à distance.</span>
+                    <strong>{t("Bornes de recharge")}</strong>
+                    <span>{t("Consultez les connexions et commandez vos bornes à distance.")}</span>
                   </div>
                   <IconArrowUpRight aria-hidden="true" />
                 </Link>
                 <Link className="operation-link" href="/transactions">
                   <div>
-                    <strong>Sessions de recharge</strong>
-                    <span>Retrouvez les horaires de recharge et l’énergie mesurée.</span>
+                    <strong>{t("Sessions de recharge")}</strong>
+                    <span>{t("Retrouvez les horaires de recharge et l’énergie mesurée.")}</span>
                   </div>
                   <IconArrowUpRight aria-hidden="true" />
                 </Link>
                 <Link className="operation-link" href="/commands">
                   <div>
-                    <strong>Suivi des commandes</strong>
-                    <span>Suivez les envois, les réponses et les délais dépassés.</span>
+                    <strong>{t("Suivi des commandes")}</strong>
+                    <span>{t("Suivez les envois, les réponses et les délais dépassés.")}</span>
                   </div>
                   <IconArrowUpRight aria-hidden="true" />
                 </Link>

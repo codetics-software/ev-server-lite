@@ -9,17 +9,20 @@ import {
 } from "@/components/ui/table";
 import { date } from "@/lib/format";
 import { money, paymentLabels, type OperatorPayment } from "./payment-types";
+import { t } from "@/lib/i18n";
 
 export function PaymentsTable({ payments }: { payments: OperatorPayment[] }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          {["Date", "Borne", "État", "Crédit", "Facturé", "Remboursé"].map((label, index) => (
-            <TableHead key={label} className={index > 2 ? "text-right" : undefined}>
-              {label}
-            </TableHead>
-          ))}
+          {["Date", "Borne", "État", t("Crédit"), t("Facturé"), t("Remboursé")].map(
+            (label, index) => (
+              <TableHead key={label} className={index > 2 ? "text-right" : undefined}>
+                {label}
+              </TableHead>
+            ),
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -29,7 +32,7 @@ export function PaymentsTable({ payments }: { payments: OperatorPayment[] }) {
             <TableCell>
               <span className="block font-medium">{payment.stationId}</span>
               <span className="text-xs text-muted-foreground">
-                Connecteur {payment.connectorId}
+                {t("Connecteur {id}", { id: payment.connectorId })}
               </span>
             </TableCell>
             <TableCell>

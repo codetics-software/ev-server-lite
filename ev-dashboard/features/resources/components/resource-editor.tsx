@@ -22,6 +22,7 @@ import {
   validateResourceField,
 } from "../hooks/use-resource-editor";
 import { ResourceField } from "./resource-field";
+import { t } from "@/lib/i18n";
 
 export function ResourceEditor({
   section,
@@ -37,6 +38,7 @@ export function ResourceEditor({
   onSaved: () => void;
 }) {
   const name = resourceName(section);
+  const sectionTitle = sections.find((item) => item.id === section)?.label;
   const { receipt, setReceipt, close } = useResourceEditor(onClose);
 
   return (
@@ -44,26 +46,28 @@ export function ResourceEditor({
       <DialogContent className="max-h-[85svh] overflow-auto">
         <DialogHeader>
           <DialogTitle>
-            {receipt ? "Enregistrement effectué" : record ? `Modifier ${name}` : `Ajouter ${name}`}
+            {receipt
+              ? t("Enregistrement effectué")
+              : record
+                ? t("Modifier {name}", { name })
+                : t("Ajouter {name}", { name })}
           </DialogTitle>
-          <DialogDescription>
-            {sections.find((item) => item.id === section)?.label}
-          </DialogDescription>
+          <DialogDescription>{sectionTitle && t(sectionTitle)}</DialogDescription>
         </DialogHeader>
         {receipt ? (
           <div className="flex flex-col gap-4">
             <Alert>
-              <AlertTitle>Enregistrement effectué</AlertTitle>
+              <AlertTitle>{t("Enregistrement effectué")}</AlertTitle>
               <AlertDescription>{display(receipt.message)}</AlertDescription>
             </Alert>
             {Boolean(receipt.secret || receipt.token) && (
               <Input
-                aria-label="Identifiant affiché une seule fois"
+                aria-label={t("Identifiant affiché une seule fois")}
                 value={String(receipt.secret || receipt.token)}
                 readOnly
               />
             )}
-            <Button onClick={close}>Terminer</Button>
+            <Button onClick={close}>{t("Terminer")}</Button>
           </div>
         ) : (
           <ResourceForm
@@ -130,8 +134,9 @@ function ResourceForm({
         ))}
         {section === "cars" && (
           <FieldDescription>
-            Les véhicules sont facultatifs : leur enregistrement n’est pas nécessaire pour
-            recharger.
+            {t(
+              "Les véhicules sont facultatifs : leur enregistrement n’est pas nécessaire pour recharger.",
+            )}
           </FieldDescription>
         )}
         {error && (
@@ -140,7 +145,7 @@ function ResourceForm({
           </Alert>
         )}
         <Button type="submit" disabled={pending}>
-          {pending ? "Enregistrement…" : "Enregistrer"}
+          {pending ? t("Enregistrement…") : t("Enregistrer")}
         </Button>
       </FieldGroup>
     </form>

@@ -11,6 +11,7 @@ import { usePreviousSession } from "./portal-access";
 import { PortalLayout } from "./portal-layout";
 import type { PublicEvse } from "./portal-types";
 import { TariffDetails } from "./tariff-details";
+import { t } from "@/lib/i18n";
 
 export function PortalScreen({ workspace, evseId }: { workspace: string; evseId: string }) {
   const [revision, setRevision] = useState(0);
@@ -27,7 +28,7 @@ export function PortalScreen({ workspace, evseId }: { workspace: string; evseId:
     <PortalLayout workspace={workspace}>
       {error ? (
         <Alert variant="destructive">
-          <AlertTitle>Point de charge indisponible</AlertTitle>
+          <AlertTitle>{t("Point de charge indisponible")}</AlertTitle>
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       ) : !evse ? (
@@ -39,26 +40,32 @@ export function PortalScreen({ workspace, evseId }: { workspace: string; evseId:
               <p>{evse.workspace}</p>
               <h1>{evse.name}</h1>
               <p>
-                Borne {evse.stationId} · Connecteur {evse.connectorId}
+                {t("Borne {station} · Connecteur {connector}", {
+                  station: evse.stationId,
+                  connector: evse.connectorId,
+                })}
               </p>
             </div>
           </div>
           <section className="rounded-xl border bg-background p-5 sm:p-7">
-            <h2 className="text-lg font-semibold">Votre recharge</h2>
+            <h2 className="text-lg font-semibold">{t("Votre recharge")}</h2>
             <TariffDetails tariff={evse.tariff} />
             <p className="mb-6 mt-2 text-xs text-muted-foreground">
-              Tarifs appliqués au début de la session. Le montant final est calculé à partir des
-              mesures de la borne.
+              {t(
+                "Tarifs appliqués au début de la session. Le montant final est calculé à partir des mesures de la borne.",
+              )}
             </p>
             {evse.available ? (
               <CheckoutForm evse={evse} />
             ) : (
               <Alert>
                 <AlertTitle>
-                  {evse.connected ? "Recharge momentanément indisponible" : "Borne hors ligne"}
+                  {evse.connected
+                    ? t("Recharge momentanément indisponible")
+                    : t("Borne hors ligne")}
                 </AlertTitle>
                 <AlertDescription>
-                  Ce connecteur ne peut pas recevoir de nouvelle session pour le moment.
+                  {t("Ce connecteur ne peut pas recevoir de nouvelle session pour le moment.")}
                 </AlertDescription>
               </Alert>
             )}
@@ -69,13 +76,13 @@ export function PortalScreen({ workspace, evseId }: { workspace: string; evseId:
               data-slot="button"
               className={buttonVariants({ variant: "outline" })}
             >
-              Retrouver ma session
+              {t("Retrouver ma session")}
             </Link>
           )}
         </>
       )}
       <Button variant="ghost" disabled={loading} onClick={() => setRevision((value) => value + 1)}>
-        Actualiser la disponibilité
+        {t("Actualiser la disponibilité")}
       </Button>
     </PortalLayout>
   );

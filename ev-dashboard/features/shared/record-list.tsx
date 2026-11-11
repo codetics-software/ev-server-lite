@@ -7,6 +7,7 @@ import { EmptyState, ErrorState, ListState } from "@/features/shared/states";
 import { usePaged } from "@/features/shared/use-paged";
 import type { RecordItem, Row } from "@/lib/api-types";
 import { useState, type ReactNode } from "react";
+import { t } from "@/lib/i18n";
 
 export function RecordList<T extends Row>({
   kind,
@@ -39,7 +40,11 @@ export function RecordList<T extends Row>({
   return (
     <section className="flex min-w-0 flex-col gap-4" aria-label={label}>
       <div className="flex flex-wrap items-end gap-3">
-        <SearchInput value={search} onChange={setSearch} label={`Rechercher · ${label}`} />
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          label={t("Rechercher · {label}", { label })}
+        />
         {toolbar}
       </div>
       {list.error && list.data && <ErrorState error={list.error} onRetry={list.refresh} />}
@@ -52,8 +57,8 @@ export function RecordList<T extends Row>({
         empty={
           <EmptyState
             icon={emptyIcon}
-            title={search ? `Aucun résultat pour « ${search} »` : emptyTitle}
-            description={search ? "Essayez une autre recherche." : emptyDescription}
+            title={search ? t("Aucun résultat pour « {search} »", { search }) : emptyTitle}
+            description={search ? t("Essayez une autre recherche.") : emptyDescription}
           />
         }
       >

@@ -3,6 +3,7 @@ package fr.codetics.ev_server.services.billing
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.invalid
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.billing.ChargingTariff
 import fr.codetics.ev_server.models.entities.RecordKey
 import fr.codetics.ev_server.repositories.RecordRepository
@@ -19,16 +20,16 @@ class TariffService(private val records: RecordRepository, private val db: Datab
             records.findById(RecordKey(tenantId, "pricing-definitions", id)).orElse(null)
                 ?: throw ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "Le tarif n’existe pas dans cet espace.",
+                    msg("tariff.not_in_workspace"),
                 )
         val data = db.decode(record.data)
         fun amount(field: String): BigDecimal {
             val value = data.path(field).asText("0")
-            ensure(value.length <= 30) { "Le montant du tarif est invalide." }
+            ensure(value.length <= 30) { msg("tariff.invalid_amount") }
             val decimal =
                 value.toBigDecimalOrNull()
-                    ?: invalid("Le montant du tarif est invalide.")
-            ensure(decimal <= BigDecimal(10000)) { "Le montant du tarif est trop élevé." }
+                    ?: invalid(msg("tariff.invalid_amount"))
+            ensure(decimal <= BigDecimal(10000)) { msg("tariff.amount_too_high") }
             return decimal
         }
         return ChargingTariff(

@@ -4,6 +4,7 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.NotFound
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.pageRequest
 import fr.codetics.ev_server.models.api.PageResponse
 import fr.codetics.ev_server.models.entities.StationEntity
@@ -44,14 +45,14 @@ class PlatformService(
     fun update(user: AppPrincipal, id: UUID, input: PlatformWorkspaceInput): PlatformWorkspaceResponse {
         authorize(user)
         ensure(input.name.isNotBlank() && input.name.length <= 200) {
-            "Le nom de l’espace doit contenir entre 1 et 200 caractères."
+            msg("workspaces.name_length")
         }
         ensure(id != user.tenantId || input.active) {
-            "Vous ne pouvez pas désactiver l’espace de la plateforme."
+            msg("workspaces.platform_cannot_disable")
         }
 
         return db.atomic {
-            val tenant = tenants.findById(id).orElse(null) ?: throw NotFound("Espace introuvable.")
+            val tenant = tenants.findById(id).orElse(null) ?: throw NotFound(msg("workspaces.not_found"))
             tenant.name = input.name.trim()
             tenant.active = input.active
             tenant.components = db.encode(input.components.toComponents())
@@ -75,7 +76,7 @@ class PlatformService(
 
     private fun authorize(user: AppPrincipal) {
         if (!user.platformAdmin) {
-            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Réservé aux administrateurs de la plateforme.")
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, msg("workspaces.platform_admins_only"))
         }
     }
 }

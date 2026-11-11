@@ -48,6 +48,7 @@ import {
   type SecurityProfile,
 } from "./station-security";
 import type { ProvisionedStation, Station } from "./station-types";
+import { t, translated } from "@/lib/i18n";
 
 function securityPath(station: Station) {
   return `stations/${encodeURIComponent(station.id)}/security`;
@@ -61,7 +62,7 @@ export function profileIssue(
 ) {
   const current = station.security_profile ?? 1;
   if (target === 0 && current !== 0 && !capabilities?.allow_unauthenticated) {
-    return "Le profil 0 est désactivé sur ce serveur.";
+    return t("Le profil 0 est désactivé sur ce serveur.");
   }
   if (
     target === 3 &&
@@ -70,14 +71,14 @@ export function profileIssue(
     !capabilities.client_certificate_authority &&
     !station.pinned_certificate_fingerprint
   ) {
-    return "Aucune autorité de certification cliente n’est configurée sur le serveur.";
+    return t("Aucune autorité de certification cliente n’est configurée sur le serveur.");
   }
   if (target > current && target > 0 && send) {
     if (!station.connected) {
-      return "La borne doit être connectée pour changer de profil.";
+      return t("La borne doit être connectée pour changer de profil.");
     }
     if (target >= 2 && (station.connection_security_profile ?? 0) < 2) {
-      return "La borne doit d’abord se connecter en wss:// (TLS).";
+      return t("La borne doit d’abord se connecter en wss:// (TLS).");
     }
     if (
       target === 3 &&
@@ -85,7 +86,7 @@ export function profileIssue(
       !station.certificate_fingerprint &&
       station.connection_security_profile !== 3
     ) {
-      return "Aucun certificat client connu pour cette borne.";
+      return t("Aucun certificat client connu pour cette borne.");
     }
   }
   return null;
@@ -116,6 +117,9 @@ export function ProfileChange({
   const issue = profileIssue(station, capabilities, chosen, send);
   const lowering = chosen < current;
   const disabling = chosen === 0 && current !== 0;
+  const [confirmBefore, confirmAfter] = t("Saisissez l’identifiant {id} pour confirmer").split(
+    "{id}",
+  );
 
   function reset() {
     setTarget(String(current));
@@ -137,7 +141,7 @@ export function ProfileChange({
         }),
       {
         success: (result) => result.message,
-        failure: "Le profil de sécurité n’a pas été modifié",
+        failure: t("Le profil de sécurité n’a pas été modifié"),
         onDone: onChanged,
       },
     );
@@ -155,14 +159,17 @@ export function ProfileChange({
         }}
       >
         <IconShieldLock data-icon="inline-start" />
-        Modifier le profil
+        {t("Modifier le profil")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier le profil de sécurité</DialogTitle>
+            <DialogTitle>{t("Modifier le profil de sécurité")}</DialogTitle>
             <DialogDescription>
-              {station.name} · actuellement {securityProfiles[current as SecurityProfile]}
+              {t("{station} · actuellement {profile}", {
+                station: station.name,
+                profile: securityProfiles[current as SecurityProfile],
+              })}
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
@@ -176,7 +183,7 @@ export function ProfileChange({
                     <FieldContent>
                       <FieldLabel htmlFor={id}>
                         {securityProfiles[profile]}
-                        {profile === current && " (actuel)"}
+                        {profile === current && ` ${t("(actuel)")}`}
                       </FieldLabel>
                       {reason && <FieldDescription>{reason}</FieldDescription>}
                     </FieldContent>
@@ -191,18 +198,18 @@ export function ProfileChange({
                 onCheckedChange={(checked) => setSend(checked === true)}
               />
               <FieldContent>
-                <FieldLabel htmlFor={sendId}>Envoyer la modification à la borne</FieldLabel>
+                <FieldLabel htmlFor={sendId}>{t("Envoyer la modification à la borne")}</FieldLabel>
                 <FieldDescription>
-                  Désactivez pour appliquer le profil seulement côté serveur (mise en service, borne
-                  hors ligne) : la borne devra être configurée sur place. Un abaissement n’est
-                  jamais envoyé à la borne.
+                  {t(
+                    "Désactivez pour appliquer le profil seulement côté serveur (mise en service, borne hors ligne) : la borne devra être configurée sur place. Un abaissement n’est jamais envoyé à la borne.",
+                  )}
                 </FieldDescription>
               </FieldContent>
             </Field>
           </FieldGroup>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Annuler
+              {t("Annuler")}
             </Button>
             <Button
               variant={lowering ? "destructive" : "default"}
@@ -212,7 +219,7 @@ export function ProfileChange({
                 setConfirming(true);
               }}
             >
-              Continuer
+              {t("Continuer")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -230,26 +237,37 @@ export function ProfileChange({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {disabling
-                ? "Désactiver l’authentification de la borne ?"
+                ? t("Désactiver l’authentification de la borne ?")
                 : lowering
-                  ? "Abaisser la sécurité de la borne ?"
-                  : `Passer la borne au profil ${chosen} ?`}
+                  ? t("Abaisser la sécurité de la borne ?")
+                  : t("Passer la borne au profil {profile} ?", { profile: chosen })}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {disabling
-                ? "N’importe quel appareil connaissant l’identifiant pourra se faire passer pour cette borne. Le serveur accepte immédiatement les connexions sans authentification."
+                ? t(
+                    "N’importe quel appareil connaissant l’identifiant pourra se faire passer pour cette borne. Le serveur accepte immédiatement les connexions sans authentification.",
+                  )
                 : lowering
-                  ? `Le serveur accepte immédiatement le profil ${chosen}, plus faible. Rien n’est envoyé à la borne : une borne ne peut pas abaisser son propre profil, elle doit être reconfigurée sur place.`
+                  ? t(
+                      "Le serveur accepte immédiatement le profil {profile}, plus faible. Rien n’est envoyé à la borne : une borne ne peut pas abaisser son propre profil, elle doit être reconfigurée sur place.",
+                      { profile: chosen },
+                    )
                   : send
-                    ? "La borne va redémarrer sa connexion. L’ancien niveau reste accepté jusqu’à sa reconnexion."
-                    : `Le profil ${chosen} est appliqué immédiatement côté serveur, sans rien envoyer à la borne : configurez-la sur place pour qu’elle se reconnecte avec ce profil.`}
+                    ? t(
+                        "La borne va redémarrer sa connexion. L’ancien niveau reste accepté jusqu’à sa reconnexion.",
+                      )
+                    : t(
+                        "Le profil {profile} est appliqué immédiatement côté serveur, sans rien envoyer à la borne : configurez-la sur place pour qu’elle se reconnecte avec ce profil.",
+                        { profile: chosen },
+                      )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {disabling && (
             <Field>
               <FieldLabel htmlFor={confirmId}>
-                Saisissez l’identifiant <code className="font-mono">{station.id}</code> pour
-                confirmer
+                {confirmBefore}
+                <code className="font-mono">{station.id}</code>
+                {confirmAfter}
               </FieldLabel>
               <Input
                 id={confirmId}
@@ -260,7 +278,7 @@ export function ProfileChange({
             </Field>
           )}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={action.busy}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={action.busy}>{t("Annuler")}</AlertDialogCancel>
             <AlertDialogAction
               variant={lowering ? "destructive" : "default"}
               disabled={action.busy || (disabling && typed.trim() !== station.id)}
@@ -270,12 +288,12 @@ export function ProfileChange({
               }}
             >
               {action.busy
-                ? "Veuillez patienter…"
+                ? t("Veuillez patienter…")
                 : disabling
-                  ? "Désactiver l’authentification"
+                  ? t("Désactiver l’authentification")
                   : lowering
-                    ? "Abaisser"
-                    : `Passer au profil ${chosen}`}
+                    ? t("Abaisser")
+                    : t("Passer au profil {profile}", { profile: chosen })}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -351,43 +369,45 @@ function PinForm({
               }),
             }),
           {
-            success: "Empreinte épinglée.",
-            failure: "L’empreinte n’a pas été épinglée",
+            success: t("Empreinte épinglée."),
+            failure: t("L’empreinte n’a pas été épinglée"),
             onDone,
           },
         );
       }}
     >
       <DialogHeader>
-        <DialogTitle>Épingler une empreinte</DialogTitle>
+        <DialogTitle>{t("Épingler une empreinte")}</DialogTitle>
         <DialogDescription>
-          Le certificat client dont l’empreinte SHA-256 correspond est accepté pour {station.name},
-          même si son nom commun diffère de l’identifiant de la borne.
+          {t(
+            "Le certificat client dont l’empreinte SHA-256 correspond est accepté pour {station}, même si son nom commun diffère de l’identifiant de la borne.",
+            { station: station.name },
+          )}
         </DialogDescription>
       </DialogHeader>
       <Field data-invalid={invalid}>
-        <FieldLabel htmlFor={id}>Empreinte SHA-256</FieldLabel>
+        <FieldLabel htmlFor={id}>{t("Empreinte SHA-256")}</FieldLabel>
         <Input
           id={id}
           value={value}
           className="font-mono text-xs"
           autoComplete="off"
-          placeholder="AB:CD:…"
+          placeholder={t("AB:CD:…")}
           aria-invalid={invalid}
           onBlur={() => setTouched(true)}
           onChange={(event) => setValue(event.target.value)}
         />
         <FieldDescription>
-          64 caractères hexadécimaux, avec ou sans « : », en majuscules ou minuscules.
+          {t("64 caractères hexadécimaux, avec ou sans « : », en majuscules ou minuscules.")}
           {isFingerprint(value) && (
             <span className="mt-1 block break-all font-mono">{normalized}</span>
           )}
         </FieldDescription>
-        {invalid && <FieldError>{fingerprintMessage}</FieldError>}
+        {invalid && <FieldError>{fingerprintMessage()}</FieldError>}
       </Field>
       <DialogFooter>
         <Button type="submit" disabled={action.busy}>
-          {action.busy ? "Veuillez patienter…" : "Épingler"}
+          {action.busy ? t("Veuillez patienter…") : t("Épingler")}
         </Button>
       </DialogFooter>
     </form>
@@ -416,10 +436,10 @@ export function certificateCommand(
   });
 }
 
-const certificateTypes = [
+const certificateTypes = translated([
   { value: "CentralSystemRootCertificate", label: "Racine du serveur" },
   { value: "ManufacturerRootCertificate", label: "Racine du fabricant" },
-];
+]);
 
 const PEM = /^-----BEGIN CERTIFICATE-----\s+[A-Za-z0-9+/=\s]+-----END CERTIFICATE-----\s*$/;
 
@@ -437,11 +457,11 @@ export function InstallCertificate({
   const action = useAction();
   const id = useId();
   const error = !pem.trim()
-    ? "Collez le certificat au format PEM."
+    ? t("Collez le certificat au format PEM.")
     : pem.trim().length > 5500
-      ? "Le certificat contient 5 500 caractères au plus."
+      ? t("Le certificat contient 5 500 caractères au plus.")
       : !PEM.test(pem.trim())
-        ? "Le certificat doit être au format PEM (-----BEGIN CERTIFICATE-----)."
+        ? t("Le certificat doit être au format PEM (-----BEGIN CERTIFICATE-----).")
         : null;
   return (
     <>
@@ -454,7 +474,7 @@ export function InstallCertificate({
         }}
       >
         <IconCertificate data-icon="inline-start" />
-        Installer un certificat
+        {t("Installer un certificat")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -475,8 +495,8 @@ export function InstallCertificate({
                     certificate: pem.trim(),
                   }),
                 {
-                  success: "Installation du certificat demandée à la borne.",
-                  failure: "Le certificat n’a pas été envoyé",
+                  success: t("Installation du certificat demandée à la borne."),
+                  failure: t("Le certificat n’a pas été envoyé"),
                   onDone: () => {
                     setOpen(false);
                     onQueued();
@@ -486,33 +506,37 @@ export function InstallCertificate({
             }}
           >
             <DialogHeader>
-              <DialogTitle>Installer un certificat racine</DialogTitle>
+              <DialogTitle>{t("Installer un certificat racine")}</DialogTitle>
               <DialogDescription>
-                La borne ajoute ce certificat à ses autorités de confiance (InstallCertificate).
+                {t(
+                  "La borne ajoute ce certificat à ses autorités de confiance (InstallCertificate).",
+                )}
               </DialogDescription>
             </DialogHeader>
             {!station.connected && (
               <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-                La borne est hors ligne : la demande sera envoyée dès sa reconnexion ou expirera.
+                {t(
+                  "La borne est hors ligne : la demande sera envoyée dès sa reconnexion ou expirera.",
+                )}
               </p>
             )}
             <FieldGroup>
               <Field>
-                <FieldLabel>Type de certificat</FieldLabel>
+                <FieldLabel>{t("Type de certificat")}</FieldLabel>
                 <OptionSelect
                   value={type}
                   onChange={setType}
                   options={certificateTypes}
-                  label="Type de certificat"
+                  label={t("Type de certificat")}
                 />
               </Field>
               <Field data-invalid={touched && Boolean(error)}>
-                <FieldLabel htmlFor={id}>Certificat (PEM)</FieldLabel>
+                <FieldLabel htmlFor={id}>{t("Certificat (PEM)")}</FieldLabel>
                 <Textarea
                   id={id}
                   value={pem}
                   className="min-h-40 font-mono text-xs"
-                  placeholder="-----BEGIN CERTIFICATE-----"
+                  placeholder={t("-----BEGIN CERTIFICATE-----")}
                   aria-invalid={touched && Boolean(error)}
                   onBlur={() => setTouched(true)}
                   onChange={(event) => setPem(event.target.value)}
@@ -522,7 +546,7 @@ export function InstallCertificate({
             </FieldGroup>
             <DialogFooter>
               <Button type="submit" disabled={action.busy}>
-                {action.busy ? "Veuillez patienter…" : "Installer"}
+                {action.busy ? t("Veuillez patienter…") : t("Installer")}
               </Button>
             </DialogFooter>
           </form>
@@ -547,24 +571,30 @@ export function SecretDialog({
     <Dialog open={value !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nouveau mot de passe OCPP</DialogTitle>
+          <DialogTitle>{t("Nouveau mot de passe OCPP")}</DialogTitle>
           <DialogDescription>
             {value?.remote
               ? online
-                ? "Le nouveau mot de passe est envoyé à la borne. L’ancien reste accepté jusqu’à sa reconnexion avec le nouveau. Si la borne refuse la modification, saisissez ce mot de passe sur place."
-                : "La borne est hors ligne : saisissez ce mot de passe sur la borne. L’ancien reste accepté jusqu’à la révocation."
-              : "Renouvellement sur place : l’ancien mot de passe ne fonctionne plus et la borne a été déconnectée. Configurez la borne avec celui-ci pour qu’elle se reconnecte."}
+                ? t(
+                    "Le nouveau mot de passe est envoyé à la borne. L’ancien reste accepté jusqu’à sa reconnexion avec le nouveau. Si la borne refuse la modification, saisissez ce mot de passe sur place.",
+                  )
+                : t(
+                    "La borne est hors ligne : saisissez ce mot de passe sur la borne. L’ancien reste accepté jusqu’à la révocation.",
+                  )
+              : t(
+                  "Renouvellement sur place : l’ancien mot de passe ne fonctionne plus et la borne a été déconnectée. Configurez la borne avec celui-ci pour qu’elle se reconnecte.",
+                )}
           </DialogDescription>
         </DialogHeader>
         {value && (
           <SecretReveal
-            title="Mot de passe de la borne"
+            title={t("Mot de passe de la borne")}
             message={value.secret.message}
             secret={value.secret.secret}
           />
         )}
         <DialogFooter>
-          <Button onClick={onClose}>Terminer</Button>
+          <Button onClick={onClose}>{t("Terminer")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

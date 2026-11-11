@@ -48,7 +48,7 @@ final class PushCoordinator {
         guard let api = model.api, model.isSignedIn, let deviceToken else { return }
         do {
             try await api.registerDevice(
-                PushDeviceInput(token: deviceToken, platform: "IOS", environment: environment, locale: Locale.current.language.languageCode?.identifier)
+                PushDeviceInput(token: deviceToken, platform: "IOS", environment: environment, locale: AppLanguage.current)
             )
             lastError = nil
         } catch {

@@ -1,8 +1,9 @@
 import type { Tariff } from "./portal-types";
+import { getIntlLocale, t } from "@/lib/i18n";
 
 export function TariffDetails({ tariff }: { tariff: Tariff }) {
   const price = (value: number) =>
-    new Intl.NumberFormat("fr-FR", {
+    new Intl.NumberFormat(getIntlLocale(), {
       style: "currency",
       currency: tariff.currency,
       maximumFractionDigits: 6,
@@ -10,9 +11,9 @@ export function TariffDetails({ tariff }: { tariff: Tariff }) {
   return (
     <dl className="divide-y text-sm">
       {[
-        ["Énergie", tariff.energyPrice, "/ kWh"],
-        ["Durée de recharge", tariff.timePrice, "/ heure"],
-        ["Frais de session", tariff.flatPrice, ""],
+        [t("Énergie"), tariff.energyPrice, "/ kWh"],
+        [t("Durée de recharge"), tariff.timePrice, "/ heure"],
+        [t("Frais de session"), tariff.flatPrice, ""],
       ].map(
         ([label, value, unit]) =>
           Number(value) > 0 && (

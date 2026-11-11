@@ -31,6 +31,7 @@ import { api, errorMessage } from "@/lib/api";
 import type { CommandReceipt } from "@/lib/api-types";
 import { fromInputDateTime, toInputDateTime } from "@/lib/format";
 import { required, rules } from "@/lib/form";
+import { t } from "@/lib/i18n";
 import {
   IconBolt,
   IconBoltOff,
@@ -74,12 +75,14 @@ type FieldSpec = {
   description?: string;
 };
 
+type ActionGroup = "charging" | "connectors" | "maintenance";
+
 type ActionSpec = {
   id: string;
   label: string;
   description: string;
   icon: typeof IconPower;
-  group: "Recharge" | "Connecteurs" | "Maintenance";
+  group: ActionGroup;
   danger?: boolean;
   confirmLabel: string;
   fields: FieldSpec[];
@@ -118,316 +121,338 @@ const now = () => toInputDateTime(new Date().toISOString());
 const firstConnector = (station: Station) => String(station.connectors?.[0]?.connector_id ?? 1);
 const optionalNumber = (value: string) => (value ? Number(value) : undefined);
 
-export const stationActions: ActionSpec[] = [
-  {
-    id: "start",
-    label: "Démarrer une recharge",
-    description: "Demande à la borne de démarrer une session pour un badge sur un connecteur.",
-    icon: IconPlayerPlay,
-    group: "Recharge",
-    confirmLabel: "Démarrer",
-    fields: [
-      { key: "connectorId", label: "Connecteur", kind: "connector", initial: firstConnector },
-      { key: "tokenUid", label: "Badge", kind: "badge", required: true },
-    ],
-    submit: (station, values) =>
-      api<CommandReceipt>("transactions/start", {
-        method: "POST",
-        body: JSON.stringify({
-          stationId: station.id,
-          connectorId: Number(values.connectorId),
-          tokenUid: values.tokenUid,
+export function stationActions(): ActionSpec[] {
+  return [
+    {
+      id: "start",
+      label: t("Démarrer une recharge"),
+      description: t("Demande à la borne de démarrer une session pour un badge sur un connecteur."),
+      icon: IconPlayerPlay,
+      group: "charging",
+      confirmLabel: t("Démarrer"),
+      fields: [
+        { key: "connectorId", label: t("Connecteur"), kind: "connector", initial: firstConnector },
+        { key: "tokenUid", label: t("Badge"), kind: "badge", required: true },
+      ],
+      submit: (station, values) =>
+        api<CommandReceipt>("transactions/start", {
+          method: "POST",
+          body: JSON.stringify({
+            stationId: station.id,
+            connectorId: Number(values.connectorId),
+            tokenUid: values.tokenUid,
+          }),
         }),
-      }),
-  },
-  {
-    id: "stop",
-    label: "Arrêter une recharge",
-    description: "Demande à la borne d’arrêter la session en cours sur le connecteur.",
-    icon: IconBoltOff,
-    group: "Recharge",
-    danger: true,
-    confirmLabel: "Arrêter",
-    fields: [{ key: "transactionId", label: "Session en cours", kind: "session", required: true }],
-    submit: (_station, values) =>
-      api<CommandReceipt>(`transactions/${values.transactionId}/stop`, { method: "POST" }),
-  },
-  {
-    id: "reserve",
-    label: "Réserver un connecteur",
-    description: "Réserve le connecteur pour un badge jusqu’à l’échéance choisie.",
-    icon: IconCalendarEvent,
-    group: "Recharge",
-    confirmLabel: "Réserver",
-    fields: [
-      { key: "connectorId", label: "Connecteur", kind: "connector", initial: firstConnector },
-      { key: "idTag", label: "Badge", kind: "badge", required: true },
-      { key: "expiryDate", label: "Fin de la réservation", kind: "datetime", initial: inOneHour },
-      {
-        key: "reservationId",
-        label: "Numéro de réservation",
-        kind: "number",
-        initial: () => String(Math.floor(Date.now() / 1000) % 1000000),
-      },
-    ],
-    submit: (station, values) =>
-      sendCommand(station.id, "ReserveNow", {
-        connectorId: Number(values.connectorId),
-        idTag: values.idTag,
-        expiryDate: fromInputDateTime(values.expiryDate),
-        reservationId: Number(values.reservationId),
-      }),
-  },
-  {
-    id: "cancel-reservation",
-    label: "Annuler une réservation",
-    description: "Annule une réservation en cours à partir de son numéro.",
-    icon: IconCalendarOff,
-    group: "Recharge",
-    confirmLabel: "Annuler la réservation",
-    fields: [
-      { key: "reservationId", label: "Numéro de réservation", kind: "number", required: true },
-    ],
-    submit: (station, values) =>
-      sendCommand(station.id, "CancelReservation", { reservationId: Number(values.reservationId) }),
-  },
-  {
-    id: "unlock",
-    label: "Déverrouiller un connecteur",
-    description: "Libère le câble bloqué dans le connecteur.",
-    icon: IconLockOpen,
-    group: "Connecteurs",
-    confirmLabel: "Déverrouiller",
-    fields: [
-      { key: "connectorId", label: "Connecteur", kind: "connector", initial: firstConnector },
-    ],
-    submit: (station, values) =>
-      sendCommand(station.id, "UnlockConnector", { connectorId: Number(values.connectorId) }),
-  },
-  {
-    id: "availability",
-    label: "Modifier la disponibilité",
-    description: "Met la borne ou un connecteur en service ou hors service.",
-    icon: IconToggleRight,
-    group: "Connecteurs",
-    confirmLabel: "Appliquer",
-    fields: [
-      { key: "connectorId", label: "Cible", kind: "connectorOrStation", initial: () => "0" },
-      {
-        key: "type",
-        label: "Disponibilité",
-        kind: "select",
-        options: [
-          { value: "Operative", label: "En service" },
-          { value: "Inoperative", label: "Hors service" },
-        ],
-        initial: () => "Operative",
-      },
-    ],
-    submit: (station, values) =>
-      sendCommand(station.id, "ChangeAvailability", {
-        connectorId: Number(values.connectorId),
-        type: values.type,
-      }),
-  },
-  {
-    id: "trigger",
-    label: "Demander un message",
-    description: "Demande à la borne d’envoyer immédiatement un message OCPP.",
-    icon: IconSend,
-    group: "Connecteurs",
-    confirmLabel: "Demander",
-    fields: [
-      {
-        key: "requestedMessage",
-        label: "Message",
-        kind: "select",
-        options: triggerMessages,
-        initial: () => "StatusNotification",
-      },
-      { key: "connectorId", label: "Cible", kind: "connectorOrStation", initial: () => "0" },
-    ],
-    submit: (station, values) =>
-      sendCommand(station.id, "TriggerMessage", {
-        requestedMessage: values.requestedMessage,
-        connectorId: Number(values.connectorId) || undefined,
-      }),
-  },
-  {
-    id: "extended-trigger",
-    label: "Demander un message (étendu)",
-    description:
-      "Demande à la borne d’envoyer immédiatement un message OCPP (ExtendedTriggerMessage, profil de sécurité).",
-    icon: IconSend,
-    group: "Connecteurs",
-    confirmLabel: "Demander",
-    fields: [
-      {
-        key: "requestedMessage",
-        label: "Message",
-        kind: "select",
-        options: extendedTriggerMessages,
-        initial: () => "StatusNotification",
-      },
-      { key: "connectorId", label: "Cible", kind: "connectorOrStation", initial: () => "0" },
-    ],
-    submit: (station, values) =>
-      sendCommand(station.id, "ExtendedTriggerMessage", {
-        requestedMessage: values.requestedMessage,
-        connectorId: Number(values.connectorId) || undefined,
-      }),
-  },
-  {
-    id: "reset-soft",
-    label: "Redémarrage logiciel",
-    description:
-      "Redémarre le logiciel de la borne. Les sessions en cours sont arrêtées proprement.",
-    icon: IconRefresh,
-    group: "Maintenance",
-    confirmLabel: "Redémarrer",
-    fields: [],
-    submit: (station) => sendCommand(station.id, "Reset", { type: "Soft" }),
-  },
-  {
-    id: "reset-hard",
-    label: "Redémarrage matériel",
-    description:
-      "Coupe et relance la borne. Les sessions en cours sont interrompues immédiatement.",
-    icon: IconPower,
-    group: "Maintenance",
-    danger: true,
-    confirmLabel: "Redémarrer la borne",
-    fields: [],
-    submit: (station) => sendCommand(station.id, "Reset", { type: "Hard" }),
-  },
-  {
-    id: "clear-cache",
-    label: "Vider le cache des autorisations",
-    description: "Efface les badges mémorisés localement par la borne.",
-    icon: IconClearAll,
-    group: "Maintenance",
-    confirmLabel: "Vider le cache",
-    fields: [],
-    submit: (station) => sendCommand(station.id, "ClearCache", {}),
-  },
-  {
-    id: "firmware",
-    label: "Mettre à jour le micrologiciel",
-    description: "La borne télécharge puis installe le micrologiciel à la date indiquée.",
-    icon: IconCloudDownload,
-    group: "Maintenance",
-    confirmLabel: "Programmer la mise à jour",
-    fields: [
-      {
-        key: "location",
-        label: "Adresse du fichier",
-        kind: "text",
-        required: true,
-        description: "Adresse HTTPS ou FTP accessible par la borne.",
-      },
-      { key: "retrieveDate", label: "Date de téléchargement", kind: "datetime", initial: now },
-      { key: "retries", label: "Nombre de tentatives", kind: "number", initial: () => "3" },
-    ],
-    submit: (station, values) =>
-      sendCommand(station.id, "UpdateFirmware", {
-        location: values.location,
-        retrieveDate: fromInputDateTime(values.retrieveDate),
-        retries: optionalNumber(values.retries),
-      }),
-  },
-  {
-    id: "diagnostics",
-    label: "Demander un diagnostic",
-    description: "La borne envoie ses journaux de diagnostic à l’adresse indiquée.",
-    icon: IconFileAnalytics,
-    group: "Maintenance",
-    confirmLabel: "Demander le diagnostic",
-    fields: [
-      { key: "location", label: "Adresse de dépôt", kind: "text", required: true },
-      { key: "startTime", label: "Depuis (facultatif)", kind: "datetime" },
-      { key: "stopTime", label: "Jusqu’à (facultatif)", kind: "datetime" },
-    ],
-    submit: (station, values) =>
-      sendCommand(station.id, "GetDiagnostics", {
-        location: values.location,
-        startTime: fromInputDateTime(values.startTime) ?? undefined,
-        stopTime: fromInputDateTime(values.stopTime) ?? undefined,
-      }),
-  },
-  {
-    id: "logs",
-    label: "Demander les journaux",
-    description: "La borne envoie son journal de diagnostic ou de sécurité à l’adresse indiquée.",
-    icon: IconFileText,
-    group: "Maintenance",
-    confirmLabel: "Demander les journaux",
-    fields: [
-      {
-        key: "logType",
-        label: "Journal",
-        kind: "select",
-        options: [
-          { value: "DiagnosticsLog", label: "Diagnostic" },
-          { value: "SecurityLog", label: "Sécurité" },
-        ],
-        initial: () => "DiagnosticsLog",
-      },
-      { key: "remoteLocation", label: "Adresse de dépôt", kind: "text", required: true },
-      { key: "oldestTimestamp", label: "Depuis (facultatif)", kind: "datetime" },
-      { key: "latestTimestamp", label: "Jusqu’à (facultatif)", kind: "datetime" },
-      { key: "retries", label: "Nombre de tentatives", kind: "number", initial: () => "3" },
-    ],
-    submit: (station, values) =>
-      sendCommand(station.id, "GetLog", {
-        logType: values.logType,
-        requestId: Number(requestId()),
-        log: {
-          remoteLocation: values.remoteLocation,
-          oldestTimestamp: fromInputDateTime(values.oldestTimestamp) ?? undefined,
-          latestTimestamp: fromInputDateTime(values.latestTimestamp) ?? undefined,
+    },
+    {
+      id: "stop",
+      label: t("Arrêter une recharge"),
+      description: t("Demande à la borne d’arrêter la session en cours sur le connecteur."),
+      icon: IconBoltOff,
+      group: "charging",
+      danger: true,
+      confirmLabel: t("Arrêter"),
+      fields: [
+        { key: "transactionId", label: t("Session en cours"), kind: "session", required: true },
+      ],
+      submit: (_station, values) =>
+        api<CommandReceipt>(`transactions/${values.transactionId}/stop`, { method: "POST" }),
+    },
+    {
+      id: "reserve",
+      label: t("Réserver un connecteur"),
+      description: t("Réserve le connecteur pour un badge jusqu’à l’échéance choisie."),
+      icon: IconCalendarEvent,
+      group: "charging",
+      confirmLabel: t("Réserver"),
+      fields: [
+        { key: "connectorId", label: t("Connecteur"), kind: "connector", initial: firstConnector },
+        { key: "idTag", label: t("Badge"), kind: "badge", required: true },
+        {
+          key: "expiryDate",
+          label: t("Fin de la réservation"),
+          kind: "datetime",
+          initial: inOneHour,
         },
-        retries: optionalNumber(values.retries),
-      }),
-  },
-  {
-    id: "signed-firmware",
-    label: "Mettre à jour le micrologiciel signé",
-    description:
-      "La borne télécharge le micrologiciel, vérifie sa signature puis l’installe (SignedUpdateFirmware).",
-    icon: IconFileCertificate,
-    group: "Maintenance",
-    confirmLabel: "Programmer la mise à jour",
-    fields: [
-      {
-        key: "location",
-        label: "Adresse du fichier",
-        kind: "text",
-        required: true,
-        description: "Adresse HTTPS ou FTP accessible par la borne.",
-      },
-      { key: "retrieveDateTime", label: "Date de téléchargement", kind: "datetime", initial: now },
-      {
-        key: "signingCertificate",
-        label: "Certificat de signature (PEM)",
-        kind: "textarea",
-        required: true,
-      },
-      { key: "signature", label: "Signature (base64)", kind: "textarea", required: true },
-      { key: "retries", label: "Nombre de tentatives", kind: "number", initial: () => "3" },
-    ],
-    submit: (station, values) =>
-      sendCommand(station.id, "SignedUpdateFirmware", {
-        requestId: Number(requestId()),
-        firmware: {
+        {
+          key: "reservationId",
+          label: t("Numéro de réservation"),
+          kind: "number",
+          initial: () => String(Math.floor(Date.now() / 1000) % 1000000),
+        },
+      ],
+      submit: (station, values) =>
+        sendCommand(station.id, "ReserveNow", {
+          connectorId: Number(values.connectorId),
+          idTag: values.idTag,
+          expiryDate: fromInputDateTime(values.expiryDate),
+          reservationId: Number(values.reservationId),
+        }),
+    },
+    {
+      id: "cancel-reservation",
+      label: t("Annuler une réservation"),
+      description: t("Annule une réservation en cours à partir de son numéro."),
+      icon: IconCalendarOff,
+      group: "charging",
+      confirmLabel: t("Annuler la réservation"),
+      fields: [
+        { key: "reservationId", label: t("Numéro de réservation"), kind: "number", required: true },
+      ],
+      submit: (station, values) =>
+        sendCommand(station.id, "CancelReservation", {
+          reservationId: Number(values.reservationId),
+        }),
+    },
+    {
+      id: "unlock",
+      label: t("Déverrouiller un connecteur"),
+      description: t("Libère le câble bloqué dans le connecteur."),
+      icon: IconLockOpen,
+      group: "connectors",
+      confirmLabel: t("Déverrouiller"),
+      fields: [
+        { key: "connectorId", label: t("Connecteur"), kind: "connector", initial: firstConnector },
+      ],
+      submit: (station, values) =>
+        sendCommand(station.id, "UnlockConnector", { connectorId: Number(values.connectorId) }),
+    },
+    {
+      id: "availability",
+      label: t("Modifier la disponibilité"),
+      description: t("Met la borne ou un connecteur en service ou hors service."),
+      icon: IconToggleRight,
+      group: "connectors",
+      confirmLabel: t("Appliquer"),
+      fields: [
+        { key: "connectorId", label: t("Cible"), kind: "connectorOrStation", initial: () => "0" },
+        {
+          key: "type",
+          label: t("Disponibilité"),
+          kind: "select",
+          options: [
+            { value: "Operative", label: t("En service") },
+            { value: "Inoperative", label: t("Hors service") },
+          ],
+          initial: () => "Operative",
+        },
+      ],
+      submit: (station, values) =>
+        sendCommand(station.id, "ChangeAvailability", {
+          connectorId: Number(values.connectorId),
+          type: values.type,
+        }),
+    },
+    {
+      id: "trigger",
+      label: t("Demander un message"),
+      description: t("Demande à la borne d’envoyer immédiatement un message OCPP."),
+      icon: IconSend,
+      group: "connectors",
+      confirmLabel: t("Demander"),
+      fields: [
+        {
+          key: "requestedMessage",
+          label: t("Message"),
+          kind: "select",
+          options: triggerMessages,
+          initial: () => "StatusNotification",
+        },
+        { key: "connectorId", label: t("Cible"), kind: "connectorOrStation", initial: () => "0" },
+      ],
+      submit: (station, values) =>
+        sendCommand(station.id, "TriggerMessage", {
+          requestedMessage: values.requestedMessage,
+          connectorId: Number(values.connectorId) || undefined,
+        }),
+    },
+    {
+      id: "extended-trigger",
+      label: t("Demander un message (étendu)"),
+      description: t(
+        "Demande à la borne d’envoyer immédiatement un message OCPP (ExtendedTriggerMessage, profil de sécurité).",
+      ),
+      icon: IconSend,
+      group: "connectors",
+      confirmLabel: t("Demander"),
+      fields: [
+        {
+          key: "requestedMessage",
+          label: t("Message"),
+          kind: "select",
+          options: extendedTriggerMessages,
+          initial: () => "StatusNotification",
+        },
+        { key: "connectorId", label: t("Cible"), kind: "connectorOrStation", initial: () => "0" },
+      ],
+      submit: (station, values) =>
+        sendCommand(station.id, "ExtendedTriggerMessage", {
+          requestedMessage: values.requestedMessage,
+          connectorId: Number(values.connectorId) || undefined,
+        }),
+    },
+    {
+      id: "reset-soft",
+      label: t("Redémarrage logiciel"),
+      description: t(
+        "Redémarre le logiciel de la borne. Les sessions en cours sont arrêtées proprement.",
+      ),
+      icon: IconRefresh,
+      group: "maintenance",
+      confirmLabel: t("Redémarrer"),
+      fields: [],
+      submit: (station) => sendCommand(station.id, "Reset", { type: "Soft" }),
+    },
+    {
+      id: "reset-hard",
+      label: t("Redémarrage matériel"),
+      description: t(
+        "Coupe et relance la borne. Les sessions en cours sont interrompues immédiatement.",
+      ),
+      icon: IconPower,
+      group: "maintenance",
+      danger: true,
+      confirmLabel: t("Redémarrer la borne"),
+      fields: [],
+      submit: (station) => sendCommand(station.id, "Reset", { type: "Hard" }),
+    },
+    {
+      id: "clear-cache",
+      label: t("Vider le cache des autorisations"),
+      description: t("Efface les badges mémorisés localement par la borne."),
+      icon: IconClearAll,
+      group: "maintenance",
+      confirmLabel: t("Vider le cache"),
+      fields: [],
+      submit: (station) => sendCommand(station.id, "ClearCache", {}),
+    },
+    {
+      id: "firmware",
+      label: t("Mettre à jour le micrologiciel"),
+      description: t("La borne télécharge puis installe le micrologiciel à la date indiquée."),
+      icon: IconCloudDownload,
+      group: "maintenance",
+      confirmLabel: t("Programmer la mise à jour"),
+      fields: [
+        {
+          key: "location",
+          label: t("Adresse du fichier"),
+          kind: "text",
+          required: true,
+          description: t("Adresse HTTPS ou FTP accessible par la borne."),
+        },
+        { key: "retrieveDate", label: t("Date de téléchargement"), kind: "datetime", initial: now },
+        { key: "retries", label: t("Nombre de tentatives"), kind: "number", initial: () => "3" },
+      ],
+      submit: (station, values) =>
+        sendCommand(station.id, "UpdateFirmware", {
           location: values.location,
-          retrieveDateTime: fromInputDateTime(values.retrieveDateTime),
-          signingCertificate: values.signingCertificate.trim(),
-          signature: values.signature.trim(),
+          retrieveDate: fromInputDateTime(values.retrieveDate),
+          retries: optionalNumber(values.retries),
+        }),
+    },
+    {
+      id: "diagnostics",
+      label: t("Demander un diagnostic"),
+      description: t("La borne envoie ses journaux de diagnostic à l’adresse indiquée."),
+      icon: IconFileAnalytics,
+      group: "maintenance",
+      confirmLabel: t("Demander le diagnostic"),
+      fields: [
+        { key: "location", label: t("Adresse de dépôt"), kind: "text", required: true },
+        { key: "startTime", label: t("Depuis (facultatif)"), kind: "datetime" },
+        { key: "stopTime", label: t("Jusqu’à (facultatif)"), kind: "datetime" },
+      ],
+      submit: (station, values) =>
+        sendCommand(station.id, "GetDiagnostics", {
+          location: values.location,
+          startTime: fromInputDateTime(values.startTime) ?? undefined,
+          stopTime: fromInputDateTime(values.stopTime) ?? undefined,
+        }),
+    },
+    {
+      id: "logs",
+      label: t("Demander les journaux"),
+      description: t(
+        "La borne envoie son journal de diagnostic ou de sécurité à l’adresse indiquée.",
+      ),
+      icon: IconFileText,
+      group: "maintenance",
+      confirmLabel: t("Demander les journaux"),
+      fields: [
+        {
+          key: "logType",
+          label: t("Journal"),
+          kind: "select",
+          options: [
+            { value: "DiagnosticsLog", label: t("Diagnostic") },
+            { value: "SecurityLog", label: t("Sécurité") },
+          ],
+          initial: () => "DiagnosticsLog",
         },
-        retries: optionalNumber(values.retries),
-      }),
-  },
-];
+        { key: "remoteLocation", label: t("Adresse de dépôt"), kind: "text", required: true },
+        { key: "oldestTimestamp", label: t("Depuis (facultatif)"), kind: "datetime" },
+        { key: "latestTimestamp", label: t("Jusqu’à (facultatif)"), kind: "datetime" },
+        { key: "retries", label: t("Nombre de tentatives"), kind: "number", initial: () => "3" },
+      ],
+      submit: (station, values) =>
+        sendCommand(station.id, "GetLog", {
+          logType: values.logType,
+          requestId: Number(requestId()),
+          log: {
+            remoteLocation: values.remoteLocation,
+            oldestTimestamp: fromInputDateTime(values.oldestTimestamp) ?? undefined,
+            latestTimestamp: fromInputDateTime(values.latestTimestamp) ?? undefined,
+          },
+          retries: optionalNumber(values.retries),
+        }),
+    },
+    {
+      id: "signed-firmware",
+      label: t("Mettre à jour le micrologiciel signé"),
+      description: t(
+        "La borne télécharge le micrologiciel, vérifie sa signature puis l’installe (SignedUpdateFirmware).",
+      ),
+      icon: IconFileCertificate,
+      group: "maintenance",
+      confirmLabel: t("Programmer la mise à jour"),
+      fields: [
+        {
+          key: "location",
+          label: t("Adresse du fichier"),
+          kind: "text",
+          required: true,
+          description: t("Adresse HTTPS ou FTP accessible par la borne."),
+        },
+        {
+          key: "retrieveDateTime",
+          label: t("Date de téléchargement"),
+          kind: "datetime",
+          initial: now,
+        },
+        {
+          key: "signingCertificate",
+          label: t("Certificat de signature (PEM)"),
+          kind: "textarea",
+          required: true,
+        },
+        { key: "signature", label: t("Signature (base64)"), kind: "textarea", required: true },
+        { key: "retries", label: t("Nombre de tentatives"), kind: "number", initial: () => "3" },
+      ],
+      submit: (station, values) =>
+        sendCommand(station.id, "SignedUpdateFirmware", {
+          requestId: Number(requestId()),
+          firmware: {
+            location: values.location,
+            retrieveDateTime: fromInputDateTime(values.retrieveDateTime),
+            signingCertificate: values.signingCertificate.trim(),
+            signature: values.signature.trim(),
+          },
+          retries: optionalNumber(values.retries),
+        }),
+    },
+  ];
+}
 
 export type ActionRequest = { id: string; initial?: Record<string, string> };
 
@@ -438,21 +463,26 @@ export function StationActionMenu({
   onSelect: (request: ActionRequest) => void;
   disabled?: boolean;
 }) {
-  const groupNames = ["Recharge", "Connecteurs", "Maintenance"] as const;
+  const actions = stationActions();
+  const groups: { id: ActionGroup; label: string }[] = [
+    { id: "charging", label: t("Recharge") },
+    { id: "connectors", label: t("Connecteurs") },
+    { id: "maintenance", label: t("Maintenance") },
+  ];
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button disabled={disabled} />}>
         <IconBolt data-icon="inline-start" />
-        Actions
+        {t("Actions")}
         <IconChevronDown data-icon="inline-end" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        {groupNames.map((group, index) => (
-          <DropdownMenuGroup key={group}>
+        {groups.map((group, index) => (
+          <DropdownMenuGroup key={group.id}>
             {index > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuLabel>{group}</DropdownMenuLabel>
-            {stationActions
-              .filter((action) => action.group === group)
+            <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+            {actions
+              .filter((action) => action.group === group.id)
               .map((action) => (
                 <DropdownMenuItem
                   key={action.id}
@@ -481,7 +511,7 @@ export function StationActionDialog({
   onClose: () => void;
   onSent: () => void;
 }) {
-  const action = stationActions.find((item) => item.id === request?.id);
+  const action = stationActions().find((item) => item.id === request?.id);
   return (
     <Dialog open={Boolean(action)} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
@@ -516,13 +546,16 @@ function ActionForm({
   const connectors = station.connectors ?? [];
   const connectorOptions: Option[] = connectors.map((connector) => ({
     value: String(connector.connector_id),
-    label: `Connecteur ${connector.connector_id}`,
+    label: t("Connecteur {id}", { id: connector.connector_id }),
   }));
   const sessions: Option[] = connectors
     .filter((connector) => connector.current_transaction_id != null)
     .map((connector) => ({
       value: String(connector.current_transaction_id),
-      label: `Connecteur ${connector.connector_id} · session ${connector.current_transaction_id}${connector.current_user_name ? ` · ${connector.current_user_name}` : ""}`,
+      label: `${t("Connecteur {id} · session {session}", {
+        id: connector.connector_id,
+        session: connector.current_transaction_id ?? "",
+      })}${connector.current_user_name ? ` · ${connector.current_user_name}` : ""}`,
     }));
   const defaults: Record<string, string> = Object.fromEntries(
     action.fields.map((field) => [
@@ -540,12 +573,15 @@ function ActionForm({
         const receipt = await action.submit(station, value);
         const id = (receipt as CommandReceipt | undefined)?.id;
         notify(
-          `${action.label} : demande envoyée`,
-          id ? `Suivez la réponse de la borne dans le suivi des commandes.` : undefined,
+          t("{action} : demande envoyée", { action: action.label }),
+          id ? t("Suivez la réponse de la borne dans le suivi des commandes.") : undefined,
         );
         onDone();
       } catch (error) {
-        notifyError(`${action.label} : échec`, errorMessage(error, "La borne n’a pas été jointe."));
+        notifyError(
+          t("{action} : échec", { action: action.label }),
+          errorMessage(error, t("La borne n’a pas été jointe.")),
+        );
       }
     },
   });
@@ -567,7 +603,7 @@ function ActionForm({
       </DialogHeader>
       {!station.connected && (
         <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-          La borne est hors ligne : la demande sera envoyée dès sa reconnexion ou expirera.
+          {t("La borne est hors ligne : la demande sera envoyée dès sa reconnexion ou expirera.")}
         </p>
       )}
       {action.fields.length > 0 && (
@@ -578,7 +614,7 @@ function ActionForm({
               name={spec.key}
               validators={
                 spec.required
-                  ? { onDynamic: rules(required("Ce champ est obligatoire.")) }
+                  ? { onDynamic: rules(required(t("Ce champ est obligatoire."))) }
                   : undefined
               }
             >
@@ -595,7 +631,7 @@ function ActionForm({
                       <FormSelect
                         field={field}
                         label={spec.label}
-                        options={[{ value: "0", label: "Toute la borne" }, ...connectorOptions]}
+                        options={[{ value: "0", label: t("Toute la borne") }, ...connectorOptions]}
                       />
                     );
                   case "session":
@@ -603,7 +639,7 @@ function ActionForm({
                       <FormSelect field={field} label={spec.label} options={sessions} />
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Aucune session en cours sur cette borne.
+                        {t("Aucune session en cours sur cette borne.")}
                       </p>
                     );
                   case "select":
@@ -656,7 +692,7 @@ function ActionForm({
       )}
       <DialogFooter className="items-center sm:justify-between">
         <Link href="/commands" className="text-xs text-muted-foreground hover:text-foreground">
-          Suivi des commandes
+          {t("Suivi des commandes")}
         </Link>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(submitting) => (
@@ -665,7 +701,7 @@ function ActionForm({
               variant={action.danger ? "destructive" : "default"}
               disabled={submitting || (action.id === "stop" && !sessions.length)}
             >
-              {submitting ? "Envoi…" : action.confirmLabel}
+              {submitting ? t("Envoi…") : action.confirmLabel}
             </Button>
           )}
         </form.Subscribe>

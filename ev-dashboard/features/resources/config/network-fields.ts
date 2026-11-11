@@ -1,6 +1,7 @@
+import { translated } from "@/lib/i18n";
 import type { FormField } from "../types";
 
-export const networkFields: Record<string, FormField[]> = {
+export const networkFields: Record<string, FormField[]> = translated({
   companies: [
     { key: "name", label: "Nom de l’entreprise", required: true, maxLength: 200 },
     { key: "address", label: "Adresse" },
@@ -54,4 +55,4 @@ export const networkFields: Record<string, FormField[]> = {
     { key: "name", label: "Nom du paramètre", required: true, maxLength: 200 },
     { key: "value", label: "Valeur", required: true },
   ],
-};
+});

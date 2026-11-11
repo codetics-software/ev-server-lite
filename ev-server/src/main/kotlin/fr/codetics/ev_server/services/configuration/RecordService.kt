@@ -4,6 +4,7 @@ import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.bounds
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.api.PageResponse
 import fr.codetics.ev_server.models.api.RecordInput
@@ -122,7 +123,7 @@ class RecordService(
         val data = organization.strict(kind, db.json.valueToTree(body.data))
         verify(user.tenantId, kind, id, data)
         val encoded = db.encode(body.data)
-        ensure(encoded.length <= 65536) { "Cet élément est trop volumineux." }
+        ensure(encoded.length <= 65536) { msg("records.too_large") }
 
         return db.atomic {
             if (id == null) {
@@ -139,7 +140,7 @@ class RecordService(
             }
 
             ensure(body.revision != null) {
-                "Renseignez la version actuelle pour éviter de remplacer une modification concurrente."
+                msg("records.revision_required")
             }
             val record =
                 records.findById(RecordKey(user.tenantId, kind, id)).orElse(null)
@@ -148,7 +149,7 @@ class RecordService(
             if (record.revision != body.revision) {
                 throw ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Cet élément a changé. Rechargez-le avant d’enregistrer.",
+                    msg("records.changed"),
                 )
             }
 
@@ -192,21 +193,21 @@ class RecordService(
             val exists =
                 if (reference.kind == "users") users.findByTenantIdAndId(tenant, reference.id) != null
                 else organization.exists(tenant, reference.kind, reference.id)
-            ensure(exists) { "${reference.label} sélectionné(e) n’existe pas dans cet espace." }
+            ensure(exists) { msg("records.reference_missing", reference.label) }
         }
 
         if (data is SiteAreaData && data.parentSiteAreaId != null) {
-            ensure(data.parentSiteAreaId != id) { "Une zone ne peut pas être sa propre parente." }
+            ensure(data.parentSiteAreaId != id) { msg("records.area_own_parent") }
             val areas = organization.siteAreas(tenant).associateBy { it.id }
             var parent: UUID? = data.parentSiteAreaId
             val visited = mutableSetOf<UUID>()
             while (parent != null) {
                 ensure(parent != id && visited.add(parent)) {
-                    "Cette zone parente créerait une boucle."
+                    msg("records.area_loop")
                 }
                 val area = areas[parent] ?: break
                 ensure(area.data.siteId == data.siteId) {
-                    "La zone parente doit appartenir au même site."
+                    msg("records.area_same_site")
                 }
                 parent = area.data.parentSiteAreaId
             }
@@ -215,7 +216,7 @@ class RecordService(
         if (data is PricingData) {
             data.scope?.stationId?.let { station ->
                 ensure(stations.existsById(StationKey(tenant, station))) {
-                    "La borne sélectionnée n’existe pas dans cet espace."
+                    msg("records.station_missing")
                 }
             }
         }
@@ -227,7 +228,7 @@ class RecordService(
                 organization.raw(tenant, child).any { record ->
                     db.decode(record.data).path(field).asText() == id.toString()
                 }
-            if (used) return "Cet élément est encore utilisé par d’autres éléments ($child)."
+            if (used) return msg("records.in_use", child)
         }
 
         if (kind == "site-areas") {
@@ -235,7 +236,7 @@ class RecordService(
                 queries.count<StationEntity>(
                     listOf(eq("key.tenantId", tenant), eq("siteAreaId", id), eq("deleted", false))
                 )
-            if (attached > 0) return "Des bornes sont encore rattachées à cette zone."
+            if (attached > 0) return msg("records.area_has_stations")
         }
 
         if (kind == "sites" || kind == "site-areas") {
@@ -244,13 +245,13 @@ class RecordService(
                 organization.raw(tenant, "pricing-definitions").any { record ->
                     db.decode(record.data).path("scope").path(field).asText() == id.toString()
                 }
-            if (priced) return "Un tarif est encore limité à cet élément."
+            if (priced) return msg("records.tariff_restricted")
         }
 
         if (kind == "pricing-definitions") {
             val published =
                 publicEvses.findAllByTenantIdOrderByName(tenant).any { it.pricingDefinitionId == id }
-            if (published) return "Ce tarif est utilisé par un point de charge public."
+            if (published) return msg("records.tariff_used_by_evse")
         }
 
         return null

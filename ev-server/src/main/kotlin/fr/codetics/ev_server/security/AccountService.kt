@@ -2,9 +2,12 @@ package fr.codetics.ev_server.security
 
 import fr.codetics.ev_server.core.AppPrincipal
 import fr.codetics.ev_server.core.AppProperties
+import fr.codetics.ev_server.core.CodedProblem
 import fr.codetics.ev_server.core.Database
+import fr.codetics.ev_server.core.I18n
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.core.randomToken
 import fr.codetics.ev_server.core.sha256
 import fr.codetics.ev_server.models.entities.AccessTokenEntity
@@ -114,14 +117,11 @@ class AccountService(
         val passwordMatches = passwords.matches(password, user?.passwordHash ?: dummyPassword)
 
         if (!passwordMatches || user == null || !user.enabled || user.deletedAt != null) {
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Identifiants incorrects.")
+            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, msg("auth.bad_credentials"))
         }
 
         if (!user.emailVerified) {
-            throw ResponseStatusException(
-                HttpStatus.UNAUTHORIZED,
-                "Vérifiez votre adresse électronique avant de vous connecter.",
-            )
+            throw CodedProblem(HttpStatus.UNAUTHORIZED, msg("auth.email_not_verified"), "email_not_verified")
         }
 
         return principal(user, organization)
@@ -141,6 +141,7 @@ class AccountService(
         )
         users.findById(user.id).ifPresent { account ->
             account.lastLoginAt = Instant.now(clock)
+            I18n.requested()?.let { account.locale = it }
             account.inactivityNotifiedAt = null
             users.save(account)
         }
@@ -162,7 +163,7 @@ class AccountService(
 
     fun validatePassword(password: String) {
         ensure(password.length in 16..128) {
-            "Le mot de passe doit contenir entre 16 et 128 caractères."
+            msg("auth.password_length")
         }
     }
 
@@ -170,7 +171,7 @@ class AccountService(
         if (!properties.signupEnabled || properties.publicTenant.isBlank()) {
             throw ResponseStatusException(
                 HttpStatus.FORBIDDEN,
-                "L’inscription libre est désactivée.",
+                msg("auth.signup_disabled"),
             )
         }
 
@@ -190,6 +191,7 @@ class AccountService(
                             email = email.lowercase(),
                             displayName = name,
                             passwordHash = passwords.encode(password),
+                            locale = I18n.locale().language,
                         )
                     )
                 challenge(user, ChallengeKind.VERIFY)
@@ -217,9 +219,9 @@ class AccountService(
         val (path, action) =
             when (kind) {
                 ChallengeKind.RESET ->
-                    if (user.passwordHash == null) "define-password" to "Définir votre mot de passe"
-                    else "reset-password" to "Réinitialiser le mot de passe"
-                ChallengeKind.VERIFY -> "verify-email" to "Vérifier l’adresse électronique"
+                    if (user.passwordHash == null) "define-password" to "mail.challenge.define_password"
+                    else "reset-password" to "mail.challenge.reset_password"
+                ChallengeKind.VERIFY -> "verify-email" to "mail.challenge.verify_email"
             }
 
         challenges.deleteAllByUserIdAndKind(user.id, kind)
@@ -231,14 +233,15 @@ class AccountService(
                 expiresAt = Instant.now(clock).plus(CHALLENGE_TTL),
             )
         )
-        mail.save(
-            MailEntity(
-                recipient = user.email,
-                subject = "Codetics Supervision — $action",
-                body =
-                    "${properties.publicUrl}/auth/$path?token=$raw\n\nCe lien expire dans 30 minutes.",
+        I18n.with(user.locale) {
+            mail.save(
+                MailEntity(
+                    recipient = user.email,
+                    subject = "Codetics Supervision — ${msg(action)}",
+                    body = "${properties.publicUrl}/auth/$path?token=$raw\n\n${msg("mail.challenge.expiry")}",
+                )
             )
-        )
+        }
     }
 
     fun completeChallenge(raw: String, kind: ChallengeKind, password: String? = null): Boolean {
@@ -258,7 +261,7 @@ class AccountService(
             ) {
                 throw ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Ce lien est invalide ou a expiré.",
+                    msg("auth.link_invalid"),
                 )
             }
 
@@ -284,7 +287,7 @@ class AccountService(
             tenants.findBySlugAndActiveTrue(slug)
                 ?: throw ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "L’espace client est indisponible.",
+                    msg("auth.workspace_unavailable"),
                 )
 
         return tenant.id
@@ -306,12 +309,12 @@ class AccountService(
                 if (linkUser != null && existing.userId != linkUser) {
                     throw ResponseStatusException(
                         HttpStatus.CONFLICT,
-                        "Ce compte externe est déjà associé.",
+                        msg("auth.oauth_already_linked"),
                     )
                 }
 
                 return@atomic findUser(existing.userId)
-                    ?: throw ResponseStatusException(HttpStatus.FORBIDDEN, "Compte désactivé.")
+                    ?: throw ResponseStatusException(HttpStatus.FORBIDDEN, msg("auth.account_disabled"))
             }
 
             val user =
@@ -336,7 +339,7 @@ class AccountService(
         ) {
             throw ResponseStatusException(
                 HttpStatus.FORBIDDEN,
-                "Associez ce fournisseur depuis un compte existant ou activez l’inscription avec vérification.",
+                msg("auth.oauth_link_from_account"),
             )
         }
 
@@ -346,7 +349,7 @@ class AccountService(
         if (users.findByTenantIdAndEmail(tenant, email.lowercase()) != null) {
             throw ResponseStatusException(
                 HttpStatus.CONFLICT,
-                "Connectez-vous à votre compte existant pour associer ce fournisseur.",
+                msg("auth.oauth_sign_in_first"),
             )
         }
 
@@ -357,6 +360,7 @@ class AccountService(
                     email = email.lowercase(),
                     displayName = (name ?: email).take(200),
                     emailVerified = true,
+                    locale = I18n.locale().language,
                 )
             )
         events.publishEvent(UserRegistered(user))
@@ -373,7 +377,7 @@ private val TENANT_SLUG = Regex("[a-z0-9][a-z0-9-]{0,62}")
 
 fun validateEmail(email: String) {
     ensure(email.length <= 320 && email.matches(EMAIL)) {
-        "Renseignez une adresse électronique valide."
+        msg("validation.email")
     }
 }
 

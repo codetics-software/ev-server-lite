@@ -18,6 +18,7 @@ import { IconCircleCheck, IconPlus, IconSolarPanel } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AssetForm, assetKinds, assetTypes, connectionTypes } from "./asset-form";
+import { t } from "@/lib/i18n";
 
 const label = (options: { value: string; label: string }[], value: unknown) =>
   options.find((option) => option.value === value)?.label ?? display(value);
@@ -26,7 +27,7 @@ export function assetColumns(areas: Map<string, string>): Column<RecordItem>[] {
   return [
     {
       id: "name",
-      header: "Équipement",
+      header: t("Équipement"),
       sort: (record) => record.name,
       cell: (record) => (
         <span className="flex flex-col">
@@ -39,22 +40,22 @@ export function assetColumns(areas: Map<string, string>): Column<RecordItem>[] {
     },
     {
       id: "area",
-      header: "Zone",
+      header: t("Zone"),
       cell: (record) =>
         field(record, "siteAreaId")
-          ? (areas.get(String(field(record, "siteAreaId"))) ?? "Zone rattachée")
-          : "Sans zone",
+          ? (areas.get(String(field(record, "siteAreaId"))) ?? t("Zone rattachée"))
+          : t("Sans zone"),
     },
     {
       id: "power",
-      header: "Puissance",
+      header: t("Puissance"),
       align: "right",
       sort: (record) => Number(field(record, "maximumPowerKw") ?? 0),
       cell: (record) => kw(field(record, "maximumPowerKw")),
     },
     {
       id: "connection",
-      header: "Mesures",
+      header: t("Mesures"),
       cell: (record) =>
         label(connectionTypes, (field<Row>(record, "connection") ?? {}).type ?? "NONE"),
     },
@@ -72,32 +73,36 @@ export function AssetsScreen() {
   return (
     <>
       <PageHeader
-        title="Équipements"
-        description="Compteurs, productions et batteries intégrés au calcul de puissance des zones."
+        title={t("Équipements")}
+        description={t(
+          "Compteurs, productions et batteries intégrés au calcul de puissance des zones.",
+        )}
         actions={
           isAdmin(user) && (
             <Button onClick={() => setCreating(true)}>
               <IconPlus data-icon="inline-start" />
-              Ajouter un équipement
+              {t("Ajouter un équipement")}
             </Button>
           )
         }
       />
       <Tabs defaultValue="all">
         <TabsList variant="line">
-          <TabsTrigger value="all">Tous les équipements</TabsTrigger>
-          <TabsTrigger value="errors">En erreur</TabsTrigger>
+          <TabsTrigger value="all">{t("Tous les équipements")}</TabsTrigger>
+          <TabsTrigger value="errors">{t("En erreur")}</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="pt-4">
           <RecordList
             kind="assets"
-            label="Équipements"
+            label={t("Équipements")}
             revision={revision}
             columns={assetColumns(areas)}
             onSelect={(record) => router.push(`/assets/${record.id}`)}
             emptyIcon={<IconSolarPanel />}
-            emptyTitle="Aucun équipement"
-            emptyDescription="Ajoutez un compteur ou une production solaire pour piloter la puissance de vos zones."
+            emptyTitle={t("Aucun équipement")}
+            emptyDescription={t(
+              "Ajoutez un compteur ou une production solaire pour piloter la puissance de vos zones.",
+            )}
           />
         </TabsContent>
         <TabsContent value="errors" className="pt-4">
@@ -109,13 +114,13 @@ export function AssetsScreen() {
             empty={
               <EmptyState
                 icon={<IconCircleCheck />}
-                title="Aucun équipement en erreur"
-                description="Tous les équipements transmettent leurs mesures."
+                title={t("Aucun équipement en erreur")}
+                description={t("Tous les équipements transmettent leurs mesures.")}
               />
             }
           >
             <DataTable
-              label="Équipements en erreur"
+              label={t("Équipements en erreur")}
               rows={errorRows}
               rowKey={(record) => record.id}
               onRowClick={(record) => router.push(`/assets/${record.id}`)}
@@ -123,7 +128,7 @@ export function AssetsScreen() {
                 ...assetColumns(areas).slice(0, 2),
                 {
                   id: "errors",
-                  header: "Anomalies",
+                  header: t("Anomalies"),
                   cell: (record) => <ErrorBadges errors={record.errors} />,
                 },
               ]}
@@ -131,7 +136,12 @@ export function AssetsScreen() {
           </ListState>
         </TabsContent>
       </Tabs>
-      <FormDialog open={creating} onOpenChange={setCreating} title="Ajouter un équipement" wide>
+      <FormDialog
+        open={creating}
+        onOpenChange={setCreating}
+        title={t("Ajouter un équipement")}
+        wide
+      >
         <AssetForm
           record={null}
           onSaved={(id) => {

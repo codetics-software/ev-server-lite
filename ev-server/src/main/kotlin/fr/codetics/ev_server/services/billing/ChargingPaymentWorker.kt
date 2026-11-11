@@ -2,6 +2,7 @@ package fr.codetics.ev_server.services.billing
 
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.lock
+import fr.codetics.ev_server.core.msg
 import fr.codetics.ev_server.models.billing.PaymentState
 import fr.codetics.ev_server.models.billing.tariff
 import fr.codetics.ev_server.models.commands.CommandState
@@ -84,7 +85,7 @@ class ChargingPaymentWorker(
                     if (rejected || startDeadline.isBefore(now)) {
                         lifecycle.settleWithoutCharging(
                             order,
-                            "La borne n’a pas démarré la recharge. Le crédit est remboursé.",
+                            msg("checkout.not_started_refunded"),
                         )
                         // Une commande non transmise ne doit plus démarrer après le remboursement.
                         if (command?.state == CommandState.QUEUED) {
@@ -145,7 +146,7 @@ class ChargingPaymentWorker(
                 "failed",
                 "canceled" -> {
                     saved.state = PaymentState.FAILED
-                    saved.lastError = "Le remboursement nécessite l’intervention de l’exploitant."
+                    saved.lastError = msg("checkout.refund_needs_operator")
                 }
                 else -> saved.state = PaymentState.REFUND_PENDING
             }

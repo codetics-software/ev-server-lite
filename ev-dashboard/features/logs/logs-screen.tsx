@@ -10,6 +10,7 @@ import { SearchInput } from "@/features/shared/search-input";
 import { EmptyState, ErrorState, ListState } from "@/features/shared/states";
 import { usePaged } from "@/features/shared/use-paged";
 import { date, display } from "@/lib/format";
+import { t, translated } from "@/lib/i18n";
 import { IconListDetails } from "@tabler/icons-react";
 import { useState } from "react";
 
@@ -21,7 +22,7 @@ type LogEntry = {
   created_at: string;
 };
 
-const columns: Column<LogEntry>[] = [
+const columns: Column<LogEntry>[] = translated([
   {
     id: "date",
     header: "Date",
@@ -51,7 +52,7 @@ const columns: Column<LogEntry>[] = [
     sort: (entry) => entry.target,
     cell: (entry) => <code className="block max-w-72 truncate text-xs">{entry.target}</code>,
   },
-];
+]);
 
 function dayBound(value: string, end: boolean) {
   return value ? new Date(`${value}T${end ? "23:59:59.999" : "00:00:00"}`).toISOString() : null;
@@ -74,27 +75,27 @@ export function LogsScreen() {
   return (
     <>
       <PageHeader
-        title="Journal d’activité"
-        description="Connexions et modifications réalisées dans votre espace."
+        title={t("Journal d’activité")}
+        description={t("Connexions et modifications réalisées dans votre espace.")}
         actions={<ExportButton path="logs/export" filename="journal" parameters={parameters} />}
       />
       <div className="flex flex-wrap items-end gap-3">
-        <SearchInput value={search} onChange={setSearch} label="Rechercher dans le journal" />
+        <SearchInput value={search} onChange={setSearch} label={t("Rechercher dans le journal")} />
         <SearchInput
           value={action}
           onChange={setAction}
-          placeholder="Action, ex. RECORD_UPDATE"
-          label="Filtrer par action"
+          placeholder={t("Action, ex. RECORD_UPDATE")}
+          label={t("Filtrer par action")}
         />
         <SearchInput
           value={actor}
           onChange={setActor}
-          placeholder="Auteur"
-          label="Filtrer par auteur"
+          placeholder={t("Auteur")}
+          label={t("Filtrer par auteur")}
         />
         <Field className="w-full sm:w-40">
           <FieldLabel htmlFor="logs-from" className="text-xs text-muted-foreground">
-            Du
+            {t("Du")}
           </FieldLabel>
           <Input
             id="logs-from"
@@ -106,7 +107,7 @@ export function LogsScreen() {
         </Field>
         <Field className="w-full sm:w-40">
           <FieldLabel htmlFor="logs-to" className="text-xs text-muted-foreground">
-            Au
+            {t("Au")}
           </FieldLabel>
           <Input
             id="logs-to"
@@ -127,13 +128,13 @@ export function LogsScreen() {
         empty={
           <EmptyState
             icon={<IconListDetails />}
-            title="Aucune entrée"
-            description="Modifiez les filtres ou la période."
+            title={t("Aucune entrée")}
+            description={t("Modifiez les filtres ou la période.")}
           />
         }
       >
         <DataTable
-          label="Journal"
+          label={t("Journal")}
           rows={list.items}
           columns={columns}
           rowKey={(entry) => String(entry.id)}

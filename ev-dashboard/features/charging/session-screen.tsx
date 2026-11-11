@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePortalAccess } from "./portal-access";
 import { PortalLayout } from "./portal-layout";
+import { t } from "@/lib/i18n";
 
 const finished: ReadonlySet<PaymentState> = new Set([
   "COMPLETED",
@@ -52,7 +53,7 @@ export function SessionScreen({ id, portalPath }: { id: string; portalPath: stri
       } catch (failure) {
         if (active) {
           setError(
-            failure instanceof Error ? failure.message : "Impossible d’actualiser la session.",
+            failure instanceof Error ? failure.message : t("Impossible d’actualiser la session."),
           );
           timer = setTimeout(refresh, 10000);
         }
@@ -77,7 +78,7 @@ export function SessionScreen({ id, portalPath }: { id: string; portalPath: stri
         }),
       );
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Impossible de demander l’arrêt.");
+      setError(failure instanceof Error ? failure.message : t("Impossible de demander l’arrêt."));
     } finally {
       setStopping(false);
     }
@@ -87,15 +88,16 @@ export function SessionScreen({ id, portalPath }: { id: string; portalPath: stri
     <PortalLayout workspace={portalPath.split("/")[2]}>
       <div className="page-heading">
         <div>
-          <h1>Votre session de recharge</h1>
-          <p>Gardez cette page ouverte pour suivre la session et demander l’arrêt.</p>
+          <h1>{t("Votre session de recharge")}</h1>
+          <p>{t("Gardez cette page ouverte pour suivre la session et demander l’arrêt.")}</p>
         </div>
       </div>
       {ready && !token && (
         <Alert variant="destructive">
           <AlertDescription>
-            L’accès à cette session n’est plus disponible dans ce navigateur. Contactez l’exploitant
-            du point de charge.
+            {t(
+              "L’accès à cette session n’est plus disponible dans ce navigateur. Contactez l’exploitant du point de charge.",
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -113,22 +115,24 @@ export function SessionScreen({ id, portalPath }: { id: string; portalPath: stri
           </h2>
           {payment.state === "START_REQUESTED" && (
             <p className="text-sm text-muted-foreground">
-              Paiement confirmé. En attente du démarrage annoncé par la borne. Si elle ne démarre
-              pas sous cinq minutes, le crédit sera remboursé.
+              {t(
+                "Paiement confirmé. En attente du démarrage annoncé par la borne. Si elle ne démarre pas sous cinq minutes, le crédit sera remboursé.",
+              )}
             </p>
           )}
           {payment.state === "STOP_REQUESTED" && (
             <p className="text-sm text-muted-foreground">
-              La demande d’arrêt a été transmise. En attente de la confirmation et du relevé final
-              de la borne. Si nécessaire, arrêtez la recharge sur la borne ou le véhicule.
+              {t(
+                "La demande d’arrêt a été transmise. En attente de la confirmation et du relevé final de la borne. Si nécessaire, arrêtez la recharge sur la borne ou le véhicule.",
+              )}
             </p>
           )}
           <dl className="divide-y text-sm">
             {(
               [
-                ["Crédit payé", payment.prepaidMinor],
-                ["Montant de la recharge", payment.billedMinor],
-                ["Montant remboursé", payment.refundedMinor],
+                [t("Crédit payé"), payment.prepaidMinor],
+                [t("Montant de la recharge"), payment.billedMinor],
+                [t("Montant remboursé"), payment.refundedMinor],
               ] as const
             ).map(([label, value]) => (
               <div key={label} className="flex justify-between gap-4 py-3">
@@ -139,26 +143,29 @@ export function SessionScreen({ id, portalPath }: { id: string; portalPath: stri
           </dl>
           {payment.message && (
             <Alert>
-              <AlertTitle>Information de l’exploitant</AlertTitle>
+              <AlertTitle>{t("Information de l’exploitant")}</AlertTitle>
               <AlertDescription>{payment.message}</AlertDescription>
             </Alert>
           )}
           {payment.state === "CHARGING" && (
             <Button variant="destructive" onClick={stop} disabled={stopping}>
-              {stopping ? "Demande en cours…" : "Arrêter la recharge"}
+              {stopping ? t("Demande en cours…") : t("Arrêter la recharge")}
             </Button>
           )}
           {payment.refundedMinor > 0 && (
             <p className="text-sm text-muted-foreground">
-              Le remboursement a été transmis à Stripe. Son apparition sur votre compte dépend de
-              votre banque.
+              {t(
+                "Le remboursement a été transmis à Stripe. Son apparition sur votre compte dépend de votre banque.",
+              )}
             </p>
           )}
-          <p className="break-all text-xs text-muted-foreground">Référence : {payment.id}</p>
+          <p className="break-all text-xs text-muted-foreground">
+            {t("Référence : {id}", { id: payment.id })}
+          </p>
         </section>
       )}
       <Link href={portalPath} data-slot="button" className={buttonVariants({ variant: "outline" })}>
-        Retour au point de charge
+        {t("Retour au point de charge")}
       </Link>
     </PortalLayout>
   );

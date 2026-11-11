@@ -1,6 +1,7 @@
 package fr.codetics.ev_server.models.organization
 
 import fr.codetics.ev_server.core.ensure
+import fr.codetics.ev_server.core.msg
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalTime
@@ -21,27 +22,27 @@ private val CONNECTOR_TYPES =
     setOf("Type2", "Type1", "CCS", "CHAdeMO", "Domestic", "Type3", "Tesla", "Cable", "Other")
 
 private fun text(value: String?, label: String, maximum: Int = 200) {
-    ensure(value == null || value.length <= maximum) { "$label : $maximum caractères au plus." }
+    ensure(value == null || value.length <= maximum) { msg("records.text_too_long", label, maximum) }
 }
 
 private fun positive(value: BigDecimal?, label: String, maximum: BigDecimal = BigDecimal(100000)) {
     ensure(value == null || (value.signum() >= 0 && value <= maximum && value.scale() <= 6)) {
-        "$label doit être un nombre positif."
+        msg("records.positive", label)
     }
 }
 
 private fun country(value: String?) {
     ensure(value == null || value.matches(COUNTRY)) {
-        "Le pays s’écrit avec son code ISO à deux lettres majuscules."
+        msg("records.country")
     }
 }
 
 private fun coordinates(latitude: BigDecimal?, longitude: BigDecimal?) {
     ensure((latitude == null) == (longitude == null)) {
-        "Renseignez la latitude et la longitude ensemble."
+        msg("records.coordinates_together")
     }
-    ensure(latitude == null || latitude.abs() <= BigDecimal(90)) { "Latitude invalide." }
-    ensure(longitude == null || longitude.abs() <= BigDecimal(180)) { "Longitude invalide." }
+    ensure(latitude == null || latitude.abs() <= BigDecimal(90)) { msg("records.latitude") }
+    ensure(longitude == null || longitude.abs() <= BigDecimal(180)) { msg("records.longitude") }
 }
 
 data class CompanyData(
@@ -54,13 +55,13 @@ data class CompanyData(
     val phone: String? = null,
 ) : RecordData {
     override fun validate() {
-        text(address, "L’adresse")
-        text(postalCode, "Le code postal", 20)
-        text(city, "La ville", 100)
+        text(address, msg("field.address"))
+        text(postalCode, msg("field.postal_code"), 20)
+        text(city, msg("field.city"), 100)
         country(country)
-        text(vatNumber, "Le numéro de TVA", 40)
-        text(email, "L’adresse électronique", 320)
-        text(phone, "Le téléphone", 40)
+        text(vatNumber, msg("field.vat_number"), 40)
+        text(email, msg("field.email"), 320)
+        text(phone, msg("field.phone"), 40)
     }
 }
 
@@ -78,15 +79,15 @@ data class SiteData(
     val timezone: String = "Europe/Paris",
 ) : RecordData {
     override fun validate() {
-        text(address, "L’adresse")
-        text(postalCode, "Le code postal", 20)
-        text(city, "La ville", 100)
+        text(address, msg("field.address"))
+        text(postalCode, msg("field.postal_code"), 20)
+        text(city, msg("field.city"), 100)
         country(country)
         coordinates(latitude, longitude)
-        ensure(runCatching { ZoneId.of(timezone) }.isSuccess) { "Fuseau horaire inconnu." }
+        ensure(runCatching { ZoneId.of(timezone) }.isSuccess) { msg("records.time_zone") }
     }
 
-    override fun references() = listOf(Reference("companies", companyId, "L’entreprise"))
+    override fun references() = listOf(Reference("companies", companyId, msg("field.company")))
 
     fun zone(): ZoneId = ZoneId.of(timezone)
 }
@@ -100,18 +101,18 @@ data class SiteAreaData(
     val parentSiteAreaId: UUID? = null,
 ) : RecordData {
     override fun validate() {
-        positive(maximumPowerKw, "La puissance disponible")
-        ensure(numberOfPhases in setOf(1, 3)) { "Une zone est monophasée ou triphasée." }
-        ensure(voltage in 100..1000) { "La tension doit être comprise entre 100 et 1 000 V." }
+        positive(maximumPowerKw, msg("field.available_power"))
+        ensure(numberOfPhases in setOf(1, 3)) { msg("records.area_phases") }
+        ensure(voltage in 100..1000) { msg("records.voltage") }
         ensure(!smartCharging || maximumPowerKw != null) {
-            "Renseignez la puissance disponible pour activer la recharge intelligente."
+            msg("records.smart_charging_power")
         }
     }
 
     override fun references() =
         listOfNotNull(
-            Reference("sites", siteId, "Le site"),
-            parentSiteAreaId?.let { Reference("site-areas", it, "La zone parente") },
+            Reference("sites", siteId, msg("field.site")),
+            parentSiteAreaId?.let { Reference("site-areas", it, msg("field.parent_area")) },
         )
 }
 
@@ -125,23 +126,23 @@ data class AssetConnectionData(
     val refreshSeconds: Int = 300,
 ) {
     fun validate() {
-        ensure(type in ASSET_CONNECTIONS) { "Type de connexion d’équipement inconnu." }
-        text(url, "L’adresse", 500)
-        text(authenticationUrl, "L’adresse d’authentification", 500)
+        ensure(type in ASSET_CONNECTIONS) { msg("records.asset_connection_type") }
+        text(url, msg("field.address"), 500)
+        text(authenticationUrl, msg("field.auth_url"), 500)
         listOfNotNull(url, authenticationUrl).forEach { address ->
-            ensure(address.startsWith("https://")) { "L’adresse de connexion doit utiliser HTTPS." }
+            ensure(address.startsWith("https://")) { msg("records.connection_https") }
         }
         ensure(type in setOf("NONE", "PUSH") || (url != null && meterId != null)) {
-            "Renseignez l’adresse et l’identifiant du compteur de la connexion."
+            msg("records.connection_meter")
         }
         ensure(type != "WIT" || authenticationUrl != null) {
-            "Renseignez l’adresse d’authentification WIT."
+            msg("records.wit_auth_url")
         }
-        text(clientId, "L’identifiant client", 200)
-        text(meterId, "L’identifiant du compteur", 100)
-        text(user, "L’utilisateur", 200)
+        text(clientId, msg("field.client_id"), 200)
+        text(meterId, msg("field.meter_id"), 100)
+        text(user, msg("field.user"), 200)
         ensure(refreshSeconds in 60..86400) {
-            "La fréquence de relevé doit être comprise entre 60 secondes et un jour."
+            msg("records.refresh_interval")
         }
     }
 
@@ -162,18 +163,18 @@ data class AssetData(
 ) : RecordData {
     override fun validate() {
         ensure(type in setOf("CONSUMPTION", "PRODUCTION", "CONSUMPTION_AND_PRODUCTION")) {
-            "Type d’équipement inconnu."
+            msg("records.asset_type")
         }
         ensure(kind == null || kind in setOf("METER", "SOLAR", "BATTERY", "BUILDING")) {
-            "Catégorie d’équipement inconnue."
+            msg("records.asset_category")
         }
-        positive(maximumPowerKw, "La puissance de l’équipement")
-        positive(staticPowerKw, "La puissance fixe")
+        positive(maximumPowerKw, msg("field.asset_power"))
+        positive(staticPowerKw, msg("field.fixed_power"))
         connection?.validate()
     }
 
     override fun references() =
-        listOfNotNull(siteAreaId?.let { Reference("site-areas", it, "La zone") })
+        listOfNotNull(siteAreaId?.let { Reference("site-areas", it, msg("field.area")) })
 
     fun producing() = type == "PRODUCTION"
 }
@@ -193,23 +194,23 @@ data class CarData(
     val carConnectorMeterId: String? = null,
 ) : RecordData {
     override fun validate() {
-        text(carConnectorMeterId, "L’identifiant du véhicule chez le connecteur", 100)
+        text(carConnectorMeterId, msg("field.connector_vehicle_id"), 100)
         ensure(vin == null || vin.matches(Regex("[A-HJ-NPR-Z0-9]{17}"))) {
-            "Le numéro VIN contient 17 caractères (sans I, O ni Q)."
+            msg("records.vin")
         }
-        text(licensePlate, "L’immatriculation", 20)
-        text(make, "Le fabricant", 100)
-        text(model, "Le modèle", 100)
-        positive(batteryKwh, "La capacité de la batterie", BigDecimal(1000))
-        positive(maxAcPowerKw, "La puissance AC", BigDecimal(1000))
-        positive(maxDcPowerKw, "La puissance DC", BigDecimal(1000))
+        text(licensePlate, msg("field.license_plate"), 20)
+        text(make, msg("field.make"), 100)
+        text(model, msg("field.model"), 100)
+        positive(batteryKwh, msg("field.battery_capacity"), BigDecimal(1000))
+        positive(maxAcPowerKw, msg("field.ac_power"), BigDecimal(1000))
+        positive(maxDcPowerKw, msg("field.dc_power"), BigDecimal(1000))
     }
 
     override fun references() =
         listOfNotNull(
-            userId?.let { Reference("users", it, "L’utilisateur") },
-            carCatalogId?.let { Reference("car-catalog", it, "Le modèle du catalogue") },
-            carConnectorId?.let { Reference("car-connectors", it, "Le connecteur de véhicule") },
+            userId?.let { Reference("users", it, msg("field.user")) },
+            carCatalogId?.let { Reference("car-catalog", it, msg("field.catalog_model")) },
+            carConnectorId?.let { Reference("car-connectors", it, msg("field.vehicle_connector")) },
         )
 }
 
@@ -220,12 +221,12 @@ data class CarConnectorData(
     val clientId: String,
 ) : RecordData {
     override fun validate() {
-        ensure(type in setOf("TRONITY", "TARGA")) { "Type de connecteur de véhicule inconnu." }
+        ensure(type in setOf("TRONITY", "TARGA")) { msg("records.vehicle_connector_type") }
         listOfNotNull(apiUrl, authenticationUrl).forEach {
-            ensure(it.startsWith("https://") && it.length <= 500) { "Les adresses du connecteur doivent utiliser HTTPS." }
+            ensure(it.startsWith("https://") && it.length <= 500) { msg("records.vehicle_connector_https") }
         }
-        ensure(type != "TARGA" || authenticationUrl != null) { "Renseignez l’adresse d’authentification Targa." }
-        ensure(clientId.isNotBlank() && clientId.length <= 200) { "L’identifiant client est requis." }
+        ensure(type != "TARGA" || authenticationUrl != null) { msg("records.targa_auth_url") }
+        ensure(clientId.isNotBlank() && clientId.length <= 200) { msg("records.client_id_required") }
     }
 }
 
@@ -241,17 +242,17 @@ data class CarCatalogData(
     val externalId: String? = null,
 ) : RecordData {
     override fun validate() {
-        ensure(make.isNotBlank() && make.length <= 100) { "Le fabricant est requis." }
-        ensure(model.isNotBlank() && model.length <= 100) { "Le modèle est requis." }
-        text(version, "La version", 100)
-        positive(batteryKwh, "La capacité de la batterie", BigDecimal(1000))
-        positive(maxAcPowerKw, "La puissance AC", BigDecimal(1000))
-        positive(maxDcPowerKw, "La puissance DC", BigDecimal(1000))
-        ensure(rangeKm == null || rangeKm in 0..5000) { "Autonomie invalide." }
+        ensure(make.isNotBlank() && make.length <= 100) { msg("records.make_required") }
+        ensure(model.isNotBlank() && model.length <= 100) { msg("records.model_required") }
+        text(version, msg("field.version"), 100)
+        positive(batteryKwh, msg("field.battery_capacity"), BigDecimal(1000))
+        positive(maxAcPowerKw, msg("field.ac_power"), BigDecimal(1000))
+        positive(maxDcPowerKw, msg("field.dc_power"), BigDecimal(1000))
+        ensure(rangeKm == null || rangeKm in 0..5000) { msg("records.range") }
         ensure(imageUrl == null || (imageUrl.startsWith("https://") && imageUrl.length <= 500)) {
-            "L’image doit être une adresse HTTPS."
+            msg("records.image_https")
         }
-        text(externalId, "L’identifiant externe", 100)
+        text(externalId, msg("field.external_id"), 100)
     }
 }
 
@@ -282,20 +283,20 @@ data class PricingRestrictions(
 ) {
     fun validate() {
         ensure(daysOfWeek == null || (daysOfWeek.isNotEmpty() && daysOfWeek.all { it in 1..7 })) {
-            "Les jours vont de 1 (lundi) à 7 (dimanche)."
+            msg("records.days")
         }
         ensure((timeFrom == null) == (timeTo == null)) {
-            "Renseignez l’heure de début et l’heure de fin ensemble."
+            msg("records.hours_together")
         }
         listOfNotNull(timeFrom, timeTo).forEach { time ->
             ensure(runCatching { LocalTime.parse(time) }.isSuccess) {
-                "Les heures s’écrivent au format HH:mm."
+                msg("records.hours_format")
             }
         }
-        positive(minEnergyKwh, "L’énergie minimale")
-        positive(maxEnergyKwh, "L’énergie maximale")
-        ensure(minDurationMinutes == null || minDurationMinutes >= 0) { "Durée minimale invalide." }
-        ensure(maxDurationMinutes == null || maxDurationMinutes > 0) { "Durée maximale invalide." }
+        positive(minEnergyKwh, msg("field.minimum_energy"))
+        positive(maxEnergyKwh, msg("field.maximum_energy"))
+        ensure(minDurationMinutes == null || minDurationMinutes >= 0) { msg("records.minimum_duration") }
+        ensure(maxDurationMinutes == null || maxDurationMinutes > 0) { msg("records.maximum_duration") }
     }
 }
 
@@ -314,25 +315,25 @@ data class PricingData(
     val active: Boolean = true,
 ) : RecordData {
     override fun validate() {
-        ensure(currency.matches(CURRENCY)) { "La devise s’écrit avec son code ISO à trois lettres." }
+        ensure(currency.matches(CURRENCY)) { msg("records.currency") }
         listOf(flatPrice, energyPrice, timePrice, parkingPrice).forEach {
-            positive(it, "Le prix", BigDecimal(10000))
+            positive(it, msg("field.price"), BigDecimal(10000))
         }
-        ensure(energyStepWh == null || energyStepWh in 1..100000) { "Pas de facturation invalide." }
+        ensure(energyStepWh == null || energyStepWh in 1..100000) { msg("records.billing_step") }
         ensure(validFrom == null || validTo == null || validFrom.isBefore(validTo)) {
-            "La fin de validité doit suivre son début."
+            msg("records.validity_order")
         }
         ensure(scope?.connectorId == null || scope.stationId != null) {
-            "Choisissez la borne du connecteur."
+            msg("records.connector_station")
         }
-        ensure(priority in -1000..1000) { "La priorité doit être comprise entre -1 000 et 1 000." }
+        ensure(priority in -1000..1000) { msg("records.priority") }
         restrictions?.validate()
     }
 
     override fun references() =
         listOfNotNull(
-            scope?.siteId?.let { Reference("sites", it, "Le site") },
-            scope?.siteAreaId?.let { Reference("site-areas", it, "La zone") },
+            scope?.siteId?.let { Reference("sites", it, msg("field.site")) },
+            scope?.siteAreaId?.let { Reference("site-areas", it, msg("field.area")) },
         )
 }
 
@@ -343,19 +344,19 @@ data class TemplateConnector(
     val phases: Int? = null,
 ) {
     fun validate() {
-        ensure(connectorId in 1..100) { "Numéro de connecteur invalide." }
-        ensure(type == null || type in CONNECTOR_TYPES) { "Type de connecteur inconnu." }
-        positive(maximumPowerKw, "La puissance du connecteur", BigDecimal(1000))
-        ensure(phases == null || phases in setOf(1, 3)) { "Un connecteur est monophasé ou triphasé." }
+        ensure(connectorId in 1..100) { msg("connector.invalid_number") }
+        ensure(type == null || type in CONNECTOR_TYPES) { msg("records.connector_type") }
+        positive(maximumPowerKw, msg("field.connector_power"), BigDecimal(1000))
+        ensure(phases == null || phases in setOf(1, 3)) { msg("connector.phases") }
     }
 }
 
 data class TemplateParameter(val key: String, val value: String) {
     fun validate() {
-        ensure(key.matches(Regex("[A-Za-z0-9_.:-]{1,100}"))) { "Nom de paramètre OCPP invalide." }
-        ensure(value.length <= 500) { "La valeur d’un paramètre OCPP contient 500 caractères au plus." }
+        ensure(key.matches(Regex("[A-Za-z0-9_.:-]{1,100}"))) { msg("ocpp.parameter.invalid_name") }
+        ensure(value.length <= 500) { msg("ocpp.parameter.value_too_long") }
         ensure(!key.equals("SecurityProfile", true) && !key.equals("AuthorizationKey", true)) {
-            "Ce paramètre de sécurité ne peut pas figurer dans un modèle."
+            msg("records.security_parameter_in_template")
         }
     }
 }
@@ -371,19 +372,19 @@ data class TemplateData(
     override fun validate() {
         listOfNotNull(vendor, model, firmwareVersion).forEach { pattern ->
             ensure(pattern.isNotBlank() && pattern.length <= 200) {
-                "Les motifs du modèle de configuration sont requis."
+                msg("records.template_patterns_required")
             }
             ensure(runCatching { Regex(pattern) }.isSuccess) {
-                "Le motif « $pattern » n’est pas une expression régulière valide."
+                msg("records.template_pattern_invalid", pattern)
             }
         }
-        positive(maximumPowerKw, "La puissance", BigDecimal(10000))
+        positive(maximumPowerKw, msg("field.power"), BigDecimal(10000))
         ensure(connectors.size <= 100 && connectors.map { it.connectorId }.toSet().size == connectors.size) {
-            "Chaque connecteur ne peut apparaître qu’une fois."
+            msg("records.connector_once")
         }
         connectors.forEach(TemplateConnector::validate)
         ensure(parameters.size <= 200 && parameters.map { it.key }.toSet().size == parameters.size) {
-            "Chaque paramètre ne peut apparaître qu’une fois."
+            msg("records.parameter_once")
         }
         parameters.forEach(TemplateParameter::validate)
     }
@@ -397,7 +398,7 @@ data class TemplateData(
 
 data class SettingData(val value: String) : RecordData {
     override fun validate() {
-        ensure(value.length <= 2000) { "La valeur contient 2 000 caractères au plus." }
+        ensure(value.length <= 2000) { msg("records.value_too_long") }
     }
 }
 

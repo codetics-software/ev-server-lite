@@ -11,8 +11,9 @@ import { revalidateLogic, useForm, useStore } from "@tanstack/react-form";
 import Link from "next/link";
 import { useState } from "react";
 import { AuthIntro } from "./auth-intro";
+import { t, translated } from "@/lib/i18n";
 
-const inputs = [
+const inputs = translated([
   {
     name: "name",
     label: "Nom de l’espace",
@@ -57,7 +58,7 @@ const inputs = [
       lengthBetween(16, 128, "Le mot de passe doit contenir entre 16 et 128 caractères."),
     ),
   },
-] as const;
+] as const);
 
 export function CreateWorkspace() {
   const [error, setError] = useState("");
@@ -71,7 +72,7 @@ export function CreateWorkspace() {
         await api("workspaces", { method: "POST", body: JSON.stringify(value) });
         setCreated(true);
       } catch (failure) {
-        setError(failure instanceof Error ? failure.message : "Impossible de créer l’espace.");
+        setError(failure instanceof Error ? failure.message : t("Impossible de créer l’espace."));
       }
     },
   });
@@ -83,14 +84,15 @@ export function CreateWorkspace() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardDescription>Codetics Supervision</CardDescription>
-            <CardTitle className="text-2xl">Créer votre espace client</CardTitle>
-            <CardDescription>Votre réseau et votre compte administrateur.</CardDescription>
+            <CardTitle className="text-2xl">{t("Créer votre espace client")}</CardTitle>
+            <CardDescription>{t("Votre réseau et votre compte administrateur.")}</CardDescription>
           </CardHeader>
           <CardContent>
             {created ? (
               <p role="status" className="text-sm">
-                Votre espace est créé. Consultez votre messagerie pour vérifier votre adresse avant
-                de vous connecter.
+                {t(
+                  "Votre espace est créé. Consultez votre messagerie pour vérifier votre adresse avant de vous connecter.",
+                )}
               </p>
             ) : (
               <form
@@ -137,8 +139,9 @@ export function CreateWorkspace() {
                     </form.Field>
                   ))}
                   <p className="text-xs text-muted-foreground">
-                    L’identifiant permanent contient 3 à 63 lettres minuscules, chiffres ou tirets.
-                    Le mot de passe contient au moins 16 caractères.
+                    {t(
+                      "L’identifiant permanent contient 3 à 63 lettres minuscules, chiffres ou tirets. Le mot de passe contient au moins 16 caractères.",
+                    )}
                   </p>
                   {error && (
                     <Alert variant="destructive">
@@ -146,7 +149,7 @@ export function CreateWorkspace() {
                     </Alert>
                   )}
                   <Button type="submit" disabled={pending}>
-                    {pending ? "Création…" : "Créer mon espace"}
+                    {pending ? t("Création…") : t("Créer mon espace")}
                   </Button>
                 </FieldGroup>
               </form>
@@ -155,7 +158,7 @@ export function CreateWorkspace() {
               href="/auth/login"
               className="mt-5 block text-center text-sm text-muted-foreground"
             >
-              Retour à la connexion
+              {t("Retour à la connexion")}
             </Link>
           </CardContent>
         </Card>

@@ -26,6 +26,7 @@ import { revalidateLogic, useForm } from "@tanstack/react-form";
 import Link from "next/link";
 import { useState } from "react";
 import type { Tax, UserBilling } from "./billing-types";
+import { t, translated } from "@/lib/i18n";
 
 type Settings = {
   configured: boolean;
@@ -63,10 +64,10 @@ function UserBillingForm({
             taxRateId: value.taxRateId === "none" ? undefined : value.taxRateId,
           }),
         });
-        notify("Paramètres de facturation enregistrés.");
+        notify(t("Paramètres de facturation enregistrés."));
         onSaved();
       } catch (failure) {
-        setError(errorMessage(failure, "Impossible d’enregistrer la facturation."));
+        setError(errorMessage(failure, t("Impossible d’enregistrer la facturation.")));
       }
     },
   });
@@ -83,8 +84,10 @@ function UserBillingForm({
           {(field) => (
             <FormSwitch
               field={field}
-              label="Facturer les utilisateurs enregistrés"
-              description="Les sessions valorisées sont facturées sur la carte enregistrée par chaque conducteur."
+              label={t("Facturer les utilisateurs enregistrés")}
+              description={t(
+                "Les sessions valorisées sont facturées sur la carte enregistrée par chaque conducteur.",
+              )}
             />
           )}
         </form.Field>
@@ -93,10 +96,10 @@ function UserBillingForm({
             {(field) => (
               <FormSelect
                 field={field}
-                label="Fréquence"
+                label={t("Fréquence")}
                 options={[
-                  { value: "PER_SESSION", label: "Une facture par session" },
-                  { value: "MONTHLY", label: "Une facture mensuelle" },
+                  { value: "PER_SESSION", label: t("Une facture par session") },
+                  { value: "MONTHLY", label: t("Une facture mensuelle") },
                 ]}
               />
             )}
@@ -105,10 +108,10 @@ function UserBillingForm({
             {(field) => (
               <FormSelect
                 field={field}
-                label="Taxe appliquée"
-                placeholder="Aucune taxe"
+                label={t("Taxe appliquée")}
+                placeholder={t("Aucune taxe")}
                 options={[
-                  { value: "none", label: "Aucune taxe" },
+                  { value: "none", label: t("Aucune taxe") },
                   ...taxes.map((tax) => ({
                     value: tax.id,
                     label: `${tax.display_name} · ${number(tax.percentage, 2)} %${tax.inclusive ? " incluse" : ""}`,
@@ -126,7 +129,7 @@ function UserBillingForm({
   );
 }
 
-const taxColumns: Column<Tax>[] = [
+const taxColumns: Column<Tax>[] = translated([
   {
     id: "name",
     header: "Taxe",
@@ -143,9 +146,9 @@ const taxColumns: Column<Tax>[] = [
   {
     id: "inclusive",
     header: "Mode",
-    cell: (tax) => (tax.inclusive ? "Incluse dans le prix" : "Ajoutée au prix"),
+    cell: (tax) => (tax.inclusive ? t("Incluse dans le prix") : t("Ajoutée au prix")),
   },
-];
+]);
 
 export function BillingScreen() {
   const [revision, refresh] = useRevision();
@@ -163,8 +166,10 @@ export function BillingScreen() {
   return (
     <>
       <PageHeader
-        title="Facturation des utilisateurs"
-        description="Facturez les recharges des conducteurs enregistrés sur le compte Stripe de votre espace."
+        title={t("Facturation des utilisateurs")}
+        description={t(
+          "Facturez les recharges des conducteurs enregistrés sur le compte Stripe de votre espace.",
+        )}
         actions={
           <Button
             variant="outline"
@@ -180,14 +185,14 @@ export function BillingScreen() {
             }
           >
             <IconCircleCheck data-icon="inline-start" />
-            Vérifier la configuration
+            {t("Vérifier la configuration")}
           </Button>
         }
       />
       {check && (
         <Alert variant={check.ready ? "default" : "destructive"}>
           <AlertTitle>
-            {check.ready ? "Facturation opérationnelle" : "Configuration incomplète"}
+            {check.ready ? t("Facturation opérationnelle") : t("Configuration incomplète")}
           </AlertTitle>
           <AlertDescription>{check.message}</AlertDescription>
         </Alert>
@@ -195,12 +200,12 @@ export function BillingScreen() {
       <div className="grid items-start gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Paramètres</CardTitle>
-            <CardDescription>Mode de facturation et taxe appliquée.</CardDescription>
+            <CardTitle>{t("Paramètres")}</CardTitle>
+            <CardDescription>{t("Mode de facturation et taxe appliquée.")}</CardDescription>
             <CardAction>
               {settings.data && (
                 <ToneBadge tone={settings.data.ready ? "success" : "warning"}>
-                  {settings.data.ready ? "Compte Stripe prêt" : "Compte Stripe à finaliser"}
+                  {settings.data.ready ? t("Compte Stripe prêt") : t("Compte Stripe à finaliser")}
                 </ToneBadge>
               )}
             </CardAction>
@@ -214,12 +219,12 @@ export function BillingScreen() {
               <>
                 {!settings.data.ready && (
                   <p className="text-sm text-muted-foreground">
-                    Connectez et finalisez le compte Stripe de l’espace depuis la page{" "}
+                    {t("Connectez et finalisez le compte Stripe de l’espace depuis la page")}{" "}
                     <Link
                       className="text-primary underline-offset-4 dark:text-sidebar-primary hover:underline"
                       href="/payments"
                     >
-                      Paiements publics
+                      {t("Paiements publics")}
                     </Link>
                     .
                   </p>
@@ -236,9 +241,9 @@ export function BillingScreen() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Taxes</CardTitle>
+            <CardTitle>{t("Taxes")}</CardTitle>
             <CardDescription>
-              Taux définis dans le tableau de bord Stripe du compte.
+              {t("Taux définis dans le tableau de bord Stripe du compte.")}
             </CardDescription>
             <CardAction>
               <a
@@ -247,7 +252,7 @@ export function BillingScreen() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Gérer dans Stripe
+                {t("Gérer dans Stripe")}
               </a>
             </CardAction>
           </CardHeader>
@@ -258,7 +263,7 @@ export function BillingScreen() {
               <LoadingState rows={2} />
             ) : taxes.data.length ? (
               <DataTable
-                label="Taxes"
+                label={t("Taxes")}
                 rows={taxes.data}
                 columns={taxColumns}
                 rowKey={(tax) => tax.id}
@@ -266,8 +271,8 @@ export function BillingScreen() {
             ) : (
               <EmptyState
                 icon={<IconReceiptTax />}
-                title="Aucune taxe"
-                description="Créez un taux de TVA dans Stripe pour l’appliquer aux factures."
+                title={t("Aucune taxe")}
+                description={t("Créez un taux de TVA dans Stripe pour l’appliquer aux factures.")}
               />
             )}
           </CardContent>
