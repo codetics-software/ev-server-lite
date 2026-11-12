@@ -36,6 +36,9 @@ struct BadgeDetailScreen: View {
                 LabeledContent("Status") {
                     Text(token.enabled ? "Active" : "Disabled")
                 }
+                if let group = token.parentIdTag {
+                    LabeledContent("Badge group", value: group)
+                }
                 if let expiry = token.expiresAt {
                     LabeledContent("Expires") {
                         Text(expiry, format: .dateTime.day().month().year())

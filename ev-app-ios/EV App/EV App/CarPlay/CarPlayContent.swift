@@ -29,4 +29,24 @@ enum CarPlayContent {
         }
         return (items, true)
     }
+
+    static func connectorSummary(_ station: CustomerStationResponse) -> String? {
+        var order: [String] = []
+        var counts: [String: (total: Int, free: Int, power: Double?)] = [:]
+        for connector in station.connectors {
+            let label = ConnectorType.label(for: connector.type)
+            if counts[label] == nil { order.append(label) }
+            var entry = counts[label] ?? (0, 0, nil)
+            entry.total += 1
+            if station.connected, ConnectorStatus(connector.status).isStartable { entry.free += 1 }
+            if let power = connector.maximumPowerKw { entry.power = max(entry.power ?? 0, power) }
+            counts[label] = entry
+        }
+        let parts = order.compactMap { label -> String? in
+            guard let entry = counts[label] else { return nil }
+            let power = entry.power.map { " \(Formatters.power($0))" } ?? ""
+            return "\(label)\(power) · \(entry.free)/\(entry.total)"
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: "\n")
+    }
 }

@@ -136,6 +136,7 @@ data class ConnectorResponse(
     val currentSoc: Int? = null,
     val currentUserName: String? = null,
     val inactiveSince: Instant? = null,
+    val evseId: String? = null,
 ) {
     companion object {
         fun from(

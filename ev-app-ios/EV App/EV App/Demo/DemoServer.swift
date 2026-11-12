@@ -336,6 +336,7 @@ nonisolated final class DemoServer: @unchecked Sendable {
             "type": type, "maximum_power_kw": power, "phases": 3,
             "current_power_kw": nullable(isMine ? livePower() : nil), "current_transaction_id": nullable(isMine ? live?.id : nil),
             "current_energy_kwh": nullable(isMine ? liveEnergy() : nil), "current_soc": nullable(isMine ? liveSoc() : nil), "current_user_name": NSNull(), "inactive_since": NSNull(),
+            "evse_id": "FR*DEM*E\(stationId.filter { $0.isLetter || $0.isNumber })\(id)",
         ]
     }
 

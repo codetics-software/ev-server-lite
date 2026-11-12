@@ -142,4 +142,26 @@ class OcppValidationTests {
             fault("SignedUpdateFirmware", """{"requestId":1,"firmware":{"location":"https://fw"}}""", serverInitiated = true),
         )
     }
+
+    @Test
+    fun `GetConfiguration accepte une liste de cles`() {
+        OcppValidation.validate("GetConfiguration", json.readTree("{}"), serverInitiated = true)
+        OcppValidation.validate(
+            "GetConfiguration",
+            json.readTree("""{"key":["HeartbeatInterval","MeterValueSampleInterval"]}"""),
+            serverInitiated = true,
+        )
+        assertEquals(
+            "PropertyConstraintViolation",
+            fault("GetConfiguration", """{"key":"HeartbeatInterval"}""", serverInitiated = true),
+        )
+        assertEquals(
+            "PropertyConstraintViolation",
+            fault("GetConfiguration", """{"key":[""]}""", serverInitiated = true),
+        )
+        assertEquals(
+            "PropertyConstraintViolation",
+            fault("ChangeConfiguration", """{"key":["HeartbeatInterval"],"value":"60"}""", serverInitiated = true),
+        )
+    }
 }

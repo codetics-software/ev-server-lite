@@ -3,6 +3,8 @@
 
 Application client SwiftUI (iOS 26.2 minimum) du serveur `ev-server`. Elle couvre uniquement le parcours conducteur : aucune fonction d’administration.
 
+Le scanner reconnaît aussi le QR code d’un autre opérateur : le conducteur choisit entre le site de l’opérateur et l’application, qui retrouve la borne par son identifiant EVSE (`FR*ABC*E12345*1`), lu dans le lien ou saisi à la main. CarPlay affiche les bornes proches avec leurs connecteurs, filtre les bornes disponibles, suit la charge et demande confirmation avant de l’arrêter.
+
 ## Configurer avant de publier
 
 Remplacez toutes les valeurs `__…__` :

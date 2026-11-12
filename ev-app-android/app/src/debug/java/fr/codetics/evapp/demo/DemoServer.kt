@@ -315,6 +315,7 @@ class DemoServer {
             "type" to type, "maximum_power_kw" to power, "phases" to 3,
             "current_power_kw" to if (mine) livePower() else null, "current_transaction_id" to if (mine) current?.id else null,
             "current_energy_kwh" to if (mine) liveEnergy() else null, "current_soc" to if (mine) liveSoc() else null, "current_user_name" to null, "inactive_since" to null,
+            "evse_id" to "FR*DEM*E${station.filter(Char::isLetterOrDigit)}$id",
         )
     }
 

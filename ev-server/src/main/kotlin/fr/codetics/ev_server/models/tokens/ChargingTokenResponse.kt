@@ -20,6 +20,7 @@ data class ChargingTokenResponse(
     val lastUsedAt: Instant? = null,
     val vehicleId: UUID? = null,
     val vehicleName: String? = null,
+    val parentIdTag: String? = null,
 ) {
     companion object {
         fun from(token: ChargingTokenEntity, userName: String? = null, vehicleName: String? = null) =
@@ -36,6 +37,7 @@ data class ChargingTokenResponse(
                 token.lastUsedAt,
                 token.vehicleId,
                 vehicleName,
+                token.parentIdTag,
             )
     }
 }

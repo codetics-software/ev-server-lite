@@ -98,6 +98,7 @@ class ChargingTokenService(
             token.expiresAt = body.expiresAt
             token.visualId = body.visualId?.trim()?.ifBlank { null }
             token.description = body.description?.trim()?.ifBlank { null }
+            token.parentIdTag = body.parentIdTag?.trim()?.ifBlank { null }
             token.defaultToken = body.default && body.userId != null
             if (token.defaultToken) clearDefault(user.tenantId, requireNotNull(body.userId), body.uid)
             tokens.save(token)
@@ -228,5 +229,8 @@ class ChargingTokenService(
         }
         ensure(body.visualId == null || body.visualId.length <= 100) { msg("tokens.visual_id_too_long") }
         ensure(body.description == null || body.description.length <= 200) { msg("tokens.description_too_long") }
+        ensure(body.parentIdTag.isNullOrBlank() || body.parentIdTag.trim().matches(Regex("[A-Za-z0-9_-]{1,20}"))) {
+            msg("tokens.parent_id_tag_invalid")
+        }
     }
 }

@@ -51,6 +51,16 @@ struct ChargeScreen: View {
                     }
                     .accessibilityIdentifier("charge.scan")
                     Button {
+                        path.append(.chargingPointID(nil, operatorURL: nil))
+                    } label: {
+                        ChargeActionLabel(
+                            title: "Enter a charging point ID",
+                            detail: "Type the ID printed on the station, such as FR*ABC*E12345.",
+                            systemImage: "keyboard"
+                        )
+                    }
+                    .accessibilityIdentifier("charge.enterId")
+                    Button {
                         model.selectedTab = .map
                     } label: {
                         ChargeActionLabel(
@@ -70,12 +80,16 @@ struct ChargeScreen: View {
                     ChargingPointScreen(link: link) { path.append($0) }
                 case .guest(let order):
                     GuestSessionScreen(order: order)
+                case .chargingPointID(let prefill, let operatorURL):
+                    ChargingPointIDScreen(prefill: prefill, operatorURL: operatorURL) { path.append($0) }
+                case .station(let id, let connectorId):
+                    StationDetailScreen(stationId: id, preview: model.stations.station(id: id), initialConnectorId: connectorId, showsClose: false)
                 }
             }
             .fullScreenCover(isPresented: $showsScanner) {
-                QRScannerScreen { link in
+                QRScannerScreen { route in
                     showsScanner = false
-                    path.append(.portal(link))
+                    path.append(route)
                 }
             }
             .onChange(of: model.pendingPortalLink, initial: true) { _, link in

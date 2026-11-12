@@ -14,6 +14,30 @@ nonisolated enum QRCodeParser {
         case notAChargingPoint
     }
 
+    enum Scan: Equatable {
+        case portal(PortalLink)
+        case chargingPoint(String)
+        case operatorPortal(URL, chargingPoint: String?)
+    }
+
+    static func read(_ value: String, portalURL: URL) -> Result<Scan, Failure> {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if ChargingPointID.isValid(trimmed) {
+            return .success(.chargingPoint(trimmed.uppercased().filter { !$0.isWhitespace }))
+        }
+        switch parse(trimmed, portalURL: portalURL) {
+        case .success(let link):
+            return .success(.portal(link))
+        case .failure(.foreignNetwork):
+            guard let url = URL(string: trimmed), let scheme = url.scheme?.lowercased(), scheme == "https" || scheme == "http" else {
+                return .failure(.notALink)
+            }
+            return .success(.operatorPortal(url, chargingPoint: ChargingPointID.find(in: trimmed)))
+        case .failure(let failure):
+            return .failure(failure)
+        }
+    }
+
     static func parse(_ value: String, portalURL: URL) -> Result<PortalLink, Failure> {
         guard
             let url = URL(string: value.trimmingCharacters(in: .whitespacesAndNewlines)),

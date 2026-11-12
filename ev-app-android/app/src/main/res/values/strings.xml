@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- EV Supervision Lite — built by Kevin Vavelin, Codetics — https://codetics.fr — Copyright (c) 2026 — SPDX-License-Identifier: LicenseRef-Codetics-Attribution-1.0 -->
 <resources>
+    <string name="all">All</string>
     <string name="app_name" translatable="false">EV App</string>
     <string name="a_link_to_choose_a_new_password_has_been_sent_to">A link to choose a new password has been sent to your email address.</string>
     <string name="about">About</string>
@@ -29,6 +30,7 @@
     <string name="available_now">Available now</string>
     <string name="back">Back</string>
     <string name="badge">Badge</string>
+    <string name="badge_group">Badge group</string>
     <string name="badge_qr_code">Badge QR code</string>
     <string name="badge_x_contact_your_operator_to_enable_it_again">Badge %1$s. Contact your operator to enable it again.</string>
     <string name="badge_x_contact_your_operator_to_renew_it">Badge %1$s. Contact your operator to renew it.</string>
@@ -50,11 +52,14 @@
     <string name="card_x_can_now_start_charging_on_this_network">Card %1$s can now start charging on this network.</string>
     <string name="change_my_password">Change my password</string>
     <string name="charge">Charge</string>
+    <string name="charge_with_this_app">Charge with this app</string>
     <string name="charging">Charging</string>
     <string name="charging_amount">Charging amount</string>
     <string name="charging_card">Charging card</string>
     <string name="charging_point">Charging point</string>
+    <string name="charging_point_id">Charging point ID</string>
     <string name="charging_point_link">Charging point link</string>
+    <string name="charging_point_of_another_operator">Charging point of another operator</string>
     <string name="charging_power">Charging power</string>
     <string name="charging_stops_when_the_credit_runs_out_the_bala">Charging stops when the credit runs out. The balance is refunded automatically, and in full if charging does not start within five minutes.</string>
     <string name="charging_time">Charging time</string>
@@ -66,6 +71,7 @@
     <string name="connector">Connector</string>
     <string name="connectors">Connectors</string>
     <string name="continue_as_a_demo_guest">Continue as a demo guest</string>
+    <string name="continue_on_x">Continue on %1$s</string>
     <string name="continue_with_the_demo_account">Continue with the demo account</string>
     <string name="create">Create</string>
     <string name="create_an_account">Create an account</string>
@@ -98,12 +104,15 @@
     <string name="ended">Ended</string>
     <string name="energy">Energy</string>
     <string name="english">English</string>
+    <string name="enter_a_charging_point_id">Enter a charging point ID</string>
+    <string name="enter_the_charging_point_id">Enter the charging point ID</string>
     <string name="estimated_price">Estimated price</string>
     <string name="expires">Expires</string>
     <string name="expires_x_x">Expires %1$s/%2$s</string>
     <string name="failed">Failed</string>
     <string name="filter">Filter</string>
     <string name="find_a_station">Find a station</string>
+    <string name="find_this_charging_point">Find this charging point</string>
     <string name="finished">Finished</string>
     <string name="finishing">Finishing</string>
     <string name="follow_live">Follow live</string>
@@ -170,6 +179,7 @@
     <string name="open">Open</string>
     <string name="open_android_settings">Open Android settings</string>
     <string name="open_my_session">Open my session</string>
+    <string name="open_the_operators_website">Open the operator’s website</string>
     <string name="operator_information">Operator information</string>
     <string name="or_enter_its_number">Or enter its number</string>
     <string name="order_a_card">Order a card</string>
@@ -199,6 +209,7 @@
     <string name="plug_this_vehicle_into_a_compatible_station_and">Plug this vehicle into a compatible station and start a session once. You can then enable automatic charging here for 24 hours.</string>
     <string name="plugged_in">Plugged in</string>
     <string name="point_the_camera_at_the_code_on_the_station">Point the camera at the code on the station.</string>
+    <string name="point_the_camera_at_the_qr_code_on_the_charging_point">Point the camera at the QR code on the charging point.</string>
     <string name="power">Power</string>
     <string name="preferences">Preferences</string>
     <string name="price">Price</string>
@@ -293,6 +304,7 @@
     <string name="this_card_is_on_your_account_but_disabled">This card is on your account but disabled.</string>
     <string name="this_card_is_on_your_account_but_has_expired">This card is on your account but has expired.</string>
     <string name="this_card_is_registered_on_your_account">This card is registered on your account.</string>
+    <string name="this_charging_point_is_not_on_x">This charging point is not on %1$s. Check the ID, or charge from the operator’s website.</string>
     <string name="this_copy_of_the_app_has_not_been_configured_for">This copy of the app has not been configured for a deployed server yet. Edit AppConfiguration.properties, replace every value below, then rebuild.</string>
     <string name="this_device_cannot_read_nfc_cards">This device cannot read NFC cards.</string>
     <string name="this_image_could_not_be_prepared">This image could not be prepared.</string>
@@ -301,6 +313,7 @@
     <string name="this_pass_shows_your_badge_as_a_qr_code_contact">This pass shows your badge as a QR code. Contact your operator to find out which stations accept it.</string>
     <string name="this_qr_code_does_not_belong_to_this_charging_ne">This QR code does not belong to this charging network. For your safety, it was not opened.</string>
     <string name="this_qr_code_is_not_a_charging_point_link">This QR code is not a charging point link.</string>
+    <string name="this_qr_code_opens_x">This QR code opens %1$s. You can pay on the operator’s website, or look for the charging point in this app.</string>
     <string name="this_server_does_not_send_push_notifications_yet">This server does not send push notifications yet.</string>
     <string name="this_server_is_not_compatible_with_this_version">This server is not compatible with this version of the app.</string>
     <string name="this_station_has_not_declared_any_connector_yet">This station has not declared any connector yet.</string>
@@ -309,6 +322,8 @@
     <string name="to_start_a_charge_sign_in_or_scan_the_qr_code_on">To start a charge, sign in or scan the QR code on the station.</string>
     <string name="try_again">Try again</string>
     <string name="try_removing_a_filter_or_searching_for_another_p">Try removing a filter or searching for another place.</string>
+    <string name="type_the_id_printed_on_the_charging_point">Type the ID printed on the charging point, usually next to the QR code or on the connector label.</string>
+    <string name="type_the_id_printed_on_the_station_such_as">Type the ID printed on the station, such as FR*ABC*E12345.</string>
     <string name="unavailable">Unavailable</string>
     <string name="unknown">Unknown</string>
     <string name="unpaid">Unpaid</string>

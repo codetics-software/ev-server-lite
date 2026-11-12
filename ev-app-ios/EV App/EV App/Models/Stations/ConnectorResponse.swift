@@ -21,6 +21,7 @@ nonisolated struct ConnectorResponse: Decodable, Sendable, Identifiable, Hashabl
     let currentSoc: Int?
     let currentUserName: String?
     let inactiveSince: Date?
+    let evseId: String?
 
     var id: Int { connectorId }
 }

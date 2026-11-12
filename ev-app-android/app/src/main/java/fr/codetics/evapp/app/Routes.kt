@@ -30,6 +30,8 @@ sealed interface Route {
 
     data object Scanner : Route
 
+    data class ChargingPointLookup(val prefill: String? = null, val operatorUrl: String? = null) : Route
+
     data class BadgeDetail(val token: ChargingTokenResponse) : Route
 
     data object ActivateCard : Route

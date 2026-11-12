@@ -21,6 +21,7 @@ import fr.codetics.ev_server.models.stations.ConnectorResponse
 import fr.codetics.ev_server.models.stations.CustomerEvseLink
 import fr.codetics.ev_server.models.stations.CustomerStationResponse
 import fr.codetics.ev_server.models.stations.CustomerTariff
+import fr.codetics.ev_server.ocpi.OcpiMapper
 import fr.codetics.ev_server.repositories.ConnectorRepository
 import fr.codetics.ev_server.repositories.PublicEvseRepository
 import fr.codetics.ev_server.repositories.SiteUserRepository
@@ -46,6 +47,7 @@ class CustomerStationService(
     private val tenants: TenantRepository,
     private val organization: Organization,
     private val pricing: PricingService,
+    private val ocpi: OcpiMapper,
 ) {
     private data class Snapshot(
         val tenant: TenantEntity,
@@ -117,6 +119,7 @@ class CustomerStationService(
                 snapshot.plugs[station.key.stationId].orEmpty().sortedBy { it.key.connectorId }.map { plug ->
                     val mine = snapshot.own[station.key.stationId to plug.key.connectorId]
                     ConnectorResponse.from(plug, mine)
+                        .copy(evseId = ocpi.evseId(station.key.stationId, plug.key.connectorId))
                 },
             public = station.publicStation,
             latitude = station.latitude ?: site?.data?.latitude,

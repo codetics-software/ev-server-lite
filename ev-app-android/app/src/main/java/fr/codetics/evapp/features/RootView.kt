@@ -60,6 +60,7 @@ import fr.codetics.evapp.features.badges.BadgesScreen
 import fr.codetics.evapp.features.billing.InvoicesScreen
 import fr.codetics.evapp.features.billing.PaymentMethodsScreen
 import fr.codetics.evapp.features.charging.ChargeScreen
+import fr.codetics.evapp.features.charging.ChargingPointIdScreen
 import fr.codetics.evapp.features.charging.ChargingPointScreen
 import fr.codetics.evapp.features.charging.GuestCheckoutScreen
 import fr.codetics.evapp.features.charging.GuestSessionScreen
@@ -219,6 +220,7 @@ private fun Destination(route: Route) {
         is Route.Checkout -> GuestCheckoutScreen(route.portal)
         is Route.GuestSession -> GuestSessionScreen(route.order)
         Route.Scanner -> QrScannerScreen()
+        is Route.ChargingPointLookup -> ChargingPointIdScreen(route.prefill, route.operatorUrl)
         is Route.BadgeDetail -> BadgeDetailScreen(route.token)
         Route.ActivateCard -> ActivateCardScreen()
         is Route.SessionDetail -> SessionDetailScreen(route.session)

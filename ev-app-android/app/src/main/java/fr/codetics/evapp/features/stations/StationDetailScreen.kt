@@ -61,6 +61,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
@@ -222,6 +224,11 @@ private fun ConnectorRow(connector: ConnectorResponse, station: CustomerStationR
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(androidx.compose.ui.res.stringResource(status.label), style = MaterialTheme.typography.bodySmall, color = status.color)
                 connector.maximumPowerKw?.let { Text(Formatters.power(it), style = MaterialTheme.typography.bodySmall) }
+            }
+            connector.evseId?.let {
+                SelectionContainer {
+                    Text(it, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.outline)
+                }
             }
         }
         val session = connector.currentTransactionId

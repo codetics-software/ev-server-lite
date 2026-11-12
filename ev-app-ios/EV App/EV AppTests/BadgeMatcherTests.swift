@@ -13,7 +13,7 @@ struct BadgeMatcherTests {
     private func token(_ uid: String, enabled: Bool = true, expires: Date? = nil) -> ChargingTokenResponse {
         ChargingTokenResponse(
             uid: uid, userId: UUID(), type: "RFID", enabled: enabled, expiresAt: expires, visualId: nil, description: nil,
-            userName: "Thomas", default: false, lastUsedAt: nil, vehicleId: nil, vehicleName: nil
+            userName: "Thomas", default: false, lastUsedAt: nil, vehicleId: nil, vehicleName: nil, parentIdTag: nil
         )
     }
 

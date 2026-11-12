@@ -29,6 +29,7 @@ import fr.codetics.ev_server.repositories.UserRepository
 import fr.codetics.ev_server.services.billing.ChargingPaymentLifecycle
 import fr.codetics.ev_server.services.organization.Organization
 import fr.codetics.ev_server.services.pricing.PricingService
+import fr.codetics.ev_server.services.reservations.ReservationService
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
@@ -64,6 +65,7 @@ class OcppService(
     private val queue: OcppCommandQueue,
     private val certificates: ChargerCertificates,
     private val properties: AppProperties,
+    private val reservations: ReservationService,
 ) {
     fun call(
         tenant: UUID,
@@ -147,7 +149,7 @@ class OcppService(
                 val decision = authorize(station, uid)
                 record(station, "AUTHORIZE", status = decision.status.name, info = uid)
                 rejected(station, uid, decision.status)
-                mapOf("idTagInfo" to mapOf("status" to decision.status))
+                mapOf("idTagInfo" to decision.info())
             }
             "StatusNotification" -> {
                 updateStatus(station, payload)
@@ -273,7 +275,14 @@ class OcppService(
         val userId: UUID? = null,
         val partnerId: UUID? = null,
         val vehicleId: UUID? = null,
-    )
+        val parentIdTag: String? = null,
+    ) {
+        fun info(): Map<String, Any> =
+            buildMap {
+                put("status", status)
+                parentIdTag?.let { put("parentIdTag", it) }
+            }
+    }
 
     private fun rejected(station: StationEntity, uid: String, status: AuthorizationStatus) {
         if (status == AuthorizationStatus.Accepted) return
@@ -374,7 +383,7 @@ class OcppService(
 
         token.lastUsedAt = Instant.now()
         tokens.save(token)
-        return Decision(AuthorizationStatus.Accepted, token.userId)
+        return Decision(AuthorizationStatus.Accepted, token.userId, parentIdTag = token.parentIdTag)
     }
 
     private fun connector(station: StationEntity, number: Int): ConnectorEntity {
@@ -486,11 +495,14 @@ class OcppService(
             ).also { db.flush() }
 
         payments.started(transaction)
+        payload.get("reservationId")?.takeIf { it.isIntegralNumber }?.let {
+            reservations.used(tenant, identity, it.intValue(), transaction.id)
+        }
         rejected(station, uid, decision.status)
         events.publishEvent(TransactionStarted(station, transaction))
         return mapOf(
             "transactionId" to transaction.id,
-            "idTagInfo" to mapOf("status" to decision.status),
+            "idTagInfo" to decision.info(),
         )
     }
 
@@ -524,7 +536,7 @@ class OcppService(
 
         val uid = payload.get("idTag")?.asText() ?: transaction.tokenUid
         payments.stopped(transaction)
-        return mapOf("idTagInfo" to mapOf("status" to authorize(station, uid, stopping = true).status))
+        return mapOf("idTagInfo" to authorize(station, uid, stopping = true).info())
     }
 
     fun close(

@@ -40,6 +40,8 @@ import fr.codetics.evapp.BuildConfig
 import fr.codetics.evapp.EvApp
 import fr.codetics.evapp.R
 import fr.codetics.evapp.app.AppModel
+import fr.codetics.evapp.app.ConnectorStatus
+import fr.codetics.evapp.app.ConnectorType
 import fr.codetics.evapp.app.Launch
 import fr.codetics.evapp.app.StationAvailability
 import fr.codetics.evapp.app.StationFilter
@@ -86,6 +88,15 @@ private fun CarContext.availabilityLabel(availability: StationAvailability): Str
         StationAvailability.Offline -> getString(R.string.offline)
     }
 
+internal fun CarContext.connectorSummary(station: CustomerStationResponse): List<String> =
+    station.connectors
+        .groupBy { ConnectorType.known(it.type) ?: getString(R.string.connector) }
+        .map { (label, connectors) ->
+            val free = if (station.connected) connectors.count { ConnectorStatus.of(it.status).isStartable } else 0
+            val power = connectors.mapNotNull { it.maximumPowerKw }.maxOrNull()?.let { " ${Formatters.power(it)}" }.orEmpty()
+            "$label$power · $free/${connectors.size}"
+        }
+
 abstract class RefreshingCarScreen(carContext: CarContext, protected val model: AppModel) : Screen(carContext) {
     private var job: Job? = null
 
@@ -117,10 +128,22 @@ abstract class RefreshingCarScreen(carContext: CarContext, protected val model: 
 }
 
 class StationsCarScreen(carContext: CarContext, model: AppModel) : RefreshingCarScreen(carContext, model) {
+    private var onlyAvailable = false
+    private var lastSessionId: Int? = null
+
+    override suspend fun refresh() {
+        super.refresh()
+        val current = model.charging.current?.id
+        if (current != null && current != lastSessionId && screenManager.top === this) {
+            screenManager.push(SessionCarScreen(carContext, model))
+        }
+        lastSessionId = current
+    }
+
     override fun onGetTemplate(): Template {
         val location = model.userLocation
         val builder = ItemList.Builder()
-        val stations = StationFilter().apply(model.stations.stations, "", location).filter { it.coordinate != null }.take(6)
+        val stations = StationFilter(onlyAvailable = onlyAvailable).apply(model.stations.stations, "", location).filter { it.coordinate != null }.take(6)
         stations.forEach { builder.addItem(row(it)) }
         val template =
             PlaceListMapTemplate.Builder()
@@ -130,7 +153,19 @@ class StationsCarScreen(carContext: CarContext, model: AppModel) : RefreshingCar
                     ActionStrip.Builder()
                         .addAction(
                             Action.Builder()
-                                .setTitle(carContext.getString(R.string.charging))
+                                .setTitle(carContext.getString(if (onlyAvailable) R.string.available else R.string.all))
+                                .setOnClickListener {
+                                    onlyAvailable = !onlyAvailable
+                                    invalidate()
+                                }
+                                .build()
+                        )
+                        .addAction(
+                            Action.Builder()
+                                .setTitle(
+                                    model.charging.current?.let { "${carContext.getString(R.string.charging)} · ${Formatters.power(it.currentPowerKw ?: 0.0)}" }
+                                        ?: carContext.getString(R.string.charging)
+                                )
                                 .setOnClickListener { screenManager.push(SessionCarScreen(carContext, model)) }
                                 .build()
                         )
@@ -197,8 +232,18 @@ class StationCarScreen(carContext: CarContext, model: AppModel, private val stat
             pane.setLoading(true)
         } else {
             pane.addRow(Row.Builder().setTitle(carContext.availabilityLabel(StationAvailability.of(station))).apply { station.addressLine?.let(::addText) }.build())
-            station.highestPowerKw?.let {
-                pane.addRow(Row.Builder().setTitle(carContext.getString(R.string.power)).addText(Formatters.power(it)).build())
+            val connectors = carContext.connectorSummary(station)
+            if (connectors.isNotEmpty()) {
+                pane.addRow(
+                    Row.Builder()
+                        .setTitle(carContext.getString(R.string.connectors))
+                        .apply { connectors.take(2).forEach(::addText) }
+                        .build()
+                )
+            } else {
+                station.highestPowerKw?.let {
+                    pane.addRow(Row.Builder().setTitle(carContext.getString(R.string.power)).addText(Formatters.power(it)).build())
+                }
             }
             station.coordinate?.let { coordinate ->
                 pane.addAction(

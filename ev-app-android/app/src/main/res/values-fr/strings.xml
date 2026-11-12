@@ -17,6 +17,7 @@
     <string name="add_a_vehicle">Ajouter un véhicule</string>
     <string name="add_to_google_wallet">Ajouter à Google Wallet</string>
     <string name="add_your_vehicle_to_get_better_charging_estimate">Ajoutez votre véhicule pour de meilleures estimations et la recharge automatique.</string>
+    <string name="all">Toutes</string>
     <string name="all_connectors">Tous les connecteurs</string>
     <string name="any_power">Toutes les puissances</string>
     <string name="app_not_configured">Application non configurée</string>
@@ -28,6 +29,7 @@
     <string name="available_now">Disponible maintenant</string>
     <string name="back">Retour</string>
     <string name="badge">Badge</string>
+    <string name="badge_group">Groupe du badge</string>
     <string name="badge_qr_code">QR code du badge</string>
     <string name="badge_x_contact_your_operator_to_enable_it_again">Badge %1$s. Contactez votre exploitant pour le réactiver.</string>
     <string name="badge_x_contact_your_operator_to_renew_it">Badge %1$s. Contactez votre exploitant pour le renouveler.</string>
@@ -49,11 +51,14 @@
     <string name="card_x_can_now_start_charging_on_this_network">La carte %1$s peut maintenant démarrer des recharges sur ce réseau.</string>
     <string name="change_my_password">Changer mon mot de passe</string>
     <string name="charge">Recharge</string>
+    <string name="charge_with_this_app">Recharger avec cette app</string>
     <string name="charging">En charge</string>
     <string name="charging_amount">Montant de la recharge</string>
     <string name="charging_card">Carte de recharge</string>
     <string name="charging_point">Point de charge</string>
+    <string name="charging_point_id">Identifiant de la borne</string>
     <string name="charging_point_link">Lien du point de charge</string>
+    <string name="charging_point_of_another_operator">Borne d’un autre opérateur</string>
     <string name="charging_power">Puissance de charge</string>
     <string name="charging_stops_when_the_credit_runs_out_the_bala">La recharge s’arrête quand le crédit est épuisé. Le solde est remboursé automatiquement, et en totalité si la recharge ne démarre pas sous cinq minutes.</string>
     <string name="charging_time">Durée de recharge</string>
@@ -65,6 +70,7 @@
     <string name="connector">Connecteur</string>
     <string name="connectors">Connecteurs</string>
     <string name="continue_as_a_demo_guest">Continuer en invité de démonstration</string>
+    <string name="continue_on_x">Continuer sur %1$s</string>
     <string name="continue_with_the_demo_account">Continuer avec le compte de démonstration</string>
     <string name="create">Créer</string>
     <string name="create_an_account">Créer un compte</string>
@@ -97,12 +103,15 @@
     <string name="ended">Fin</string>
     <string name="energy">Énergie</string>
     <string name="english">Anglais</string>
+    <string name="enter_a_charging_point_id">Saisir un identifiant de borne</string>
+    <string name="enter_the_charging_point_id">Saisir l’identifiant de la borne</string>
     <string name="estimated_price">Prix estimé</string>
     <string name="expires">Expire le</string>
     <string name="expires_x_x">Expire le %1$s/%2$s</string>
     <string name="failed">Échec</string>
     <string name="filter">Filtrer</string>
     <string name="find_a_station">Trouver une borne</string>
+    <string name="find_this_charging_point">Trouver cette borne</string>
     <string name="finished">Terminée</string>
     <string name="finishing">Fin de charge</string>
     <string name="follow_live">Suivre en direct</string>
@@ -169,6 +178,7 @@
     <string name="open">Ouvrir</string>
     <string name="open_android_settings">Ouvrir les réglages Android</string>
     <string name="open_my_session">Ouvrir ma session</string>
+    <string name="open_the_operators_website">Ouvrir le site de l’opérateur</string>
     <string name="operator_information">Information de l’exploitant</string>
     <string name="or_enter_its_number">Ou saisissez son numéro</string>
     <string name="order_a_card">Commander une carte</string>
@@ -198,6 +208,7 @@
     <string name="plug_this_vehicle_into_a_compatible_station_and">Branchez ce véhicule sur une borne compatible et démarrez une session. Vous pourrez ensuite activer ici la recharge automatique pendant 24 heures.</string>
     <string name="plugged_in">Branché</string>
     <string name="point_the_camera_at_the_code_on_the_station">Visez le code sur la borne avec l’appareil photo.</string>
+    <string name="point_the_camera_at_the_qr_code_on_the_charging_point">Visez le QR code de la borne avec l’appareil photo.</string>
     <string name="power">Puissance</string>
     <string name="preferences">Préférences</string>
     <string name="price">Prix</string>
@@ -292,6 +303,7 @@
     <string name="this_card_is_on_your_account_but_disabled">Cette carte est sur votre compte mais désactivée.</string>
     <string name="this_card_is_on_your_account_but_has_expired">Cette carte est sur votre compte mais a expiré.</string>
     <string name="this_card_is_registered_on_your_account">Cette carte est bien enregistrée sur votre compte.</string>
+    <string name="this_charging_point_is_not_on_x">Cette borne n’est pas sur %1$s. Vérifiez l’identifiant, ou rechargez depuis le site de l’opérateur.</string>
     <string name="this_copy_of_the_app_has_not_been_configured_for">Cette copie de l’application n’a pas encore été configurée pour un serveur déployé. Modifiez AppConfiguration.properties, remplacez chaque valeur ci-dessous, puis recompilez.</string>
     <string name="this_device_cannot_read_nfc_cards">Cet appareil ne peut pas lire les cartes NFC.</string>
     <string name="this_image_could_not_be_prepared">Cette image n’a pas pu être préparée.</string>
@@ -300,6 +312,7 @@
     <string name="this_pass_shows_your_badge_as_a_qr_code_contact">Cette carte affiche votre badge sous forme de QR code. Contactez votre exploitant pour savoir quelles bornes l’acceptent.</string>
     <string name="this_qr_code_does_not_belong_to_this_charging_ne">Ce QR code n’appartient pas à ce réseau de recharge. Par sécurité, il n’a pas été ouvert.</string>
     <string name="this_qr_code_is_not_a_charging_point_link">Ce QR code n’est pas un lien de point de charge.</string>
+    <string name="this_qr_code_opens_x">Ce QR code ouvre %1$s. Vous pouvez payer sur le site de l’opérateur, ou chercher la borne dans cette app.</string>
     <string name="this_server_does_not_send_push_notifications_yet">Ce serveur n’envoie pas encore de notifications push.</string>
     <string name="this_server_is_not_compatible_with_this_version">Ce serveur n’est pas compatible avec cette version de l’application.</string>
     <string name="this_station_has_not_declared_any_connector_yet">Cette borne n’a pas encore déclaré de connecteur.</string>
@@ -308,6 +321,8 @@
     <string name="to_start_a_charge_sign_in_or_scan_the_qr_code_on">Pour démarrer une recharge, connectez-vous ou scannez le QR code de la borne.</string>
     <string name="try_again">Réessayer</string>
     <string name="try_removing_a_filter_or_searching_for_another_p">Retirez un filtre ou cherchez un autre lieu.</string>
+    <string name="type_the_id_printed_on_the_charging_point">Saisissez l’identifiant imprimé sur la borne, souvent à côté du QR code ou sur l’étiquette du connecteur.</string>
+    <string name="type_the_id_printed_on_the_station_such_as">Saisissez l’identifiant imprimé sur la borne, par exemple FR*ABC*E12345.</string>
     <string name="unavailable">Indisponible</string>
     <string name="unknown">Inconnu</string>
     <string name="unpaid">Impayée</string>

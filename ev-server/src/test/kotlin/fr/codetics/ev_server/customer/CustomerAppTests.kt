@@ -239,6 +239,7 @@ constructor(
         assertEquals("Gare", row.path("site_name").asText())
         val plug = row.path("connectors")[0]
         assertEquals("Charging", plug.path("status").asText())
+        assertEquals("FR*COD*EOPEN1", plug.path("evse_id").asText())
         assertTrue(plug.path("current_user_name").isNull || plug.path("current_user_name").isMissingNode)
         assertTrue(plug.path("current_transaction_id").isNull || plug.path("current_transaction_id").isMissingNode)
         assertFalse(row.has("pinned_certificate_fingerprint"))

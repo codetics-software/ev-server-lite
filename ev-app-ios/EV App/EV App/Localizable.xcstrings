@@ -473,6 +473,22 @@
         }
       }
     },
+    "All": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes"
+          }
+        }
+      }
+    },
     "All connectors": {
       "localizations": {
         "es": {
@@ -725,6 +741,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "QR code du badge"
+          }
+        }
+      }
+    },
+    "Badge group": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grupo de la tarjeta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Groupe du badge"
           }
         }
       }
@@ -1001,6 +1033,22 @@
         }
       }
     },
+    "Charge with this app": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargar con esta app"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recharger avec cette app"
+          }
+        }
+      }
+    },
     "Charging": {
       "localizations": {
         "es": {
@@ -1065,6 +1113,22 @@
         }
       }
     },
+    "Charging point ID": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Identificador del punto de carga"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Identifiant de la borne"
+          }
+        }
+      }
+    },
     "Charging point link": {
       "localizations": {
         "es": {
@@ -1077,6 +1141,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lien du point de charge"
+          }
+        }
+      }
+    },
+    "Charging point of another operator": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Punto de carga de otro operador"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borne d’un autre opérateur"
           }
         }
       }
@@ -1253,6 +1333,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Continuer en invité de démonstration"
+          }
+        }
+      }
+    },
+    "Continue on %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar en %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer sur %@"
           }
         }
       }
@@ -1753,6 +1849,38 @@
         }
       }
     },
+    "Enter a charging point ID": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introducir un identificador de punto de carga"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisir un identifiant de borne"
+          }
+        }
+      }
+    },
+    "Enter the charging point ID": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introducir el identificador del punto de carga"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisir l’identifiant de la borne"
+          }
+        }
+      }
+    },
     "Estimated price": {
       "localizations": {
         "es": {
@@ -1801,6 +1929,22 @@
         }
       }
     },
+    "FR*ABC*E12345*1": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FR*ABC*E12345*1"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FR*ABC*E12345*1"
+          }
+        }
+      }
+    },
     "Failed": {
       "localizations": {
         "es": {
@@ -1845,6 +1989,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Trouver une borne"
+          }
+        }
+      }
+    },
+    "Find this charging point": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar este punto de carga"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouver cette borne"
           }
         }
       }
@@ -2873,6 +3033,22 @@
         }
       }
     },
+    "Open the operator’s website": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir la web del operador"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir le site de l’opérateur"
+          }
+        }
+      }
+    },
     "Operator information": {
       "localizations": {
         "es": {
@@ -3317,6 +3493,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Branché"
+          }
+        }
+      }
+    },
+    "Point the camera at the QR code on the charging point.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apunta la cámara al código QR del punto de carga."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visez le QR code de la borne avec l’appareil photo."
           }
         }
       }
@@ -4729,6 +4921,22 @@
         }
       }
     },
+    "This QR code opens %@. You can pay on the operator’s website, or look for the charging point in this app.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este código QR abre %@. Puedes pagar en la web del operador o buscar el punto de carga en esta app."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce QR code ouvre %@. Vous pouvez payer sur le site de l’opérateur, ou chercher la borne dans cette app."
+          }
+        }
+      }
+    },
     "This card is not registered on your account.": {
       "localizations": {
         "es": {
@@ -4789,6 +4997,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cette carte est bien enregistrée sur votre compte."
+          }
+        }
+      }
+    },
+    "This charging point is not on %@. Check the ID, or charge from the operator’s website.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este punto de carga no está en %@. Comprueba el identificador o carga desde la web del operador."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette borne n’est pas sur %@. Vérifiez l’identifiant, ou rechargez depuis le site de l’opérateur."
           }
         }
       }
@@ -5061,6 +5285,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Retirez un filtre ou cherchez un autre lieu."
+          }
+        }
+      }
+    },
+    "Type the ID printed on the charging point, usually next to the QR code or on the connector label.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe el identificador impreso en el punto de carga, normalmente junto al código QR o en la etiqueta del conector."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez l’identifiant imprimé sur la borne, souvent à côté du QR code ou sur l’étiquette du connecteur."
+          }
+        }
+      }
+    },
+    "Type the ID printed on the station, such as FR*ABC*E12345.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe el identificador impreso en la estación, por ejemplo FR*ABC*E12345."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saisissez l’identifiant imprimé sur la borne, par exemple FR*ABC*E12345."
           }
         }
       }

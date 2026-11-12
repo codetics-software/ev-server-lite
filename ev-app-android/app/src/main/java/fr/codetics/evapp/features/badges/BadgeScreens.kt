@@ -520,6 +520,10 @@ fun BadgeDetailScreen(token: ChargingTokenResponse) {
                 }
                 RowDivider()
                 LabeledRow(stringResource(R.string.status), if (token.enabled) stringResource(R.string.active) else stringResource(R.string.disabled))
+                token.parentIdTag?.let {
+                    RowDivider()
+                    LabeledRow(stringResource(R.string.badge_group), it)
+                }
                 token.expiresAt?.let {
                     RowDivider()
                     LabeledRow(stringResource(R.string.expires), Formatters.date(it))

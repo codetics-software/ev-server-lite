@@ -27,4 +27,5 @@ class ChargingTokenEntity(
     var defaultToken: Boolean = false,
     var lastUsedAt: Instant? = null,
     var vehicleId: UUID? = null,
+    var parentIdTag: String? = null,
 )

@@ -7,6 +7,7 @@ package fr.codetics.evapp.features.charging
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -28,7 +29,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -56,7 +59,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -156,6 +162,13 @@ fun ChargeScreen() {
                     modifier = Modifier.testTag("charge.scan"),
                 ) { model.open(Route.Scanner) }
                 RowDivider()
+                ActionRow(
+                    stringResource(R.string.enter_a_charging_point_id),
+                    stringResource(R.string.type_the_id_printed_on_the_station_such_as),
+                    R.drawable.sym_search,
+                    modifier = Modifier.testTag("charge.enterId"),
+                ) { model.open(Route.ChargingPointLookup()) }
+                RowDivider()
                 ActionRow(stringResource(R.string.find_a_station), stringResource(R.string.see_the_stations_around_you_on_the_map), R.drawable.sym_map) {
                     model.selectedTab = AppTab.Map
                 }
@@ -221,26 +234,61 @@ fun QrScannerScreen() {
     val hasCamera = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
     LaunchedEffect(Unit) { if (hasCamera && !granted) permission.launch(Manifest.permission.CAMERA) }
     var handled by remember { mutableStateOf(false) }
+    var foreign by remember { mutableStateOf<QrCodeParser.Scan.OperatorPortal?>(null) }
+    val haptics = LocalHapticFeedback.current
+    fun replaceWith(route: Route) {
+        handled = true
+        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+        model.back()
+        model.open(route, AppTab.Charge)
+    }
     fun handle(value: String) {
         val portal = model.configuration?.portalUrl ?: return
-        if (handled) return
-        when (val outcome = QrCodeParser.parse(value, portal)) {
-            is QrCodeParser.Outcome.Success -> {
-                handled = true
-                model.back()
-                model.open(Route.Portal(outcome.link), AppTab.Charge)
+        if (handled || foreign != null) return
+        when (val scan = QrCodeParser.read(value, portal)) {
+            is QrCodeParser.Scan.Portal -> replaceWith(Route.Portal(scan.link))
+            is QrCodeParser.Scan.ChargingPoint -> replaceWith(Route.ChargingPointLookup(scan.id))
+            is QrCodeParser.Scan.OperatorPortal -> {
+                haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                errorMessage = null
+                foreign = scan
             }
-            is QrCodeParser.Outcome.Rejected -> errorMessage = context.getString(outcome.failure.message)
+            is QrCodeParser.Scan.Rejected -> errorMessage = context.getString(scan.failure.message)
         }
+    }
+    foreign?.let { scan ->
+        AlertDialog(
+            onDismissRequest = { foreign = null },
+            title = { Text(stringResource(R.string.charging_point_of_another_operator)) },
+            text = { Text(stringResource(R.string.this_qr_code_opens_x, Uri.parse(scan.url).host ?: scan.url)) },
+            confirmButton = {
+                TextButton(onClick = { foreign = null; replaceWith(Route.ChargingPointLookup(scan.chargingPoint, scan.url)) }, modifier = Modifier.testTag("scan.foreign.app")) {
+                    Text(stringResource(R.string.charge_with_this_app))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { foreign = null; context.openInBrowser(scan.url) }, modifier = Modifier.testTag("scan.foreign.web")) {
+                    Text(stringResource(R.string.open_the_operators_website))
+                }
+            },
+        )
     }
     EvScaffold(stringResource(R.string.scan_a_qr_code), onBack = { model.back() }) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             if (hasCamera && granted) {
                 Box(Modifier.fillMaxWidth().weight(1.2f).clipToBounds().background(androidx.compose.ui.graphics.Color.Black), contentAlignment = Alignment.Center) {
                     QrCamera(::handle, Modifier.fillMaxSize().testTag("scan.camera"))
-                    Box(
-                        Modifier.size(240.dp).clip(RoundedCornerShape(24.dp))
-                            .background(androidx.compose.ui.graphics.Color.White.copy(alpha = 0.12f)),
+                    Viewfinder(Modifier.size(240.dp))
+                    Text(
+                        stringResource(R.string.point_the_camera_at_the_qr_code_on_the_charging_point),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = androidx.compose.ui.graphics.Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.align(Alignment.TopCenter).padding(16.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f))
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }
             }
@@ -262,6 +310,14 @@ fun QrScannerScreen() {
                         }
                     }
                     errorMessage?.let { message -> item { ErrorBanner(message) } }
+                    section {
+                        ActionRow(
+                            stringResource(R.string.enter_the_charging_point_id),
+                            icon = R.drawable.sym_search,
+                            chevron = true,
+                            modifier = Modifier.testTag("scan.enterId"),
+                        ) { replaceWith(Route.ChargingPointLookup()) }
+                    }
                     if (DemoSupport.available && model.isDemo) {
                         section(stringResource(R.string.debug_only)) {
                             ActionRow(stringResource(R.string.simulate_scanning_the_demo_qr_code), icon = R.drawable.sym_qr_code_scanner, modifier = Modifier.testTag("scan.demo")) {
@@ -271,6 +327,31 @@ fun QrScannerScreen() {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun Viewfinder(modifier: Modifier = Modifier) {
+    val color = androidx.compose.ui.graphics.Color.White
+    Canvas(modifier) {
+        val stroke = 4.dp.toPx()
+        val arm = size.minDimension * 0.18f
+        val inset = stroke / 2
+        val right = size.width - inset
+        val bottom = size.height - inset
+        listOf(
+            listOf(Offset(inset, inset + arm), Offset(inset, inset), Offset(inset + arm, inset)),
+            listOf(Offset(right - arm, inset), Offset(right, inset), Offset(right, inset + arm)),
+            listOf(Offset(inset, bottom - arm), Offset(inset, bottom), Offset(inset + arm, bottom)),
+            listOf(Offset(right - arm, bottom), Offset(right, bottom), Offset(right, bottom - arm)),
+        ).forEach { points ->
+            val path = Path().apply {
+                moveTo(points[0].x, points[0].y)
+                lineTo(points[1].x, points[1].y)
+                lineTo(points[2].x, points[2].y)
+            }
+            drawPath(path, color, style = Stroke(width = stroke, cap = StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
         }
     }
 }

@@ -20,6 +20,7 @@ nonisolated struct ChargingTokenResponse: Decodable, Sendable, Identifiable, Has
     let lastUsedAt: Date?
     let vehicleId: UUID?
     let vehicleName: String?
+    let parentIdTag: String?
 
     var id: String { uid }
 }

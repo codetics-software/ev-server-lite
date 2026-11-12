@@ -239,6 +239,7 @@ data class ChargingTokenResponse(
     val lastUsedAt: Instant? = null,
     val vehicleId: UUID? = null,
     val vehicleName: String? = null,
+    val parentIdTag: String? = null,
 )
 
 @Serializable data class GoogleWalletPassResponse(val jwt: String, val saveUrl: String)

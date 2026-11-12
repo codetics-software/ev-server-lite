@@ -6,6 +6,7 @@
 package fr.codetics.evapp
 
 import fr.codetics.evapp.app.BadgeMatcher
+import fr.codetics.evapp.app.ChargingPointId
 import fr.codetics.evapp.app.ConnectorStatus
 import fr.codetics.evapp.app.Coordinate
 import fr.codetics.evapp.app.PortalLink
@@ -196,5 +197,71 @@ class StationFilterTests {
         val paris = Coordinate(48.8566, 2.3522)
         val lyon = Coordinate(45.7640, 4.8357)
         assertEquals(392_000.0, distanceMeters(paris, lyon), 3_000.0)
+    }
+}
+
+class ChargingPointIdTests {
+    private val portal = "https://reseau.fr"
+
+    private fun connector(id: Int, evseId: String?) =
+        ConnectorResponse(connectorId = id, status = "Available", errorCode = "NoError", statusAt = Instant.now(), evseId = evseId)
+
+    private val stations =
+        listOf(
+            CustomerStationResponse(
+                id = "PAR-01", name = "Paris", connected = true, public = true, autoCharge = false, publicEvses = emptyList(),
+                connectors = listOf(connector(1, "FR*COD*EPAR011"), connector(2, "FR*COD*EPAR012")),
+            ),
+            CustomerStationResponse(
+                id = "LYO-01", name = "Lyon", connected = true, public = true, autoCharge = false, publicEvses = emptyList(),
+                connectors = listOf(connector(1, null)),
+            ),
+        )
+
+    @Test
+    fun recognisesChargingPointIds() {
+        assertTrue(ChargingPointId.isValid("FR*COD*E12345*1"))
+        assertTrue(ChargingPointId.isValid("frcode12345"))
+        assertTrue(ChargingPointId.isValid("FR*COD*E PAR01 1"))
+        assertFalse(ChargingPointId.isValid("bonjour"))
+        assertFalse(ChargingPointId.isValid("https://reseau.fr"))
+    }
+
+    @Test
+    fun findsTheIdInsideAnOperatorLink() {
+        assertEquals("FR*ABC*E1234*1", ChargingPointId.find("https://pay.example.com/start?evse=FR*ABC*E1234*1&lang=fr"))
+        assertEquals("FR*ABC*E99", ChargingPointId.find("https://pay.example.com/evse/fr%2Aabc%2Ae99"))
+        assertNull(ChargingPointId.find("https://pay.example.com/station/42"))
+    }
+
+    @Test
+    fun matchesConnectorsIgnoringSeparatorsAndCase() {
+        val match = ChargingPointId.match("fr*cod*e par01*2", stations)
+        assertEquals("PAR-01", match?.station?.id)
+        assertEquals(2, match?.connectorId)
+        assertNull(ChargingPointId.match("FR*XYZ*EPAR011", stations))
+    }
+
+    @Test
+    fun fallsBackToTheStationIdentifier() {
+        assertEquals(1, ChargingPointId.match("lyo01", stations)?.connectorId)
+        assertNull(ChargingPointId.match("par-01", stations)?.connectorId)
+    }
+
+    @Test
+    fun classifiesScannedCodes() {
+        val evse = "5f9f1c1e-7c3a-4d3a-9c55-0a7e6b1d2f10"
+        assertEquals(
+            QrCodeParser.Scan.Portal(PortalLink("codetics", UUID.fromString(evse))),
+            QrCodeParser.read("https://reseau.fr/charge/codetics/$evse", portal),
+        )
+        assertEquals(QrCodeParser.Scan.ChargingPoint("FR*COD*E12345"), QrCodeParser.read(" FR*COD*E12345 ", portal))
+        assertEquals(
+            QrCodeParser.Scan.OperatorPortal("https://pay.example.com/s?id=FR*ABC*E77", "FR*ABC*E77"),
+            QrCodeParser.read("https://pay.example.com/s?id=FR*ABC*E77", portal),
+        )
+        assertEquals(QrCodeParser.Scan.Rejected(QrCodeParser.Failure.NotALink), QrCodeParser.read("ftp://pay.example.com/x", portal))
+        assertEquals(QrCodeParser.Scan.Rejected(QrCodeParser.Failure.NotALink), QrCodeParser.read("bonjour", portal))
+        assertEquals(QrCodeParser.Scan.Rejected(QrCodeParser.Failure.NotAChargingPoint), QrCodeParser.read("https://reseau.fr/account", portal))
     }
 }

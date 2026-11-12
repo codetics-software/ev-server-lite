@@ -7,10 +7,11 @@ Application client Kotlin et Jetpack Compose (Android 8.0, API 26, minimum) du s
 
 - Carte et liste des bornes autour de l’utilisateur, filtres, itinéraire, photos prises sur place.
 - Recharge par QR code, avec un badge ou sans compte (paiement par carte, remboursement du solde).
+- QR code d’un autre opérateur : le conducteur choisit entre le site de l’opérateur et l’application, qui retrouve la borne par son identifiant EVSE (`FR*ABC*E12345*1`), lu dans le lien ou saisi à la main.
 - Suivi de la charge en temps réel, historique, statistiques, données de comptage signées.
 - Lecture NFC d’une carte et vérification sur le compte, activation d’une carte commandée.
 - Passe Google Wallet, notifications FCM, véhicules et charge automatique, factures, moyens de paiement, suppression du compte.
-- Android Auto (catégorie recharge) : bornes proches, itinéraire, suivi et arrêt de la charge.
+- Android Auto (catégorie recharge) : bornes proches, filtre des bornes disponibles, connecteurs, itinéraire, suivi et arrêt de la charge.
 
 ## Configurer avant de publier
 

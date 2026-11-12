@@ -64,6 +64,7 @@ class MongoSchema(private val mongo: MongoTemplate) : InitializingBean {
                 ),
             "station_commands" to index("state" to ASC, "deadline" to ASC),
             "station_commands" to index("tenantId" to ASC, "createdAt" to DESC),
+            "station_reservations" to index("_id.tenantId" to ASC, "createdAt" to DESC),
             "audit_events" to index("tenantId" to ASC, "_id" to DESC),
             "ocpi_partners" to index("tokenHash" to ASC).unique(),
             "ocpi_partners" to index("tenantId" to ASC, "name" to ASC),

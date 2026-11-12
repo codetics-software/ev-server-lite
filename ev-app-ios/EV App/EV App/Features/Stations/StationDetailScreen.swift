@@ -13,12 +13,15 @@ struct StationDetailScreen: View {
     @Environment(\.dismiss) private var dismiss
     let stationId: String
     let preview: CustomerStationResponse?
+    var initialConnectorId: Int?
+    var showsClose = true
 
     @State private var loaded: CustomerStationResponse?
     @State private var errorMessage: String?
     @State private var startRequest: StartRequest?
     @State private var startedSession: ChargingSessionResponse?
     @State private var showsReport = false
+    @State private var offeredStart = false
 
     private var station: CustomerStationResponse? { loaded ?? preview }
 
@@ -35,9 +38,11 @@ struct StationDetailScreen: View {
         .navigationTitle(station?.name ?? String(localized: "Station"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done", systemImage: "xmark") { dismiss() }
-                    .accessibilityIdentifier("station.close")
+            if showsClose {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", systemImage: "xmark") { dismiss() }
+                        .accessibilityIdentifier("station.close")
+                }
             }
         }
         .sheet(item: $startRequest) { request in
@@ -52,7 +57,10 @@ struct StationDetailScreen: View {
         .navigationDestination(item: $startedSession) { session in
             LiveSessionScreen(sessionId: session.id)
         }
-        .task(id: stationId) { await load() }
+        .task(id: stationId) {
+            await load()
+            offerStart()
+        }
         .refreshable { await load() }
     }
 
@@ -96,6 +104,15 @@ struct StationDetailScreen: View {
                 Button("Report a problem", systemImage: "exclamationmark.bubble") { showsReport = true }
             }
         }
+    }
+
+    private func offerStart() {
+        guard !offeredStart, model.isSignedIn, let initialConnectorId, let station, station.connected,
+              let connector = station.connectors.first(where: { $0.connectorId == initialConnectorId }),
+              connector.currentTransactionId == nil, ConnectorStatus(connector.status).isStartable
+        else { return }
+        offeredStart = true
+        startRequest = StartRequest(stationId: station.id, stationName: station.name, connectorId: connector.connectorId)
     }
 
     private func openSession(_ id: Int) {

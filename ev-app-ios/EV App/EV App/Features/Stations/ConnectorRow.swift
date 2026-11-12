@@ -30,6 +30,12 @@ struct ConnectorRow: View {
                     }
                 }
                 .font(.caption)
+                if let evseId = connector.evseId {
+                    Text(evseId)
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(.tertiary)
+                        .textSelection(.enabled)
+                }
             }
             Spacer(minLength: 0)
             if let session = connector.currentTransactionId {

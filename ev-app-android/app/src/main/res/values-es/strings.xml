@@ -17,6 +17,7 @@
     <string name="add_a_vehicle">Añadir un vehículo</string>
     <string name="add_to_google_wallet">Añadir a Google Wallet</string>
     <string name="add_your_vehicle_to_get_better_charging_estimate">Añada su vehículo para obtener mejores estimaciones de carga y la carga automática.</string>
+    <string name="all">Todas</string>
     <string name="all_connectors">Todos los conectores</string>
     <string name="any_power">Cualquier potencia</string>
     <string name="app_not_configured">Aplicación no configurada</string>
@@ -28,6 +29,7 @@
     <string name="available_now">Disponible ahora</string>
     <string name="back">Atrás</string>
     <string name="badge">Tarjeta</string>
+    <string name="badge_group">Grupo de la tarjeta</string>
     <string name="badge_qr_code">Código QR de la tarjeta</string>
     <string name="badge_x_contact_your_operator_to_enable_it_again">Tarjeta %1$s. Póngase en contacto con su operador para volver a activarla.</string>
     <string name="badge_x_contact_your_operator_to_renew_it">Tarjeta %1$s. Póngase en contacto con su operador para renovarla.</string>
@@ -49,11 +51,14 @@
     <string name="card_x_can_now_start_charging_on_this_network">La tarjeta %1$s ya puede iniciar cargas en esta red.</string>
     <string name="change_my_password">Cambiar mi contraseña</string>
     <string name="charge">Cargar</string>
+    <string name="charge_with_this_app">Cargar con esta app</string>
     <string name="charging">Cargando</string>
     <string name="charging_amount">Importe de carga</string>
     <string name="charging_card">Tarjeta de carga</string>
     <string name="charging_point">Punto de carga</string>
+    <string name="charging_point_id">Identificador del punto de carga</string>
     <string name="charging_point_link">Enlace del punto de carga</string>
+    <string name="charging_point_of_another_operator">Punto de carga de otro operador</string>
     <string name="charging_power">Potencia de carga</string>
     <string name="charging_stops_when_the_credit_runs_out_the_bala">La carga se detiene cuando se agota el crédito. El saldo se reembolsa automáticamente, y en su totalidad si la carga no comienza en cinco minutos.</string>
     <string name="charging_time">Tiempo de carga</string>
@@ -65,6 +70,7 @@
     <string name="connector">Conector</string>
     <string name="connectors">Conectores</string>
     <string name="continue_as_a_demo_guest">Continuar como invitado de demostración</string>
+    <string name="continue_on_x">Continuar en %1$s</string>
     <string name="continue_with_the_demo_account">Continuar con la cuenta de demostración</string>
     <string name="create">Crear</string>
     <string name="create_an_account">Crear una cuenta</string>
@@ -97,12 +103,15 @@
     <string name="ended">Finalizada</string>
     <string name="energy">Energía</string>
     <string name="english">Inglés</string>
+    <string name="enter_a_charging_point_id">Introducir un identificador de punto de carga</string>
+    <string name="enter_the_charging_point_id">Introducir el identificador del punto de carga</string>
     <string name="estimated_price">Precio estimado</string>
     <string name="expires">Caduca</string>
     <string name="expires_x_x">Caduca %1$s/%2$s</string>
     <string name="failed">Fallida</string>
     <string name="filter">Filtrar</string>
     <string name="find_a_station">Buscar una estación</string>
+    <string name="find_this_charging_point">Buscar este punto de carga</string>
     <string name="finished">Terminada</string>
     <string name="finishing">Finalizando</string>
     <string name="follow_live">Seguir en directo</string>
@@ -169,6 +178,7 @@
     <string name="open">Abrir</string>
     <string name="open_android_settings">Abrir los ajustes de Android</string>
     <string name="open_my_session">Abrir mi sesión</string>
+    <string name="open_the_operators_website">Abrir la web del operador</string>
     <string name="operator_information">Información del operador</string>
     <string name="or_enter_its_number">O introduzca su número</string>
     <string name="order_a_card">Pedir una tarjeta</string>
@@ -198,6 +208,7 @@
     <string name="plug_this_vehicle_into_a_compatible_station_and">Conecte este vehículo a una estación compatible e inicie una sesión una vez. Después podrá activar aquí la carga automática durante 24 horas.</string>
     <string name="plugged_in">Conectado</string>
     <string name="point_the_camera_at_the_code_on_the_station">Apunte la cámara al código de la estación.</string>
+    <string name="point_the_camera_at_the_qr_code_on_the_charging_point">Apunta la cámara al código QR del punto de carga.</string>
     <string name="power">Potencia</string>
     <string name="preferences">Preferencias</string>
     <string name="price">Precio</string>
@@ -292,6 +303,7 @@
     <string name="this_card_is_on_your_account_but_disabled">Esta tarjeta está en su cuenta, pero desactivada.</string>
     <string name="this_card_is_on_your_account_but_has_expired">Esta tarjeta está en su cuenta, pero ha caducado.</string>
     <string name="this_card_is_registered_on_your_account">Esta tarjeta está registrada en su cuenta.</string>
+    <string name="this_charging_point_is_not_on_x">Este punto de carga no está en %1$s. Comprueba el identificador o carga desde la web del operador.</string>
     <string name="this_copy_of_the_app_has_not_been_configured_for">Esta copia de la aplicación aún no se ha configurado para un servidor desplegado. Edite AppConfiguration.properties, sustituya todos los valores siguientes y vuelva a compilar.</string>
     <string name="this_device_cannot_read_nfc_cards">Este dispositivo no puede leer tarjetas NFC.</string>
     <string name="this_image_could_not_be_prepared">No se ha podido preparar esta imagen.</string>
@@ -300,6 +312,7 @@
     <string name="this_pass_shows_your_badge_as_a_qr_code_contact">Este pase muestra su tarjeta como un código QR. Póngase en contacto con su operador para saber qué estaciones lo aceptan.</string>
     <string name="this_qr_code_does_not_belong_to_this_charging_ne">Este código QR no pertenece a esta red de carga. Por su seguridad, no se ha abierto.</string>
     <string name="this_qr_code_is_not_a_charging_point_link">Este código QR no es un enlace de punto de carga.</string>
+    <string name="this_qr_code_opens_x">Este código QR abre %1$s. Puedes pagar en la web del operador o buscar el punto de carga en esta app.</string>
     <string name="this_server_does_not_send_push_notifications_yet">Este servidor todavía no envía notificaciones push.</string>
     <string name="this_server_is_not_compatible_with_this_version">Este servidor no es compatible con esta versión de la aplicación.</string>
     <string name="this_station_has_not_declared_any_connector_yet">Esta estación todavía no ha declarado ningún conector.</string>
@@ -308,6 +321,8 @@
     <string name="to_start_a_charge_sign_in_or_scan_the_qr_code_on">Para iniciar una carga, inicie sesión o escanee el código QR de la estación.</string>
     <string name="try_again">Reintentar</string>
     <string name="try_removing_a_filter_or_searching_for_another_p">Pruebe a quitar un filtro o a buscar otro lugar.</string>
+    <string name="type_the_id_printed_on_the_charging_point">Escribe el identificador impreso en el punto de carga, normalmente junto al código QR o en la etiqueta del conector.</string>
+    <string name="type_the_id_printed_on_the_station_such_as">Escribe el identificador impreso en la estación, por ejemplo FR*ABC*E12345.</string>
     <string name="unavailable">No disponible</string>
     <string name="unknown">Desconocido</string>
     <string name="unpaid">Impagada</string>

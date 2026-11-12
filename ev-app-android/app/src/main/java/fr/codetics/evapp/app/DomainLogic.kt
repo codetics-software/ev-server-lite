@@ -152,6 +152,31 @@ data class StationFilter(
     }
 }
 
+object ChargingPointId {
+    data class Match(val station: CustomerStationResponse, val connectorId: Int?)
+
+    private val valid = Regex("[A-Z]{2}\\*?[A-Z0-9]{3}\\*?E[A-Z0-9*]{1,40}")
+    private val embedded = Regex("(?:^|[^A-Z0-9])([A-Z]{2}\\*[A-Z0-9]{3}\\*E[A-Z0-9*]{1,40})", RegexOption.IGNORE_CASE)
+
+    fun normalize(value: String): String = value.uppercase().filter { it in 'A'..'Z' || it in '0'..'9' }
+
+    fun isValid(value: String): Boolean = valid.matches(value.uppercase().filterNot(Char::isWhitespace))
+
+    fun find(text: String): String? {
+        val decoded = runCatching { java.net.URLDecoder.decode(text.replace("+", "%2B"), Charsets.UTF_8) }.getOrDefault(text)
+        return embedded.find(decoded)?.groupValues?.get(1)?.uppercase()
+    }
+
+    fun match(value: String, stations: List<CustomerStationResponse>): Match? {
+        val wanted = normalize(value)
+        if (wanted.isEmpty()) return null
+        stations.forEach { station ->
+            station.connectors.firstOrNull { it.evseId?.let(::normalize) == wanted }?.let { return Match(station, it.connectorId) }
+        }
+        return stations.firstOrNull { normalize(it.id) == wanted }?.let { Match(it, it.connectors.singleOrNull()?.connectorId) }
+    }
+}
+
 object QrCodeParser {
     enum class Failure(@StringRes val message: Int) {
         NotALink(R.string.this_qr_code_is_not_a_charging_point_link),
@@ -163,6 +188,32 @@ object QrCodeParser {
         data class Success(val link: PortalLink) : Outcome
 
         data class Rejected(val failure: Failure) : Outcome
+    }
+
+    sealed interface Scan {
+        data class Portal(val link: PortalLink) : Scan
+
+        data class ChargingPoint(val id: String) : Scan
+
+        data class OperatorPortal(val url: String, val chargingPoint: String?) : Scan
+
+        data class Rejected(val failure: Failure) : Scan
+    }
+
+    fun read(value: String, portalUrl: String): Scan {
+        val trimmed = value.trim()
+        if (ChargingPointId.isValid(trimmed)) return Scan.ChargingPoint(trimmed.uppercase().filterNot(Char::isWhitespace))
+        return when (val outcome = parse(trimmed, portalUrl)) {
+            is Outcome.Success -> Scan.Portal(outcome.link)
+            is Outcome.Rejected ->
+                if (outcome.failure == Failure.ForeignNetwork) {
+                    val scheme = runCatching { URI(trimmed).scheme?.lowercase() }.getOrNull()
+                    if (scheme == "https" || scheme == "http") Scan.OperatorPortal(trimmed, ChargingPointId.find(trimmed))
+                    else Scan.Rejected(Failure.NotALink)
+                } else {
+                    Scan.Rejected(outcome.failure)
+                }
+        }
     }
 
     private val workspace = Regex("[a-z0-9][a-z0-9-]{0,62}")

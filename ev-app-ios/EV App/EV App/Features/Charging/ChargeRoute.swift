@@ -11,4 +11,6 @@ enum ChargeRoute: Hashable {
     case session(Int)
     case portal(PortalLink)
     case guest(GuestOrder)
+    case chargingPointID(String?, operatorURL: URL?)
+    case station(String, connectorId: Int?)
 }

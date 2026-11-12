@@ -11,6 +11,7 @@ data class TokenInput(
     val visualId: String? = null,
     val description: String? = null,
     val default: Boolean = false,
+    val parentIdTag: String? = null,
 )
 
 data class TokenAssignment(val userId: UUID)

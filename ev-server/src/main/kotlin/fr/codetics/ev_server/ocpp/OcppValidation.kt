@@ -201,11 +201,11 @@ object OcppValidation {
                 throw OcppFault("OccurrenceConstraintViolation", "Paramètre manquant : $key")
             }
         }
-        validatePrimitives(payload)
+        validatePrimitives(payload, action)
         validateAction(action, payload)
     }
 
-    private fun validatePrimitives(payload: JsonNode) {
+    private fun validatePrimitives(payload: JsonNode, action: String) {
         payload.properties().forEach { (key, value) ->
             if (
                 key in integers &&
@@ -228,6 +228,7 @@ object OcppValidation {
         }
 
         textLimits.forEach { (key, maximum) ->
+            if (key == "key" && action == "GetConfiguration") return@forEach
             payload.get(key)?.let { value ->
                 val minimum = if (key == "value") 0 else 1
 
@@ -281,6 +282,13 @@ object OcppValidation {
             "SecurityEventNotification" -> {
                 if (!payload.path("type").isString || payload.path("type").asText().length !in 1..50) {
                     throw OcppFault("PropertyConstraintViolation", "Valeur invalide : type")
+                }
+            }
+            "GetConfiguration" -> {
+                payload.get("key")?.let { keys ->
+                    if (!keys.isArray || keys.any { !it.isString || it.asText().length !in 1..50 }) {
+                        throw OcppFault("PropertyConstraintViolation", "Paramètre invalide : key")
+                    }
                 }
             }
             "ExtendedTriggerMessage" -> {
