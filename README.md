@@ -4,7 +4,7 @@
 
 Une supervision de recharge volontairement légère : un serveur **Kotlin / Spring Boot**, un tableau de bord **Next.js**, une base **PostgreSQL** ou **MongoDB**. Développée par Kevin Vavelin, [Codetics](https://codetics.fr).
 
-Le produit couvre les bornes et connecteurs, les commandes OCPP 1.6, les sessions, les utilisateurs et badges RFID, les sites, les tarifs et le paiement public par QR code. L’enregistrement d’un véhicule reste facultatif. Pour des besoins de supervision plus avancés, contactez Codetics.
+Le produit couvre les bornes et connecteurs, les commandes OCPP 1.6 et 2.0.1, les sessions, les utilisateurs et badges RFID, les sites, les tarifs et le paiement public par QR code. L’enregistrement d’un véhicule reste facultatif. Pour des besoins de supervision plus avancés, contactez Codetics.
 
 Applications conducteurs : [iOS](ev-app-ios/README.md) et [Android](ev-app-android/README.md). Règles de licence pour les agents et outils d’IA : [AGENTS.md](AGENTS.md).
 
@@ -149,12 +149,16 @@ L’adresse peut aussi viser directement `/api/v1/stripe/webhook` sur le serveur
 
 ## Connexion des bornes
 
-Ajoutez une borne dans le tableau de bord et conservez son mot de passe, affiché une seule fois. Configurez OCPP 1.6 JSON, le sous-protocole `ocpp1.6` et l’authentification Basic :
+Ajoutez une borne dans le tableau de bord et conservez son mot de passe, affiché une seule fois. Choisissez sa version OCPP : détection automatique, OCPP 1.6 ou OCPP 2.0.1. Configurez OCPP-J (JSON), le sous-protocole `ocpp2.0.1` ou `ocpp1.6` et l’authentification Basic :
 
 ```text
 wss://adresse-du-serveur/ocpp/{espace}/{identifiant-borne}
 Authorization: Basic <base64(identifiant-borne:mot-de-passe)>
 ```
+
+Le Plug & Charge (ISO 15118) demande des certificats V2G déposés avant le démarrage du serveur : voir [Certificats ISO 15118](docs/deploiement/README.md#certificats-iso-15118-plug--charge).
+
+En détection automatique, le serveur retient la première version proposée par la borne dans `Sec-WebSocket-Protocol`. Une version imposée refuse les connexions qui ne la proposent pas. Les bornes existantes restent en OCPP 1.6 imposé.
 
 Les commandes sont persistées et suivies jusqu’à la réponse ou au dépassement de leur délai. Une réponse positive à une commande de démarrage ne prouve pas que le véhicule recharge.
 

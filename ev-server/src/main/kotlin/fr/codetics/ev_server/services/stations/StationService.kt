@@ -12,11 +12,13 @@ import fr.codetics.ev_server.core.stationSecret
 import fr.codetics.ev_server.models.api.MutationResponse
 import fr.codetics.ev_server.models.api.PageResponse
 import fr.codetics.ev_server.models.commands.CommandReceipt
+import fr.codetics.ev_server.models.commands.CommandState
 import fr.codetics.ev_server.models.entities.ConnectorEntity
 import fr.codetics.ev_server.models.entities.ConnectorKey
 import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.entities.TransactionEntity
+import fr.codetics.ev_server.models.stations.AutoChargeChange
 import fr.codetics.ev_server.models.stations.AutoChargeSetting
 import fr.codetics.ev_server.models.stations.ConnectorResponse
 import fr.codetics.ev_server.models.stations.ParameterInput
@@ -30,6 +32,9 @@ import fr.codetics.ev_server.models.stations.StationUpdate
 import fr.codetics.ev_server.models.stations.TemplateApplication
 import fr.codetics.ev_server.ocpp.OcppCommandQueue
 import fr.codetics.ev_server.ocpp.OcppGateway
+import fr.codetics.ev_server.ocpp.OcppVersion
+import fr.codetics.ev_server.ocpp.ocpp
+import fr.codetics.ev_server.ocpp.v201.Ocpp201Variables
 import fr.codetics.ev_server.ocpp.STATION_ID
 import fr.codetics.ev_server.ocpp.StationIdentity
 import fr.codetics.ev_server.persistence.Condition
@@ -144,6 +149,7 @@ class StationService(
             msg("stations.name_length")
         }
         input.siteAreaId?.let { requireArea(user.tenantId, it) }
+        ensure(input.ocppProtocol in OcppVersion.PROTOCOLS) { msg("ocpp.version.invalid") }
 
         return db.atomic {
             val key = StationKey(user.tenantId, input.id)
@@ -164,6 +170,7 @@ class StationService(
                     pendingSecretHash = null
                     pinnedCertificateFingerprint = null
                     issuedCertificateFingerprint = null
+                    ocppProtocol = input.ocppProtocol
                 }
             stations.save(station).also { db.flush() }
             db.audit(user.tenantId, user.id.toString(), "STATION_CREATE", input.id)
@@ -194,12 +201,17 @@ class StationService(
             }
             ensure(connector.type == null || connector.type.length <= 30) { msg("connector.invalid_type") }
         }
+        ensure(input.ocppProtocol == null || input.ocppProtocol in OcppVersion.PROTOCOLS) { msg("ocpp.version.invalid") }
 
         db.atomic {
             val station =
                 db.lock<StationEntity>(StationKey(user.tenantId, stationId))?.takeUnless { it.deleted }
                     ?: throw NotFound(msg("stations.not_found"))
             val disabled = station.enabled && !input.enabled
+            val protocol = input.ocppProtocol ?: station.ocppProtocol
+            val renegotiate =
+                station.connected && OcppVersion.fromLabel(station.ocppVersion) !in OcppVersion.allowed(protocol)
+            station.ocppProtocol = protocol
             station.name = input.name.trim()
             station.siteAreaId = input.siteAreaId
             station.enabled = input.enabled
@@ -218,7 +230,7 @@ class StationService(
                 connectors.save(connector)
             }
             db.audit(user.tenantId, user.id.toString(), "STATION_UPDATE", stationId)
-            if (disabled) gateway.disconnect(StationIdentity(user.tenantId, stationId))
+            if (disabled || renegotiate) gateway.disconnect(StationIdentity(user.tenantId, stationId))
         }
         return find(user.tenantId, stationId)
     }
@@ -304,8 +316,13 @@ class StationService(
     }
 
     fun changeParameter(user: AppPrincipal, stationId: String, input: ParameterInput): CommandReceipt {
-        station(user.tenantId, stationId)
-        ensure(input.key.matches(Regex("[A-Za-z0-9_.:-]{1,100}"))) { msg("ocpp.parameter.invalid_name") }
+        val device = station(user.tenantId, stationId)
+        ensure(
+            input.key.matches(Regex("[A-Za-z0-9_.:-]{1,100}")) ||
+                (device.ocpp() == OcppVersion.V201 && input.key.length <= 255 && Ocpp201Variables.parse(input.key) != null)
+        ) {
+            msg("ocpp.parameter.invalid_name")
+        }
         ensure(input.value.length <= 500) { msg("stations.parameter_value_too_long") }
         val existing =
             parameters.findAllByKeyTenantIdAndKeyStationIdOrderByKeyKey(user.tenantId, stationId)
@@ -325,7 +342,7 @@ class StationService(
         return CommandReceipt(id)
     }
 
-    fun autoCharge(user: AppPrincipal, stationId: String, input: AutoChargeSetting): CommandReceipt =
+    fun autoCharge(user: AppPrincipal, stationId: String, input: AutoChargeSetting): AutoChargeChange =
         db.atomic {
             val station =
                 db.lock<StationEntity>(StationKey(user.tenantId, stationId))?.takeUnless { it.deleted }
@@ -340,7 +357,7 @@ class StationService(
             }
             val id = configuration.syncAutoCharge(station, force = true)
             db.audit(user.tenantId, user.id.toString(), "STATION_AUTOCHARGE", "$stationId/${input.enabled}")
-            CommandReceipt(requireNotNull(id))
+            AutoChargeChange(id, id?.let { CommandState.QUEUED })
         }
 
     fun applyTemplate(user: AppPrincipal, stationId: String): TemplateApplication =

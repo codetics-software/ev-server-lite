@@ -13,6 +13,7 @@ import fr.codetics.ev_server.models.entities.RegistrationTokenEntity
 import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationEventEntity
 import fr.codetics.ev_server.models.entities.StationKey
+import fr.codetics.ev_server.ocpp.OcppVersion
 import fr.codetics.ev_server.repositories.RegistrationTokenRepository
 import fr.codetics.ev_server.repositories.StationEventRepository
 import fr.codetics.ev_server.repositories.StationRepository
@@ -128,6 +129,7 @@ class RegistrationTokenService(
                     siteAreaId = token.siteAreaId
                     enabled = true
                     deleted = false
+                    ocppProtocol = OcppVersion.AUTO
                 }
             stations.save(station).also { db.flush() }
             stationEvents.save(

@@ -99,6 +99,12 @@ app:
     allow-unauthenticated: ${OCPP_ALLOW_UNAUTHENTICATED:false}
     heartbeat-seconds: ${OCPP_HEARTBEAT_SECONDS:60}
     public-url: ${OCPP_PUBLIC_URL:}
+    certificates-dir: ${OCPP_CERTIFICATES_DIR:certificates}
+    iso15118-enabled: ${OCPP_ISO15118_ENABLED:false}
+    v2g-certificate-days: ${OCPP_V2G_CERTIFICATE_DAYS:365}
+    contract-service-url: ${OCPP_ISO15118_CONTRACT_URL:}
+    contract-service-token: ${OCPP_ISO15118_CONTRACT_TOKEN:}
+    ocsp-allow-private: ${OCPP_OCSP_ALLOW_PRIVATE:false}
   bootstrap:
     email: ${BOOTSTRAP_EMAIL:}
     password: ${BOOTSTRAP_PASSWORD:}

@@ -27,6 +27,7 @@ export type Station = {
   last_seen: string | null;
   last_boot?: string | null;
   ocpp_version?: string | null;
+  ocpp_protocol?: OcppProtocol | null;
   site_area_id?: string | null;
   site_id?: string | null;
   public?: boolean;
@@ -50,6 +51,8 @@ export type Station = {
   heartbeat_interval?: number | null;
   data_transfer_vendors?: string[];
   log_status?: string | null;
+  v2g_certificate_subject?: string | null;
+  v2g_certificate_expires_at?: string | null;
 };
 
 export type StationInError = { station: Station; errors: string[] };
@@ -112,6 +115,42 @@ export type RegistrationToken = {
 };
 
 export type ProvisionedStation = { id: string; secret: string; message: string };
+
+export type OcppProtocol = "AUTO" | "1.6" | "2.0.1";
+
+export function ocppProtocols() {
+  return [
+    { value: "AUTO", label: t("Détection automatique") },
+    { value: "1.6", label: t("OCPP 1.6") },
+    { value: "2.0.1", label: t("OCPP 2.0.1") },
+  ];
+}
+
+export function ocppVersionOf(station: Station): string | null {
+  const protocol = station.ocpp_protocol ?? "1.6";
+  if (protocol !== "AUTO") {
+    return protocol;
+  }
+  return station.last_seen ? (station.ocpp_version ?? "1.6") : null;
+}
+
+export function ocppLabel(station: Station) {
+  const version = ocppVersionOf(station);
+  if (station.ocpp_protocol === "AUTO") {
+    return version ? t("OCPP {version} (détectée)", { version }) : t("OCPP à détecter");
+  }
+  return `OCPP ${version}`;
+}
+
+export function ocppTransport(protocol: string | null | undefined) {
+  if (protocol === "2.0.1") {
+    return t("OCPP 2.0.1 JSON, sous-protocole ocpp2.0.1.");
+  }
+  if (protocol === "AUTO") {
+    return t("OCPP 2.0.1 ou 1.6 JSON, sous-protocole ocpp2.0.1 ou ocpp1.6 au choix de la borne.");
+  }
+  return t("OCPP 1.6 JSON, sous-protocole ocpp1.6.");
+}
 
 export function connectorTypes() {
   return [

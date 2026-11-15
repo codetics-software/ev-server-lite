@@ -140,6 +140,10 @@ service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
 
 puis activez `proxy_protocol` dans le Caddyfile et réglez le délai TCP de l’écouteur comme ci-dessus.
 
+## ISO 15118
+
+Suivez [Certificats ISO 15118](README.md#certificats-iso-15118-plug--charge). Sur EC2, déposez les fichiers dans `deploy/certificates` ; sur EKS, créez le secret `ev-iso15118-certificates` ; sur ECS Fargate, montez en lecture seule sur `/app/certificates` un volume EFS contenant les fichiers, et conservez une copie de `cpo-sub-ca.key` dans Secrets Manager. Le groupe de sécurité du serveur doit autoriser la sortie HTTP(S) vers les répondeurs OCSP et le service de certificats de contrat.
+
 ## Dimensionnement et coûts
 
 | Parc | Calcul | Base |

@@ -27,6 +27,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.server.HandshakeInterceptor
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler
 
 @Configuration(proxyBeanMethods = false)
 @EnableWebSocket
@@ -44,6 +45,7 @@ class OcppWebSocketConfiguration(
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
         registry
             .addHandler(gateway, "/ocpp/{tenant}/{station}")
+            .setHandshakeHandler(StationProtocol())
             .addInterceptors(
                 StationHandshake(stations, tenants, passwords, accounts, registrations, certificates, properties, stationEvents)
             )
@@ -52,6 +54,15 @@ class OcppWebSocketConfiguration(
 
 val STATION_ID = Regex("[A-Za-z0-9._:*-]{1,100}")
 private val TENANT_SLUG = Regex("[a-z0-9-]{1,63}")
+
+private val negotiated = ThreadLocal<OcppVersion?>()
+
+private class StationProtocol : DefaultHandshakeHandler() {
+    override fun selectProtocol(requestedProtocols: List<String>, webSocketHandler: WebSocketHandler): String? {
+        val chosen = negotiated.get() ?: return null
+        return requestedProtocols.firstOrNull { it.equals(chosen.subprotocol, true) }
+    }
+}
 
 data class ConnectionSecurity(
     val profile: Int,
@@ -82,13 +93,14 @@ private class StationHandshake(
         attributes: MutableMap<String, Any>,
     ): Boolean {
         var known: StationEntity? = null
+        negotiated.remove()
         try {
             val path = request.uri.path.split('/').filter(String::isNotBlank)
             val protocols =
                 request.headers["Sec-WebSocket-Protocol"].orEmpty().flatMap { header ->
                     header.split(',').map(String::trim)
                 }
-            require(path.size == 3 && (protocols.isEmpty() || "ocpp1.6" in protocols))
+            require(path.size == 3 && (protocols.isEmpty() || protocols.any { OcppVersion.fromSubprotocol(it) != null }))
 
             val slug = path[1]
             val station = path[2]
@@ -121,6 +133,9 @@ private class StationHandshake(
                 known ?: password?.let { registrations.register(tenant.id, station, it) }
                     ?: throw IllegalArgumentException("Borne inconnue.")
             if (!device.enabled) throw Rejected("borne désactivée")
+            val version =
+                OcppVersion.negotiate(device.ocppProtocol, protocols)
+                    ?: throw Rejected("OCPP ${device.ocppProtocol} non proposé par la borne")
 
             var promote = false
             val basic =
@@ -173,6 +188,8 @@ private class StationHandshake(
             attributes["station"] = StationIdentity(tenant.id, station)
             attributes["security"] = ConnectionSecurity(effective, certificate, promote)
             attributes["connection"] = UUID.randomUUID().toString()
+            attributes["ocpp"] = version
+            negotiated.set(version)
             return true
         } catch (error: Exception) {
             log.debug("Connexion OCPP refusée : {}", error.message)
@@ -237,6 +254,6 @@ private class StationHandshake(
         handler: WebSocketHandler,
         exception: Exception?,
     ) {
-        // L’authentification précède l’acceptation de la connexion WebSocket.
+        negotiated.remove()
     }
 }

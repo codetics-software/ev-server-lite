@@ -106,6 +106,10 @@ class MongoSchema(private val mongo: MongoTemplate) : InitializingBean {
             "charging_transactions" to
                 index("tenantId" to ASC, "userId" to ASC, "startedAt" to DESC),
             "charging_transactions" to index("stoppedAt" to ASC, "lastMeterAt" to ASC),
+            "charging_transactions" to
+                index("tenantId" to ASC, "stationId" to ASC, "ocppTransactionId" to ASC)
+                    .unique()
+                    .partial(exists("ocppTransactionId")),
             "meter_values" to index("transactionId" to ASC, "sampledAt" to ASC),
             "site_users" to index("_id.tenantId" to ASC, "_id.userId" to ASC),
             "station_events" to

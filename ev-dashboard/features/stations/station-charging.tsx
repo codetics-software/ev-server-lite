@@ -316,7 +316,7 @@ function ProfileForm({ station, onDone }: { station: Station; onDone: () => void
       <DialogHeader>
         <DialogTitle>{t("Nouveau profil de recharge")}</DialogTitle>
         <DialogDescription>
-          {t("{station} · programme de puissance OCPP 1.6", { station: station.name })}
+          {t("{station} · programme de puissance OCPP", { station: station.name })}
         </DialogDescription>
       </DialogHeader>
       <FieldGroup>

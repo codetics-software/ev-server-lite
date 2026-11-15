@@ -37,6 +37,8 @@ interface TransactionRepository : StoreRepository<TransactionEntity, Int> {
 
     fun findByTenantIdAndId(tenant: UUID, id: Int): TransactionEntity?
 
+    fun findFirstByTenantIdAndStationIdAndOcppTransactionId(tenant: UUID, station: String, ocppTransactionId: String): TransactionEntity?
+
     fun findFirstByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(
         tenant: UUID,
         station: String,

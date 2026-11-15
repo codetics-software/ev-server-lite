@@ -96,6 +96,10 @@ service.beta.kubernetes.io/scw-loadbalancer-timeout-client: "1h"
 
 Les réglages faits dans la console sur un Load Balancer créé par Kapsule sont écrasés par le contrôleur : passez toujours par les annotations.
 
+## ISO 15118
+
+Suivez [Certificats ISO 15118](README.md#certificats-iso-15118-plug--charge). Sur une Instance, déposez les fichiers dans `deploy/certificates` ; sur Kapsule, créez le secret `ev-iso15118-certificates`, et conservez une copie de `cpo-sub-ca.key` dans Secret Manager. Autorisez la sortie HTTP(S) vers les répondeurs OCSP et le service de certificats de contrat (Public Gateway pour un réseau privé).
+
 ## Dimensionnement et coûts
 
 | Parc | Instance | Base |

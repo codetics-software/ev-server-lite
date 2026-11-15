@@ -18,6 +18,22 @@ Les messages OCPP reçus sont dédupliqués par espace, borne et identifiant de 
 
 Les écarts courants des bornes du marché sont tolérés : horodatages sans fuseau (lus en UTC) ou avec un décalage `+0100`, valeurs de mesure numériques, index décimaux, fabricant et modèle jusqu’à 50 caractères, en-tête `Sec-WebSocket-Protocol` absent. Un code d’erreur inconnu est enregistré comme `OtherError`, le code d’origine étant conservé dans l’événement.
 
+## OCPP 1.6 et OCPP 2.0.1
+
+Les deux versions partagent la même adresse `/ocpp/{espace}/{borne}`. La version de chaque borne est choisie par l’administrateur (`AUTO`, `1.6` ou `2.0.1`) et négociée par le sous-protocole WebSocket ; la version obtenue est enregistrée à chaque connexion. Les bornes antérieures à OCPP 2.0.1 sont migrées en `1.6` imposé et suivent exactement le même traitement qu’auparavant.
+
+Les messages OCPP 2.0.1 sont décrits par des modèles Kotlin écrits à la main (`ocpp/v201`) : types, énumérations, requêtes et réponses des 64 actions. Le décodage est strict (propriétés inconnues, types, champs obligatoires, énumérations, longueurs, cardinalités, dates) et produit les codes d’erreur OCPP-J 2.0.1 (`FormatViolation`, `NotImplemented`, `MessageTypeNotSupported`, `RpcFrameworkError`…). Les bornes 1.6 gardent leurs codes 1.6.
+
+Le traitement métier est commun : autorisation, sessions, mesures, paiement, réservations, événements. Un EVSE OCPP 2.0.1 correspond à un connecteur de la supervision. Les états `Occupied` sont précisés par l’état de charge des `TransactionEvent` pour retrouver les mêmes états qu’en 1.6 (`Preparing`, `Charging`, `SuspendedEV`, `SuspendedEVSE`, `Finishing`). Les mesures 2.0.1 (valeur numérique, multiplicateur, relevé signé séparé) sont converties au format des mesures 1.6 avant enregistrement. L’identifiant de transaction choisi par la borne est conservé à côté du numéro de session.
+
+Les fonctions de la plateforme émettent toujours des commandes 1.6 ; pour une borne 2.0.1 elles sont traduites à l’envoi (`RemoteStartTransaction` → `RequestStartTransaction`, `ChangeConfiguration` → `SetVariables`, `GetConfiguration` → `GetBaseReport` ou `GetVariables`, `GetDiagnostics` → `GetLog`…) et la réponse est ramenée au format 1.6. Une commande sans équivalent est refusée dès la demande lorsque la version de la borne est connue. Les paramètres d’une borne 2.0.1 portent le nom `Composant[:instance][@evse[.connecteur]]/Variable[:instance]`, alimentés par `NotifyReport`. Les administrateurs peuvent aussi envoyer des commandes 2.0.1 natives depuis l’onglet avancé.
+
+En OCPP 2.0.1, le relèvement du profil suit le cas d’usage A05 : le serveur envoie `SetNetworkProfile` (adresse `OCPP_PUBLIC_URL`, emplacement libre de `NetworkConfigurationPriority` ou choisi par l’administrateur), place ce profil en tête de `NetworkConfigurationPriority` par `SetVariables`, puis demande `Reset OnIdle`. Le nouveau profil s’applique à la première connexion qui l’atteint ; un refus à l’une des étapes annule la demande. Le mot de passe se renouvelle par `SetVariables SecurityCtrlr/BasicAuthPassword`. La recharge automatique ne pilote aucune variable de la borne : le réglage reste appliqué par le serveur lors de l’autorisation des identifiants `MacAddress`.
+
+Les commandes d’une borne partent une à une : la suivante attend la réponse de la précédente, son échéance, ou une reconnexion de la borne (la commande en attente est alors close en dépassement de délai), comme l’exige OCPP-J pour les deux versions.
+
+Le Plug & Charge ISO 15118 repose sur les certificats du dossier `OCPP_CERTIFICATES_DIR`, vérifiés au démarrage (voir le guide de déploiement) : signature des certificats V2G des bornes par la sous-autorité CPO, installation des racines V2G et MO sur les bornes, vérification des certificats de contrat dans `Authorize` (`certificateStatus`), réponses OCSP pour `GetCertificateStatus`, relais de `Get15118EVCertificate` vers le service de certificats de contrat, et profil de transaction calculé à partir de `NotifyEVChargingNeeds` (limites du véhicule et du connecteur). Un EVSE à plusieurs connecteurs prend l’état le plus actif de ses connecteurs.
+
 ## Sécurité des bornes OCPP
 
 Chaque borne a un profil de sécurité OCPP 1.6 (1 par défaut). Une borne peut se connecter avec un profil plus fort que le sien, jamais plus faible.

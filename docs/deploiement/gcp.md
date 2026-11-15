@@ -146,6 +146,10 @@ Les en-têtes ajoutés par l’équilibreur **remplacent** ceux du client portan
 
 Sur le service de backend de `APP_HOST`, ajoutez `--custom-request-header='X-Client-Cert:'` pour écraser toute valeur fournie par un client. Les deux proxys partagent les plages des frontaux Google : `OCPP_CLIENT_CERT_PROXIES` ne les distingue pas, cet écrasement reste donc obligatoire.
 
+## ISO 15118
+
+Suivez [Certificats ISO 15118](README.md#certificats-iso-15118-plug--charge). Sur une VM, déposez les fichiers dans `deploy/certificates` ; sur GKE, créez le secret `ev-iso15118-certificates` ; sur Cloud Run, montez chaque fichier depuis Secret Manager comme volume de secrets dans `/app/certificates`. Autorisez la sortie HTTP(S) vers les répondeurs OCSP et le service de certificats de contrat (Cloud NAT si le serveur n’a pas d’adresse publique).
+
 ## Dimensionnement et coûts
 
 | Parc | VM | Cloud SQL |

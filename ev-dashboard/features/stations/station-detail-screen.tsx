@@ -47,7 +47,7 @@ import { StationProperties } from "./station-properties";
 import type { SecurityCapabilities } from "./station-security";
 import { PinDialog } from "./station-security-dialogs";
 import { StationSecurityPanel } from "./station-security-panel";
-import type { Station } from "./station-types";
+import { ocppLabel, ocppVersionOf, type Station } from "./station-types";
 import { t } from "@/lib/i18n";
 
 function Info({ label, value }: { label: string; value: string }) {
@@ -113,7 +113,7 @@ export function StationDetailScreen({ id }: { id: string }) {
         description={[
           station.id,
           [station.vendor, station.model].filter(Boolean).join(" ") || t("Matériel inconnu"),
-          `OCPP ${station.ocpp_version ?? "1.6"}`,
+          ocppLabel(station),
         ].join(" · ")}
         meta={
           <>
@@ -299,11 +299,18 @@ export function StationDetailScreen({ id }: { id: string }) {
         {admin && (
           <TabsContent value="advanced" className="max-w-2xl pt-4">
             <p className="mb-4 text-sm text-muted-foreground">
-              {t(
-                "Envoi d’une commande OCPP 1.6 brute. Réservé aux administrateurs : préférez les actions dédiées.",
-              )}
+              {ocppVersionOf(station) === "2.0.1"
+                ? t(
+                    "Envoi d’une commande OCPP 2.0.1 brute. Réservé aux administrateurs : préférez les actions dédiées.",
+                  )
+                : t(
+                    "Envoi d’une commande OCPP 1.6 brute. Réservé aux administrateurs : préférez les actions dédiées.",
+                  )}
             </p>
-            <StationCommandForm station={station.id} />
+            <StationCommandForm
+              station={station.id}
+              version={ocppVersionOf(station) === "2.0.1" ? "2.0.1" : "1.6"}
+            />
           </TabsContent>
         )}
       </Tabs>

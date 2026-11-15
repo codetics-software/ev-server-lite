@@ -5,6 +5,7 @@ import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationEventEntity
 import fr.codetics.ev_server.models.entities.StationKey
+import fr.codetics.ev_server.ocpp.v201.Ocpp201Commands
 import fr.codetics.ev_server.repositories.StationEventRepository
 import fr.codetics.ev_server.repositories.StationRepository
 import java.time.Instant
@@ -26,6 +27,7 @@ class OcppGateway(
     private val queue: OcppCommandQueue,
     private val stationEvents: StationEventRepository,
     private val events: ApplicationEventPublisher,
+    private val translator: Ocpp201Commands,
 ) : TextWebSocketHandler(), SubProtocolCapable, SmartLifecycle {
     private val log = LoggerFactory.getLogger(javaClass)
     private val sessions = ConcurrentHashMap<StationIdentity, WebSocketSession>()
@@ -46,19 +48,23 @@ class OcppGateway(
     override fun isRunning() = running
 
     override fun getSubProtocols(): List<String> {
-        return listOf("ocpp1.6")
+        return listOf(OcppVersion.V201.subprotocol, OcppVersion.V16.subprotocol)
     }
 
     private fun identity(session: WebSocketSession): StationIdentity {
         return session.attributes["station"] as StationIdentity
     }
 
+    private fun version(session: WebSocketSession): OcppVersion =
+        session.attributes["ocpp"] as? OcppVersion ?: OcppVersion.V16
+
     override fun afterConnectionEstablished(session: WebSocketSession) {
         session.setTextMessageSizeLimit(262144)
         val station = identity(session)
         val previous = sessions.put(station, session)
         previous?.close(CloseStatus.POLICY_VIOLATION)
-        updateConnectivity(station, true, session.attributes["security"] as? ConnectionSecurity)
+        queue.interrupted(station)
+        updateConnectivity(station, true, session.attributes["security"] as? ConnectionSecurity, version(session))
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
@@ -73,6 +79,7 @@ class OcppGateway(
         identity: StationIdentity,
         connected: Boolean,
         security: ConnectionSecurity? = null,
+        version: OcppVersion = OcppVersion.V16,
     ) {
         db.atomic {
             val station = db.lock<StationEntity>(StationKey(identity.tenant, identity.station))
@@ -80,6 +87,7 @@ class OcppGateway(
             if (station != null) {
                 station.connected = connected
                 station.lastSeen = Instant.now()
+                if (connected) station.ocppVersion = version.label
                 if (connected && security != null) {
                     station.connectionSecurityProfile = security.profile
                     security.certificate?.let { certificate ->
@@ -107,6 +115,7 @@ class OcppGateway(
                         stationId = identity.station,
                         type = if (connected) "CONNECTION" else "DISCONNECTION",
                         status = if (connected) security?.let { "Profil ${it.profile}" } else null,
+                        info = if (connected) "OCPP ${version.label}" else null,
                     )
                 )
                 events.publishEvent(StationConnectionChanged(station, connected))
@@ -134,6 +143,7 @@ class OcppGateway(
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         val station = identity(session)
+        val version = version(session)
         var id = ""
 
         try {
@@ -154,6 +164,7 @@ class OcppGateway(
                             frame[2].asText(),
                             frame[3],
                             session.attributes["connection"].toString(),
+                            version,
                         )
                     send(session, response)
                 }
@@ -162,11 +173,23 @@ class OcppGateway(
                     queue.complete(station, frame)
                 }
                 else -> {
-                    throw OcppFault("ProtocolError", "Type de trame non pris en charge.")
+                    throw OcppFault(
+                        if (version == OcppVersion.V201) "MessageTypeNotSupported" else "ProtocolError",
+                        "Type de trame non pris en charge.",
+                    )
                 }
             }
         } catch (fault: OcppFault) {
-            sendError(session, id, fault.code, fault.message)
+            if (version == OcppVersion.V201) {
+                sendError(
+                    session,
+                    id.ifBlank { "-1" },
+                    if (fault.code == "FormationViolation") "FormatViolation" else fault.code,
+                    fault.message.take(255),
+                )
+            } else {
+                sendError(session, id, fault.code, fault.message)
+            }
         } catch (error: Exception) {
             log.warn(
                 "Message OCPP non traité (borne {}/{}, message '{}')",
@@ -177,6 +200,8 @@ class OcppGateway(
             )
             if (id.isNotBlank()) {
                 sendError(session, id, "InternalError", "Le message n’a pas pu être traité.")
+            } else if (version == OcppVersion.V201) {
+                sendError(session, "-1", "RpcFrameworkError", "Le message n’a pas pu être lu.")
             } else {
                 session.close(CloseStatus.BAD_DATA)
             }
@@ -228,9 +253,17 @@ class OcppGateway(
         ping()
 
         sessions.forEach { (station, session) ->
-            val pending = queue.claim(station)
+            val version = version(session)
+            val pending = queue.claim(station, version)
 
             pending.forEach { command ->
+                val wire =
+                    try {
+                        translator.outbound(command, version)
+                    } catch (fault: OcppFault) {
+                        queue.fail(command, fault.message)
+                        return@forEach
+                    }
                 try {
                     send(
                         session,
@@ -238,8 +271,8 @@ class OcppGateway(
                             listOf(
                                 2,
                                 command.id.toString(),
-                                command.action,
-                                db.decode(command.request),
+                                wire.action,
+                                wire.payload,
                             )
                         ),
                     )

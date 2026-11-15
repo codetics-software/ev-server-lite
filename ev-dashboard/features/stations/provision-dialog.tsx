@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
-import { FormPicker, FormText } from "@/features/shared/form-fields";
+import { FormPicker, FormSelect, FormText } from "@/features/shared/form-fields";
 import { SecretReveal } from "@/features/shared/secret-reveal";
 import { useComponent, useWorkspaceSession } from "@/features/workspace/workspace-context";
 import { api, errorMessage } from "@/lib/api";
@@ -20,7 +20,7 @@ import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { useApi } from "@/hooks/use-api";
 import { ocppUrl, profileLabel, type SecurityCapabilities } from "./station-security";
-import type { ProvisionedStation } from "./station-types";
+import { ocppProtocols, ocppTransport, type ProvisionedStation } from "./station-types";
 import { t } from "@/lib/i18n";
 
 export function ProvisionDialog({
@@ -32,7 +32,7 @@ export function ProvisionDialog({
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
 }) {
-  const [receipt, setReceipt] = useState<ProvisionedStation | null>(null);
+  const [receipt, setReceipt] = useState<(ProvisionedStation & { protocol: string }) | null>(null);
   const { workspace } = useWorkspaceSession();
   const capabilities = useApi<SecurityCapabilities>(
     receipt ? "stations/security/capabilities" : null,
@@ -58,7 +58,7 @@ export function ProvisionDialog({
                   { id: receipt.id },
                 )
               : t(
-                  "La borne se connecte ensuite en OCPP 1.6 avec son identifiant et son mot de passe.",
+                  "La borne se connecte ensuite en OCPP 1.6 ou 2.0.1 avec son identifiant et son mot de passe.",
                 )}
           </DialogDescription>
         </DialogHeader>
@@ -78,8 +78,8 @@ export function ProvisionDialog({
             />
             <p className="text-sm text-muted-foreground">
               {t(
-                "{profile} : OCPP 1.6 JSON, sous-protocole ocpp1.6, authentification Basic avec l’identifiant et ce mot de passe.",
-                { profile: profileLabel(1) },
+                "{profile} : {transport} Authentification Basic avec l’identifiant et ce mot de passe.",
+                { profile: profileLabel(1), transport: ocppTransport(receipt.protocol) },
               )}
               {!publicUrl &&
                 ` ${t("Adaptez le nom d’hôte si le serveur OCPP est publié à une autre adresse que ce tableau de bord.")}`}
@@ -103,25 +103,29 @@ export function ProvisionDialog({
   );
 }
 
-function ProvisionForm({ onCreated }: { onCreated: (result: ProvisionedStation) => void }) {
+function ProvisionForm({
+  onCreated,
+}: {
+  onCreated: (result: ProvisionedStation & { protocol: string }) => void;
+}) {
   const organization = useComponent("organization");
   const [error, setError] = useState("");
   const form = useForm({
-    defaultValues: { id: "", name: "", siteAreaId: "" },
+    defaultValues: { id: "", name: "", siteAreaId: "", ocppProtocol: "AUTO" },
     validationLogic: revalidateLogic(),
     onSubmit: async ({ value }) => {
       setError("");
       try {
-        onCreated(
-          await api<ProvisionedStation>("stations", {
-            method: "POST",
-            body: JSON.stringify({
-              id: value.id.trim(),
-              name: value.name.trim(),
-              siteAreaId: value.siteAreaId || undefined,
-            }),
+        const created = await api<ProvisionedStation>("stations", {
+          method: "POST",
+          body: JSON.stringify({
+            id: value.id.trim(),
+            name: value.name.trim(),
+            siteAreaId: value.siteAreaId || undefined,
+            ocppProtocol: value.ocppProtocol,
           }),
-        );
+        });
+        onCreated({ ...created, protocol: value.ocppProtocol });
       } catch (failure) {
         setError(errorMessage(failure, t("Impossible d’ajouter la borne.")));
       }
@@ -168,6 +172,18 @@ function ProvisionForm({ onCreated }: { onCreated: (result: ProvisionedStation) 
           validators={{ onDynamic: rules(required(t("Renseignez un nom.")), maxLength(200)) }}
         >
           {(field) => <FormText field={field} label={t("Nom")} maxLength={200} required />}
+        </form.Field>
+        <form.Field name="ocppProtocol">
+          {(field) => (
+            <FormSelect
+              field={field}
+              label={t("Version OCPP")}
+              description={t(
+                "En détection automatique, la borne utilise la version qu’elle préfère parmi OCPP 2.0.1 et 1.6.",
+              )}
+              options={ocppProtocols()}
+            />
+          )}
         </form.Field>
         {organization && (
           <form.Field name="siteAreaId">

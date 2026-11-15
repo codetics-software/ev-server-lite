@@ -57,4 +57,5 @@ class TransactionEntity(
     var signedMeterStart: String? = null,
     var signedMeterStop: String? = null,
     var signedMeterFormat: String? = null,
+    var ocppTransactionId: String? = null,
 )

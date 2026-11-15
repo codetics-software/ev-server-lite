@@ -1,6 +1,132 @@
 import type { Messages } from "../types";
 
 const messages: Messages = {
+  "ISO 15118 · Plug & Charge": { en: "ISO 15118 · Plug & Charge", es: "ISO 15118 · Plug & Charge" },
+  "Certificats V2G de la borne, racines des opérateurs de mobilité et contrats des véhicules.": {
+    en: "Charging station V2G certificates, mobility operator roots and vehicle contracts.",
+    es: "Certificados V2G de la estación, raíces de los operadores de movilidad y contratos de los vehículos.",
+  },
+  "ISO 15118 n’est pas activé sur ce serveur. Déposez les certificats V2G dans le dossier des certificats puis définissez OCPP_ISO15118_ENABLED=true, comme décrit dans la documentation de déploiement.":
+    {
+      en: "ISO 15118 is not enabled on this server. Place the V2G certificates in the certificates folder, then set OCPP_ISO15118_ENABLED=true, as described in the deployment documentation.",
+      es: "ISO 15118 no está activado en este servidor. Coloque los certificados V2G en la carpeta de certificados y defina OCPP_ISO15118_ENABLED=true, como se describe en la documentación de despliegue.",
+    },
+  "Sous-autorité CPO": { en: "CPO sub-CA", es: "Subautoridad CPO" },
+  "Racines de confiance": { en: "Trust roots", es: "Raíces de confianza" },
+  "{v2g} racine(s) V2G, {mo} racine(s) d’opérateurs de mobilité": {
+    en: "{v2g} V2G root(s), {mo} mobility operator root(s)",
+    es: "{v2g} raíz/raíces V2G, {mo} raíz/raíces de operadores de movilidad",
+  },
+  "Service de certificats de contrat": {
+    en: "Contract certificate service",
+    es: "Servicio de certificados de contrato",
+  },
+  Configuré: { en: "Configured", es: "Configurado" },
+  "Non configuré": { en: "Not configured", es: "No configurado" },
+  "Certificat V2G de la borne": {
+    en: "Charging station V2G certificate",
+    es: "Certificado V2G de la estación",
+  },
+  "Aucun certificat V2G émis par ce serveur": {
+    en: "No V2G certificate issued by this server",
+    es: "Ningún certificado V2G emitido por este servidor",
+  },
+  "Installation des racines V2G et MO demandée à la borne.": {
+    en: "V2G and MO root installation requested from the charging station.",
+    es: "Instalación de las raíces V2G y MO solicitada a la estación.",
+  },
+  "L’installation des racines n’a pas été envoyée": {
+    en: "The root installation was not sent",
+    es: "La instalación de las raíces no se envió",
+  },
+  "Installer les racines V2G et MO": {
+    en: "Install V2G and MO roots",
+    es: "Instalar las raíces V2G y MO",
+  },
+  "La borne va envoyer une demande de certificat V2G.": {
+    en: "The charging station will send a V2G certificate request.",
+    es: "La estación enviará una solicitud de certificado V2G.",
+  },
+  "Demander un certificat V2G": {
+    en: "Request a V2G certificate",
+    es: "Solicitar un certificado V2G",
+  },
+  "Lecture des certificats ISO 15118 demandée à la borne.": {
+    en: "ISO 15118 certificate reading requested from the charging station.",
+    es: "Lectura de los certificados ISO 15118 solicitada a la estación.",
+  },
+  "Lire les certificats ISO 15118": {
+    en: "Read ISO 15118 certificates",
+    es: "Leer los certificados ISO 15118",
+  },
+  "Emplacement du profil réseau": { en: "Network profile slot", es: "Ranura del perfil de red" },
+  "Laissez vide pour utiliser le premier emplacement libre d’après NetworkConfigurationPriority.": {
+    en: "Leave empty to use the first free slot according to NetworkConfigurationPriority.",
+    es: "Déjelo vacío para usar la primera ranura libre según NetworkConfigurationPriority.",
+  },
+  "Interface réseau de la borne": {
+    en: "Charging station network interface",
+    es: "Interfaz de red de la estación",
+  },
+  "Wired pour Ethernet, Wireless pour le Wi-Fi ou le réseau mobile.": {
+    en: "Wired for Ethernet, Wireless for Wi-Fi or mobile network.",
+    es: "Wired para Ethernet, Wireless para Wi-Fi o red móvil.",
+  },
+  "La borne reçoit un profil réseau au profil {profile}, le place en tête de sa liste puis redémarre. L’ancien niveau reste accepté jusqu’à sa reconnexion.":
+    {
+      en: "The charging station receives a network profile at profile {profile}, puts it first in its list, then restarts. The previous level remains accepted until it reconnects.",
+      es: "La estación recibe un perfil de red con el perfil {profile}, lo coloca en primer lugar de su lista y se reinicia. El nivel anterior se sigue aceptando hasta su reconexión.",
+    },
+  "OCPP 1.6": { en: "OCPP 1.6", es: "OCPP 1.6" },
+  "OCPP 2.0.1": { en: "OCPP 2.0.1", es: "OCPP 2.0.1" },
+  "Commande OCPP 2.0.1": { en: "OCPP 2.0.1 command", es: "Comando OCPP 2.0.1" },
+  "Détection automatique": { en: "Automatic detection", es: "Detección automática" },
+  "En détection automatique, la borne utilise la version qu’elle préfère parmi OCPP 2.0.1 et 1.6.":
+    {
+      en: "With automatic detection, the charging station uses its preferred version among OCPP 2.0.1 and 1.6.",
+      es: "Con la detección automática, la estación usa la versión que prefiera entre OCPP 2.0.1 y 1.6.",
+    },
+  "En détection automatique, la borne utilise la version qu’elle préfère. Une version désormais refusée déconnecte la borne, qui se reconnecte avec la version choisie.":
+    {
+      en: "With automatic detection, the charging station uses its preferred version. A version that is no longer allowed disconnects the station, which reconnects with the chosen version.",
+      es: "Con la detección automática, la estación usa la versión que prefiera. Una versión que deja de estar permitida desconecta la estación, que se vuelve a conectar con la versión elegida.",
+    },
+  "Envoi d’une commande OCPP 2.0.1 brute. Réservé aux administrateurs : préférez les actions dédiées.":
+    {
+      en: "Sends a raw OCPP 2.0.1 command. Administrators only: prefer the dedicated actions.",
+      es: "Envío de un comando OCPP 2.0.1 sin procesar. Reservado a los administradores: utilice preferentemente las acciones dedicadas.",
+    },
+  "La borne se connecte ensuite en OCPP 1.6 ou 2.0.1 avec son identifiant et son mot de passe.": {
+    en: "The charging station then connects over OCPP 1.6 or 2.0.1 with its ID and password.",
+    es: "Después, la estación se conecta en OCPP 1.6 o 2.0.1 con su identificador y su contraseña.",
+  },
+  "OCPP 2.0.1 JSON, sous-protocole ocpp2.0.1.": {
+    en: "OCPP 2.0.1 JSON, ocpp2.0.1 subprotocol.",
+    es: "OCPP 2.0.1 JSON, subprotocolo ocpp2.0.1.",
+  },
+  "OCPP 2.0.1 ou 1.6 JSON, sous-protocole ocpp2.0.1 ou ocpp1.6 au choix de la borne.": {
+    en: "OCPP 2.0.1 or 1.6 JSON, ocpp2.0.1 or ocpp1.6 subprotocol as chosen by the charging station.",
+    es: "OCPP 2.0.1 o 1.6 JSON, subprotocolo ocpp2.0.1 u ocpp1.6 según elija la estación.",
+  },
+  "OCPP à détecter": { en: "OCPP to be detected", es: "OCPP por detectar" },
+  "OCPP {version} (détectée)": {
+    en: "OCPP {version} (detected)",
+    es: "OCPP {version} (detectada)",
+  },
+  "Version OCPP": { en: "OCPP version", es: "Versión OCPP" },
+  "Version détectée : OCPP {version}. Une version désormais refusée déconnecte la borne, qui se reconnecte avec la version choisie.":
+    {
+      en: "Detected version: OCPP {version}. A version that is no longer allowed disconnects the station, which reconnects with the chosen version.",
+      es: "Versión detectada: OCPP {version}. Una versión que deja de estar permitida desconecta la estación, que se vuelve a conectar con la versión elegida.",
+    },
+  "{profile} : {transport} Authentification Basic avec l’identifiant et ce mot de passe.": {
+    en: "{profile}: {transport} Basic authentication with the ID and this password.",
+    es: "{profile}: {transport} Autenticación Basic con el identificador y esta contraseña.",
+  },
+  "{station} · programme de puissance OCPP": {
+    en: "{station} · OCPP power schedule",
+    es: "{station} · programa de potencia OCPP",
+  },
   "(actuel)": { en: "(current)", es: "(actual)" },
   "-----BEGIN CERTIFICATE-----": {
     en: "-----BEGIN CERTIFICATE-----",
@@ -434,10 +560,6 @@ const messages: Messages = {
   "La borne reçoit une demande de suppression du profil.": {
     en: "The charging station receives a request to delete the profile.",
     es: "La estación recibe una solicitud de eliminación del perfil.",
-  },
-  "La borne se connecte ensuite en OCPP 1.6 avec son identifiant et son mot de passe.": {
-    en: "The charging station then connects over OCPP 1.6 with its ID and password.",
-    es: "Después, la estación se conecta en OCPP 1.6 con su identificador y su contraseña.",
   },
   "La borne télécharge le micrologiciel, vérifie sa signature puis l’installe (SignedUpdateFirmware).":
     {
@@ -1026,11 +1148,6 @@ const messages: Messages = {
   },
   "{count} phase": { en: "{count} phase", es: "{count} fase" },
   "{count} phases": { en: "{count} phases", es: "{count} fases" },
-  "{profile} : OCPP 1.6 JSON, sous-protocole ocpp1.6, authentification Basic avec l’identifiant et ce mot de passe.":
-    {
-      en: "{profile}: OCPP 1.6 JSON, ocpp1.6 subprotocol, Basic authentication with the ID and this password.",
-      es: "{profile}: OCPP 1.6 JSON, subprotocolo ocpp1.6, autenticación Basic con el identificador y esta contraseña.",
-    },
   "{purpose} · niveau {level} · {date}": {
     en: "{purpose} · level {level} · {date}",
     es: "{purpose} · nivel {level} · {date}",
@@ -1038,10 +1155,6 @@ const messages: Messages = {
   "{station} · actuellement {profile}": {
     en: "{station} · currently {profile}",
     es: "{station} · actualmente {profile}",
-  },
-  "{station} · programme de puissance OCPP 1.6": {
-    en: "{station} · OCPP 1.6 power schedule",
-    es: "{station} · programa de potencia OCPP 1.6",
   },
   "À utiliser lorsque vous êtes devant la borne : l’ancien mot de passe ne fonctionne plus immédiatement et la borne est déconnectée jusqu’à ce que le nouveau y soit saisi.":
     {

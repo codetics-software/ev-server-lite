@@ -46,8 +46,9 @@ import {
   type SecurityCapabilities,
   type SecurityChange,
   type SecurityProfile,
+  ocppInterfaces,
 } from "./station-security";
-import type { ProvisionedStation, Station } from "./station-types";
+import { ocppVersionOf, type ProvisionedStation, type Station } from "./station-types";
 import { t, translated } from "@/lib/i18n";
 
 function securityPath(station: Station) {
@@ -105,12 +106,17 @@ export function ProfileChange({
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState(String(current));
   const [send, setSend] = useState(true);
+  const [slot, setSlot] = useState("");
+  const [network, setNetwork] = useState("Wired0");
   const [confirming, setConfirming] = useState(false);
   const [typed, setTyped] = useState("");
   const action = useAction();
   const sendId = useId();
   const confirmId = useId();
   const chosen = Number(target);
+  const v201 = ocppVersionOf(station) === "2.0.1";
+  const slotId = useId();
+  const networkProfile = v201 && send && chosen > current && chosen > 0;
   const profiles = ([0, 1, 2, 3] as SecurityProfile[]).filter(
     (profile) => profile !== 0 || current === 0 || capabilities?.allow_unauthenticated,
   );
@@ -124,6 +130,8 @@ export function ProfileChange({
   function reset() {
     setTarget(String(current));
     setSend(true);
+    setSlot("");
+    setNetwork("Wired0");
     setTyped("");
   }
 
@@ -137,6 +145,8 @@ export function ProfileChange({
             securityProfile: chosen,
             pinnedCertificateFingerprint: station.pinned_certificate_fingerprint ?? null,
             sendToStation: send,
+            configurationSlot: networkProfile && slot ? Number(slot) : undefined,
+            ocppInterface: networkProfile ? network : undefined,
           }),
         }),
       {
@@ -206,6 +216,39 @@ export function ProfileChange({
                 </FieldDescription>
               </FieldContent>
             </Field>
+            {networkProfile && (
+              <>
+                <Field>
+                  <FieldLabel htmlFor={slotId}>{t("Emplacement du profil réseau")}</FieldLabel>
+                  <Input
+                    id={slotId}
+                    type="number"
+                    min={0}
+                    max={99}
+                    value={slot}
+                    placeholder={t("Automatique")}
+                    onChange={(event) => setSlot(event.target.value)}
+                  />
+                  <FieldDescription>
+                    {t(
+                      "Laissez vide pour utiliser le premier emplacement libre d’après NetworkConfigurationPriority.",
+                    )}
+                  </FieldDescription>
+                </Field>
+                <Field>
+                  <FieldLabel>{t("Interface réseau de la borne")}</FieldLabel>
+                  <OptionSelect
+                    value={network}
+                    onChange={setNetwork}
+                    options={ocppInterfaces}
+                    label={t("Interface réseau de la borne")}
+                  />
+                  <FieldDescription>
+                    {t("Wired pour Ethernet, Wireless pour le Wi-Fi ou le réseau mobile.")}
+                  </FieldDescription>
+                </Field>
+              </>
+            )}
           </FieldGroup>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
@@ -252,14 +295,19 @@ export function ProfileChange({
                       "Le serveur accepte immédiatement le profil {profile}, plus faible. Rien n’est envoyé à la borne : une borne ne peut pas abaisser son propre profil, elle doit être reconfigurée sur place.",
                       { profile: chosen },
                     )
-                  : send
+                  : send && v201
                     ? t(
-                        "La borne va redémarrer sa connexion. L’ancien niveau reste accepté jusqu’à sa reconnexion.",
-                      )
-                    : t(
-                        "Le profil {profile} est appliqué immédiatement côté serveur, sans rien envoyer à la borne : configurez-la sur place pour qu’elle se reconnecte avec ce profil.",
+                        "La borne reçoit un profil réseau au profil {profile}, le place en tête de sa liste puis redémarre. L’ancien niveau reste accepté jusqu’à sa reconnexion.",
                         { profile: chosen },
-                      )}
+                      )
+                    : send
+                      ? t(
+                          "La borne va redémarrer sa connexion. L’ancien niveau reste accepté jusqu’à sa reconnexion.",
+                        )
+                      : t(
+                          "Le profil {profile} est appliqué immédiatement côté serveur, sans rien envoyer à la borne : configurez-la sur place pour qu’elle se reconnecte avec ce profil.",
+                          { profile: chosen },
+                        )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {disabling && (

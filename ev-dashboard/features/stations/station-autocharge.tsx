@@ -17,7 +17,6 @@ import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/
 import { Switch } from "@/components/ui/switch";
 import { useAction } from "@/features/shared/use-action";
 import { api } from "@/lib/api";
-import type { CommandReceipt } from "@/lib/api-types";
 import { IconHistory } from "@tabler/icons-react";
 import { useState } from "react";
 import type { Station } from "./station-types";
@@ -117,10 +116,13 @@ export function StationAutoCharge({
                 const receipt = await action.run(
                   "autocharge",
                   () =>
-                    api<CommandReceipt>(`stations/${encodeURIComponent(station.id)}/autocharge`, {
-                      method: "PUT",
-                      body: JSON.stringify({ enabled: requested }),
-                    }),
+                    api<{ id: string | null }>(
+                      `stations/${encodeURIComponent(station.id)}/autocharge`,
+                      {
+                        method: "PUT",
+                        body: JSON.stringify({ enabled: requested }),
+                      },
+                    ),
                   {
                     success: requested
                       ? t("Recharge automatique activée.")
@@ -130,7 +132,7 @@ export function StationAutoCharge({
                 );
                 setRequested(null);
                 if (receipt) {
-                  setQueued(true);
+                  setQueued(Boolean(receipt.id));
                   onChanged();
                 }
               }}

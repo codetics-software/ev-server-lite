@@ -34,4 +34,5 @@ class ConnectorEntity(
     var meterAt: Instant? = null,
     var pluggedAt: Instant? = null,
     var vid: String? = null,
+    var ocppConnectors: String? = null,
 )

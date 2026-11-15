@@ -27,4 +27,6 @@ class CommandEntity(
     var deadline: Instant = Instant.now().plusSeconds(60),
     var completedAt: Instant? = null,
     @JdbcTypeCode(SqlTypes.JSON) var callback: String? = null,
+    var ocppVersion: String? = null,
+    var wireVersion: String? = null,
 )

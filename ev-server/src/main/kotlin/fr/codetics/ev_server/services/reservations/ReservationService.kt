@@ -33,6 +33,14 @@ class ReservationService(private val reservations: ReservationRepository, privat
         reservations.save(reservation)
     }
 
+    fun updated(tenantId: UUID, stationId: String, reservationId: Int, status: String) {
+        val reservation = reservations.findById(ReservationKey(tenantId, stationId, reservationId)).orElse(null) ?: return
+        if (reservation.status == "USED") return
+        reservation.status = status
+        reservation.updatedAt = Instant.now()
+        reservations.save(reservation)
+    }
+
     @EventListener
     fun completed(event: CommandCompleted) {
         val command = event.command

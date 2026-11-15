@@ -63,7 +63,7 @@ Le pool compte 12 connexions par défaut ; ajustez avec `SPRING_DATASOURCE_HIKAR
 
 ## Secrets
 
-Conservez dans le gestionnaire de secrets du fournisseur, et injectez comme variables d’environnement : `DATABASE_PASSWORD`, `BOOTSTRAP_PASSWORD` (puis supprimez-le), `SMTP_PASSWORD`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_ENCRYPTION_KEY`, `OCPP_SIGNING_CA_KEY`, `EV_DATABASE_API_KEY`, `APNS_KEY`, `WALLET_CERTIFICATE`, `WALLET_CERTIFICATE_PASSWORD`, `FCM_SERVICE_ACCOUNT`, `GOOGLE_WALLET_SERVICE_ACCOUNT`.
+Conservez dans le gestionnaire de secrets du fournisseur, et injectez comme variables d’environnement : `DATABASE_PASSWORD`, `BOOTSTRAP_PASSWORD` (puis supprimez-le), `SMTP_PASSWORD`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_ENCRYPTION_KEY`, `OCPP_SIGNING_CA_KEY`, `OCPP_ISO15118_CONTRACT_TOKEN`, la clé `cpo-sub-ca.key` du dossier des certificats ISO 15118, `EV_DATABASE_API_KEY`, `APNS_KEY`, `WALLET_CERTIFICATE`, `WALLET_CERTIFICATE_PASSWORD`, `FCM_SERVICE_ACCOUNT`, `GOOGLE_WALLET_SERVICE_ACCOUNT`.
 
 `APP_ENCRYPTION_KEY` chiffre des secrets en base : sa perte rend ces données illisibles. Sauvegardez-la séparément de la base. Les valeurs PEM (`OCPP_CLIENT_CA`, `OCPP_SIGNING_CA_*`) acceptent un texte multiligne, une seule ligne avec `\n`, ou le chemin d’un fichier monté.
 
@@ -76,7 +76,7 @@ Les bornes ouvrent une connexion WebSocket permanente vers `/ocpp/{espace}/{born
 3. ne pas limiter la durée totale d’une connexion, ou la fixer à plusieurs heures. Une coupure provoque une reconnexion, normale mais visible dans l’historique ;
 4. publier `X-Forwarded-For` et `X-Forwarded-Proto` en remplaçant toute valeur envoyée par le client.
 
-L’affinité de session n’est pas nécessaire : une borne n’a qu’une connexion, et les commandes passent par une file en base. Le sous-protocole `ocpp1.6` est accepté, et une borne qui n’en annonce aucun est traitée comme OCPP 1.6.
+L’affinité de session n’est pas nécessaire : une borne n’a qu’une connexion, et les commandes passent par une file en base, une commande à la fois par borne jusqu’à sa réponse ou son échéance. Les sous-protocoles `ocpp2.0.1` et `ocpp1.6` sont acceptés selon la version choisie pour la borne ; une borne qui n’en annonce aucun utilise la version imposée, ou OCPP 1.6.
 
 Un refus de connexion répond HTTP 401 et ajoute un événement `CONNECTION_REJECTED` dans l’historique de la borne. C’est le premier endroit à consulter lors d’une mise en service.
 
@@ -154,6 +154,42 @@ SERVER_SSL_CLIENT_AUTH=want
 
 Tout le port du serveur passe alors en HTTPS : `EV_SERVER_URL` doit viser un nom couvert par ce certificat, et le renouvellement du certificat demande un redémarrage. L’adresse réelle de la borne n’est connue que si l’équilibreur la conserve (pas de protocole PROXY côté Java). Réservez cette option aux cas où aucun mandataire ne peut vérifier le certificat ; la variante recommandée est un Caddy ou un nginx derrière un équilibreur TCP (option B).
 
+## Certificats ISO 15118 (Plug & Charge)
+
+Le Plug & Charge (ISO 15118 avec OCPP 2.0.1) exige des certificats déposés **avant** le démarrage du serveur. Lorsque `OCPP_ISO15118_ENABLED=true`, le serveur lit le dossier `OCPP_CERTIFICATES_DIR` (`/app/certificates` dans l’image) au démarrage et **refuse de démarrer** s’il manque un fichier, si un certificat est expiré, si la chaîne ne remonte pas à la racine V2G ou si la clé ne correspond pas au certificat. Le journal liste alors chaque problème :
+
+```text
+ISO 15118 est activé (OCPP_ISO15118_ENABLED=true) mais le dossier des certificats /app/certificates est incomplet ou invalide :
+ - cpo-sub-ca.key absent
+```
+
+| Fichier | Obligatoire | Contenu |
+|---|---|---|
+| `v2g-root.pem` | oui | certificat(s) racine V2G |
+| `cpo-sub-ca.pem` | oui | chaîne CPO : d’abord la sous-autorité qui signe les certificats des bornes (Sub-CA 2), puis la Sub-CA 1 |
+| `cpo-sub-ca.key` | oui | clé privée ECDSA P-256 de la Sub-CA 2 (PKCS#8 ou SEC1) |
+| `mo-root.pem` | non | racine(s) des opérateurs de mobilité, pour vérifier les certificats de contrat et les installer sur les bornes |
+
+**Production** : la racine V2G et la chaîne CPO sont délivrées par l’opérateur de l’infrastructure V2G utilisée (par exemple Hubject) ; les racines MO viennent des opérateurs de mobilité acceptés. **Recette** : `scripts/create-iso15118-certificates.sh [dossier]` crée une infrastructure de test complète dans `deploy/certificates` (ou le dossier indiqué) et refuse d’écraser des fichiers existants (`ISO15118_FORCE=true` pour les remplacer). Variable facultative : `ISO15118_ORGANIZATION`.
+
+Le serveur tourne sous l’utilisateur 10001 : la clé doit lui être lisible sans l’être pour les autres (`chown 10001 cpo-sub-ca.key && chmod 600 cpo-sub-ca.key` sur une VM). Sauvegardez la clé dans le gestionnaire de secrets : sa perte oblige à faire émettre une nouvelle Sub-CA.
+
+Une fois les fichiers en place :
+
+1. Définissez `OCPP_ISO15118_ENABLED=true` et redémarrez le serveur. Le tableau de bord (borne OCPP 2.0.1 > Sécurité > ISO 15118) affiche la sous-autorité CPO, son expiration et les racines chargées.
+2. Pour chaque borne, **Installer les racines V2G et MO**, puis **Demander un certificat V2G** : la borne envoie sa demande, le serveur la signe avec la Sub-CA et renvoie la chaîne sans la racine. Les administrateurs sont prévenus 30 jours avant l’expiration du certificat V2G d’une borne.
+3. `GetCertificateStatus` : le serveur interroge le répondeur OCSP indiqué par la borne et lui renvoie la réponse DER. Autorisez les sorties HTTP(S) vers les répondeurs OCSP de l’infrastructure V2G. Les adresses privées sont refusées, sauf `OCPP_OCSP_ALLOW_PRIVATE=true` (répondeur interne).
+4. `Authorize` avec un certificat de contrat : la chaîne est vérifiée par rapport à `mo-root.pem` et `v2g-root.pem`, et chaque entrée OCSP transmise est contrôlée. Le badge (eMAID) doit exister dans les badges de l’espace.
+5. `Get15118EVCertificate` (installation ou mise à jour du contrat dans le véhicule) est relayé vers `OCPP_ISO15118_CONTRACT_URL`, avec `Authorization: Bearer OCPP_ISO15118_CONTRACT_TOKEN` si défini. Ce service, chez l’opérateur de mobilité ou son pool de certificats de contrat, doit répondre en moins de 4 s :
+
+```text
+POST OCPP_ISO15118_CONTRACT_URL
+{"stationId":"…","iso15118SchemaVersion":"…","action":"Install","exiRequest":"<base64>"}
+→ 200 {"status":"Accepted","exiResponse":"<base64>"}
+```
+
+Renouvellement de la Sub-CA : remplacez les fichiers puis redémarrez le serveur ; les certificats déjà émis restent valides jusqu’à leur échéance s’ils remontent toujours à la racine.
+
 ## Mise à l’échelle
 
 **Limite actuelle : une seule réplique du serveur Java.** Les connexions WebSocket sont tenues en mémoire, et chaque instance exécute toutes les tâches planifiées :
@@ -230,7 +266,13 @@ Le port 25 sortant est bloqué ou restreint chez la plupart des fournisseurs. Ut
 | `OCPP_SIGNED_CERTIFICATE_DAYS` | serveur | | 365 |
 | `OCPP_ALLOW_UNAUTHENTICATED` | serveur | | `false` |
 | `OCPP_HEARTBEAT_SECONDS` | serveur | | 60 (10 à 300) |
-| `OCPP_PUBLIC_URL` | serveur | | adresse `wss://…/ocpp` affichée dans la fiche de mise en service des bornes |
+| `OCPP_PUBLIC_URL` | serveur | | adresse `wss://…/ocpp` affichée dans la fiche de mise en service des bornes ; obligatoire pour relever à distance le profil d’une borne OCPP 2.0.1 |
+| `OCPP_ISO15118_ENABLED` | serveur | | `false` ; `true` exige le dossier des certificats complet au démarrage |
+| `OCPP_CERTIFICATES_DIR` | serveur | | `/app/certificates` dans l’image |
+| `OCPP_V2G_CERTIFICATE_DAYS` | serveur | | 365, borné par l’échéance de la Sub-CA |
+| `OCPP_ISO15118_CONTRACT_URL` | serveur | | service de certificats de contrat (Get15118EVCertificate) |
+| `OCPP_ISO15118_CONTRACT_TOKEN` | serveur | oui | jeton Bearer de ce service |
+| `OCPP_OCSP_ALLOW_PRIVATE` | serveur | | `false` |
 | `SERVER_SSL_*` | serveur | clé | option C seulement |
 | `LOGGING_STRUCTURED_FORMAT_CONSOLE` | serveur | | `ecs`, `logstash` ou `gelf` |
 
@@ -250,6 +292,7 @@ docker compose logs -f server
 - `COMPOSE_PROFILES=local-db` démarre PostgreSQL dans un volume local. Avec une base gérée, retirez ce profil et définissez `DATABASE_URL`.
 - Caddy (`deploy/caddy/Caddyfile`) obtient et renouvelle les certificats, transmet WebSocket et remplace `X-Forwarded-For` et `X-Forwarded-Proto`. Le serveur ne fait confiance qu’aux adresses fixes de Caddy (`172.30.0.10`, pour OCPP) et du tableau de bord (`172.30.0.30`, pour `APP_TRUSTED_PROXIES`).
 - Profil 3 : copiez `caddy/sites/ocpp-mtls.caddy.example` en `caddy/sites/ocpp-mtls.caddy`, placez `caddy/sites/ocpp-client-ca.pem`, renseignez `OCPP_CLIENT_CA` (même contenu) et redémarrez Caddy.
+- ISO 15118 : `deploy/certificates` est monté en lecture seule sur `/app/certificates`. Déposez-y les fichiers (ou lancez `../scripts/create-iso15118-certificates.sh` pour une recette), donnez la clé à l’utilisateur 10001, puis définissez `OCPP_ISO15118_ENABLED=true` dans `server.env`.
 - Mise à jour : `git pull && docker compose up -d --build`.
 - Un nginx existant peut remplacer Caddy : voir `deploy/nginx/ev-supervision.conf`.
 
@@ -272,6 +315,13 @@ Avant l’application, remplacez `REGISTRE` et les étiquettes dans la section `
 - Le Service `edge` crée un équilibreur **TCP** devant Caddy : TLS et mTLS sont identiques partout. `externalTrafficPolicy: Local` conserve l’adresse des bornes quand l’équilibreur le permet ; sinon activez le protocole PROXY v2 sur l’équilibreur et dans Caddy (`listener_wrappers { proxy_protocol { allow <plage> } tls }`).
 - `OCPP_TRUSTED_PROXIES`, `OCPP_CLIENT_CERT_PROXIES` et `APP_TRUSTED_PROXIES` visent la plage des pods, les adresses des pods n’étant pas fixes ; la NetworkPolicy fournie n’autorise vers le serveur que Caddy et le tableau de bord. Vérifiez que le plugin réseau du cluster applique les NetworkPolicy.
 - Caddy conserve ses certificats dans un volume `ReadWriteOnce` : une seule réplique.
+- ISO 15118 : le secret `ev-iso15118-certificates` est monté en lecture seule sur `/app/certificates` (facultatif tant que `OCPP_ISO15118_ENABLED=false`) :
+
+  ```sh
+  kubectl -n ev-supervision create secret generic ev-iso15118-certificates \
+    --from-file=v2g-root.pem --from-file=cpo-sub-ca.pem --from-file=cpo-sub-ca.key --from-file=mo-root.pem
+  kubectl -n ev-supervision rollout restart deployment/server
+  ```
 - Le projet ingress-nginx n’est plus maintenu depuis mars 2026 ([annonce](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)) : ne l’utilisez pas pour une nouvelle installation.
 
 ## Application mobile iOS
@@ -307,3 +357,4 @@ curl --http1.1 -sS -o /dev/null -w '%{http_code}\n' \
 4. Profil 3 : une connexion sans certificat est refusée par le mandataire ; une requête vers `APP_HOST` avec un faux en-tête `X-Client-Cert` n’élève pas la borne au profil 3.
 5. Une notification Stripe de test est reçue (tableau de bord Stripe, onglet des livraisons).
 6. Un courriel de réinitialisation du mot de passe arrive.
+7. ISO 15118 : le serveur démarre avec `OCPP_ISO15118_ENABLED=true` et la section ISO 15118 d’une borne OCPP 2.0.1 affiche la sous-autorité CPO et les racines chargées.

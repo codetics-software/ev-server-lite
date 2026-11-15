@@ -97,6 +97,10 @@ oci-network-load-balancer.oraclecloud.com/is-preserve-source: "true"
 
 Le délai d’inactivité TCP par défaut du Network Load Balancer est de 360 s ([NLB](https://docs.oracle.com/en-us/iaas/Content/NetworkLoadBalancer/NetworkLoadBalancers/configure-idle-timeout.htm)), au-delà du battement par défaut.
 
+## ISO 15118
+
+Suivez [Certificats ISO 15118](README.md#certificats-iso-15118-plug--charge). Sur une instance, déposez les fichiers dans `deploy/certificates` ; sur OKE, créez le secret `ev-iso15118-certificates`, et conservez une copie de `cpo-sub-ca.key` dans OCI Vault. Autorisez la sortie HTTP(S) vers les répondeurs OCSP et le service de certificats de contrat (passerelle NAT pour un sous-réseau privé).
+
 ## Dimensionnement et coûts
 
 | Parc | Instance | PostgreSQL |

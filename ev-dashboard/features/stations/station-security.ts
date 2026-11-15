@@ -12,7 +12,30 @@ export type SecurityCapabilities = {
   certificate_signing: boolean;
   default_heartbeat_interval: number;
   ocpp_public_url?: string | null;
+  iso15118?: Iso15118Capabilities;
 };
+
+export type CertificateSummary = { subject: string; expires_at: string; fingerprint: string };
+
+export type Iso15118Capabilities = {
+  enabled: boolean;
+  certificates_directory?: string | null;
+  v2g_roots?: CertificateSummary[];
+  cpo_chain?: CertificateSummary[];
+  mo_roots?: CertificateSummary[];
+  contract_service?: boolean;
+};
+
+export const ocppInterfaces = [
+  "Wired0",
+  "Wired1",
+  "Wired2",
+  "Wired3",
+  "Wireless0",
+  "Wireless1",
+  "Wireless2",
+  "Wireless3",
+].map((value) => ({ value, label: value }));
 
 export type SecurityChange = { station: Station; command_id: string | null; message: string };
 
@@ -43,7 +66,12 @@ export function fingerprintMessage() {
 
 export function isProtectedKey(key: string) {
   const normalized = key.trim().toLowerCase();
-  return normalized === "securityprofile" || normalized === "authorizationkey";
+  return (
+    normalized === "securityprofile" ||
+    normalized === "authorizationkey" ||
+    normalized.startsWith("securityctrlr/") ||
+    normalized.startsWith("ocppcommctrlr/networkconfigurationpriority")
+  );
 }
 
 export function normalizeFingerprint(value: string) {

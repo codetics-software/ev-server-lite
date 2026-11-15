@@ -5,6 +5,7 @@ import fr.codetics.ev_server.core.AppProperties
 import fr.codetics.ev_server.core.Database
 import fr.codetics.ev_server.core.I18n
 import fr.codetics.ev_server.core.NotFound
+import fr.codetics.ev_server.core.InvalidRequest
 import fr.codetics.ev_server.core.ensure
 import fr.codetics.ev_server.core.lock
 import fr.codetics.ev_server.core.msg
@@ -15,6 +16,7 @@ import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationEventEntity
 import fr.codetics.ev_server.models.entities.StationKey
 import fr.codetics.ev_server.models.notifications.NotificationType
+import fr.codetics.ev_server.models.stations.Iso15118Capabilities
 import fr.codetics.ev_server.models.stations.OcppSecurityCapabilities
 import fr.codetics.ev_server.models.stations.ProvisionedStation
 import fr.codetics.ev_server.models.stations.StationResponse
@@ -26,8 +28,36 @@ import fr.codetics.ev_server.ocpp.CommandCompleted
 import fr.codetics.ev_server.ocpp.OcppCommandQueue
 import fr.codetics.ev_server.ocpp.StationIdentity
 import fr.codetics.ev_server.ocpp.OcppGateway
+import fr.codetics.ev_server.models.entities.StationParameterEntity
+import fr.codetics.ev_server.models.entities.StationParameterKey
+import fr.codetics.ev_server.ocpp.OcppVersion
+import fr.codetics.ev_server.ocpp.ocpp
+import fr.codetics.ev_server.ocpp.v201.CertificateSummary
+import fr.codetics.ev_server.ocpp.v201.ContractCertificateClient
+import fr.codetics.ev_server.ocpp.v201.Component
+import fr.codetics.ev_server.ocpp.v201.GetCertificateIdUseEnum
+import fr.codetics.ev_server.ocpp.v201.GetInstalledCertificateIdsRequest
+import fr.codetics.ev_server.ocpp.v201.InstallCertificateRequest
+import fr.codetics.ev_server.ocpp.v201.InstallCertificateUseEnum
+import fr.codetics.ev_server.ocpp.v201.Iso15118Certificates
+import fr.codetics.ev_server.ocpp.v201.MessageTriggerEnum
+import fr.codetics.ev_server.ocpp.v201.NetworkConnectionProfile
+import fr.codetics.ev_server.ocpp.v201.OCPPInterfaceEnum
+import fr.codetics.ev_server.ocpp.v201.OCPPTransportEnum
+import fr.codetics.ev_server.ocpp.v201.OCPPVersionEnum
+import fr.codetics.ev_server.ocpp.v201.Ocpp201Codec
+import fr.codetics.ev_server.ocpp.v201.Ocpp201Variables
+import fr.codetics.ev_server.ocpp.v201.ResetEnum
+import fr.codetics.ev_server.ocpp.v201.ResetRequest
+import fr.codetics.ev_server.ocpp.v201.SetNetworkProfileRequest
+import fr.codetics.ev_server.ocpp.v201.SetVariableData
+import fr.codetics.ev_server.ocpp.v201.SetVariablesRequest
+import fr.codetics.ev_server.ocpp.v201.TriggerMessageRequest
+import fr.codetics.ev_server.ocpp.v201.Variable
 import fr.codetics.ev_server.repositories.CommandRepository
 import fr.codetics.ev_server.repositories.StationEventRepository
+import fr.codetics.ev_server.repositories.StationParameterRepository
+import fr.codetics.ev_server.repositories.TenantRepository
 import fr.codetics.ev_server.repositories.StationRepository
 import fr.codetics.ev_server.services.notifications.NotificationService
 import java.time.Duration
@@ -57,6 +87,10 @@ class StationSecurityService(
     private val properties: AppProperties,
     private val stationService: StationService,
     private val notifications: NotificationService,
+    private val tenants: TenantRepository,
+    private val parameters: StationParameterRepository,
+    private val iso15118: Iso15118Certificates,
+    private val contracts: ContractCertificateClient,
 ) {
     fun capabilities() =
         OcppSecurityCapabilities(
@@ -67,6 +101,15 @@ class StationSecurityService(
             certificateSigning = certificates.signingConfigured,
             defaultHeartbeatInterval = properties.ocpp.heartbeatInterval(),
             ocppPublicUrl = properties.ocpp.publicUrl.trim().trimEnd('/').ifBlank { null },
+            iso15118 =
+                Iso15118Capabilities(
+                    enabled = iso15118.enabled,
+                    certificatesDirectory = iso15118.directory.toString(),
+                    v2gRoots = iso15118.v2gRoots.map(CertificateSummary::of),
+                    cpoChain = iso15118.cpoChain.map(CertificateSummary::of),
+                    moRoots = iso15118.moRoots.map(CertificateSummary::of),
+                    contractService = contracts.configured,
+                ),
         )
 
     fun changeProfile(user: AppPrincipal, stationId: String, input: SecurityProfileInput): SecurityChange {
@@ -127,12 +170,14 @@ class StationSecurityService(
                     }
                     station.requestedSecurityProfile = target
                     command =
-                        queue.command(
-                            user.tenantId,
-                            stationId,
-                            "ChangeConfiguration",
-                            db.json.valueToTree(mapOf("key" to SECURITY_PROFILE_KEY, "value" to target.toString())),
-                        )
+                        if (station.ocpp() == OcppVersion.V201) networkProfile(station, target, input)
+                        else
+                            queue.command(
+                                user.tenantId,
+                                stationId,
+                                "ChangeConfiguration",
+                                db.json.valueToTree(mapOf("key" to SECURITY_PROFILE_KEY, "value" to target.toString())),
+                            )
                     message =
                         msg("security.profile_requested", target)
                 } else {
@@ -261,6 +306,92 @@ class StationSecurityService(
         return stationService.find(user.tenantId, stationId)
     }
 
+    private fun networkProfile(station: StationEntity, target: Int, input: SecurityProfileInput): UUID {
+        val base = properties.ocpp.publicUrl.trim().trimEnd('/').ifBlank { null }
+        conflict(base != null) { msg("security.public_url_required") }
+        val tenant = station.key.tenantId
+        val slug = tenants.findById(tenant).orElseThrow().slug
+        val priority = priority(station)
+        val slot = input.configurationSlot ?: (1..(priority.maxOrNull() ?: 1) + 1).first { it !in priority.ifEmpty { listOf(1) } }
+        ensure(slot in 0..99) { msg("security.invalid_slot") }
+        val network =
+            input.ocppInterface?.let { name -> OCPPInterfaceEnum.entries.firstOrNull { it.name == name } ?: throw InvalidRequest(msg("security.invalid_interface")) }
+                ?: OCPPInterfaceEnum.Wired0
+        val timeout =
+            parameters.findById(StationParameterKey(tenant, station.key.stationId, MESSAGE_TIMEOUT_KEY)).orElse(null)
+                ?.value?.toIntOrNull()?.takeIf { it > 0 } ?: 30
+        val request =
+            SetNetworkProfileRequest(
+                configurationSlot = slot,
+                connectionData =
+                    NetworkConnectionProfile(
+                        ocppVersion = OCPPVersionEnum.OCPP20,
+                        ocppTransport = OCPPTransportEnum.JSON,
+                        ocppCsmsUrl = "${requireNotNull(base)}/$slug",
+                        messageTimeout = timeout,
+                        securityProfile = target,
+                        ocppInterface = network,
+                    ),
+            )
+        return queue.command(tenant, station.key.stationId, "SetNetworkProfile", Ocpp201Codec.encode(request), version = OcppVersion.V201)
+    }
+
+    private fun priority(station: StationEntity): List<Int> =
+        parameters.findById(StationParameterKey(station.key.tenantId, station.key.stationId, PRIORITY_KEY)).orElse(null)
+            ?.value.orEmpty().split(',').mapNotNull { it.trim().toIntOrNull() }
+
+    fun iso15118Command(user: AppPrincipal, stationId: String, action: String): List<UUID> {
+        conflict(iso15118.enabled) { msg("iso15118.disabled") }
+        val station = stationService.station(user.tenantId, stationId)
+        conflict(station.ocpp() == OcppVersion.V201) { msg("iso15118.station_201") }
+        val ids =
+            when (action) {
+                "install-roots" ->
+                    (iso15118.v2gRoots.map { InstallCertificateUseEnum.V2GRootCertificate to it } +
+                            iso15118.moRoots.map { InstallCertificateUseEnum.MORootCertificate to it })
+                        .map { (type, certificate) ->
+                            queue.command(
+                                user.tenantId,
+                                stationId,
+                                "InstallCertificate",
+                                Ocpp201Codec.encode(InstallCertificateRequest(type, ChargerCertificates.encode(certificate))),
+                                version = OcppVersion.V201,
+                            )
+                        }
+                "request-certificate" ->
+                    listOf(
+                        queue.command(
+                            user.tenantId,
+                            stationId,
+                            "TriggerMessage",
+                            Ocpp201Codec.encode(TriggerMessageRequest(requestedMessage = MessageTriggerEnum.SignV2GCertificate)),
+                            version = OcppVersion.V201,
+                        )
+                    )
+                "installed" ->
+                    listOf(
+                        queue.command(
+                            user.tenantId,
+                            stationId,
+                            "GetInstalledCertificateIds",
+                            Ocpp201Codec.encode(
+                                GetInstalledCertificateIdsRequest(
+                                    listOf(
+                                        GetCertificateIdUseEnum.V2GRootCertificate,
+                                        GetCertificateIdUseEnum.MORootCertificate,
+                                        GetCertificateIdUseEnum.V2GCertificateChain,
+                                    )
+                                )
+                            ),
+                            version = OcppVersion.V201,
+                        )
+                    )
+                else -> throw InvalidRequest(msg("iso15118.unknown_action"))
+            }
+        db.audit(user.tenantId, user.id.toString(), "STATION_ISO15118_${action.uppercase().replace('-', '_')}", stationId)
+        return ids
+    }
+
     fun certificateCommand(user: AppPrincipal, stationId: String, action: String, payload: Map<String, Any?>): UUID {
         ensure(action in ADMIN_CERTIFICATE_ACTIONS) { msg("security.unknown_certificate_action") }
         conflict(action != "ExtendedTriggerMessage" || certificates.signingConfigured) {
@@ -342,9 +473,13 @@ class StationSecurityService(
                 }
                 stations.save(station)
             }
+            "SetNetworkProfile" -> if (command.ocppVersion == OcppVersion.V201.label) networkProfileCompleted(event)
+            "SetVariables" -> if (command.ocppVersion == OcppVersion.V201.label) priorityCompleted(event)
+            "Reset" -> if (command.ocppVersion == OcppVersion.V201.label) resetCompleted(event)
             "CertificateSigned", "InstallCertificate", "DeleteCertificate" -> {
                 val station = stations.findById(StationKey(command.tenantId, command.stationId)).orElse(null) ?: return
                 val status = if (event.success) event.result.path("status").asText() else command.state.name
+                val v2g = db.decode(command.request).path("certificateType").asText() == "V2GCertificate"
                 stationEvents.save(
                     StationEventEntity(
                         tenantId = command.tenantId,
@@ -354,7 +489,14 @@ class StationSecurityService(
                     )
                 )
                 db.audit(command.tenantId, "station:${command.stationId}", "STATION_${command.action}", "${command.stationId}/$status")
-                if (command.action == "CertificateSigned" && status == "Accepted") {
+                if (command.action == "CertificateSigned" && status == "Accepted" && v2g) {
+                    val chain = db.decode(command.request).path("certificateChain").asText()
+                    runCatching { iso15118.parse(chain).firstOrNull() }.getOrNull()?.let { leaf ->
+                        station.v2gCertificateSubject = leaf.subjectX500Principal.name.take(500)
+                        station.v2gCertificateExpiresAt = leaf.notAfter.toInstant()
+                        stations.save(station)
+                    }
+                } else if (command.action == "CertificateSigned" && status == "Accepted") {
                     val chain = db.decode(command.request).path("certificateChain").asText()
                     runCatching { certificates.fromHeader(chain).firstOrNull() }.getOrNull()?.let { leaf ->
                         station.issuedCertificateFingerprint = ChargerCertificates.fingerprint(leaf)
@@ -368,11 +510,89 @@ class StationSecurityService(
         }
     }
 
+    private fun requested(event: CommandCompleted): StationEntity? {
+        val station = stations.findById(StationKey(event.command.tenantId, event.command.stationId)).orElse(null) ?: return null
+        return station.takeIf { it.requestedSecurityProfile != null }
+    }
+
+    private fun abandon(station: StationEntity, step: String, status: String?) {
+        val requested = station.requestedSecurityProfile
+        station.requestedSecurityProfile = null
+        stations.save(station)
+        event(station, "SecurityProfile${status ?: "Failed"}", "$step / $requested")
+        db.audit(station.key.tenantId, "station:${station.key.stationId}", "STATION_SECURITY_PROFILE", "${station.key.stationId}/$requested/$step:${status ?: "Failed"}")
+    }
+
+    private fun networkProfileCompleted(event: CommandCompleted) {
+        val station = requested(event) ?: return
+        val request = db.decode(event.command.request)
+        if (request.path("connectionData").path("securityProfile").intValue() != station.requestedSecurityProfile) return
+        val status = if (event.success) event.result.path("status").asText() else null
+        if (status != "Accepted") return abandon(station, "SetNetworkProfile", status)
+        val slot = request.path("configurationSlot").intValue()
+        val current = priority(station).ifEmpty { listOf(if (slot == 1) 2 else 1) }
+        val order = (listOf(slot) + current.filter { it != slot }).joinToString(",")
+        queue.command(
+            station.key.tenantId,
+            station.key.stationId,
+            "SetVariables",
+            Ocpp201Codec.encode(
+                SetVariablesRequest(
+                    listOf(
+                        SetVariableData(
+                            attributeValue = order,
+                            component = Component(name = "OCPPCommCtrlr"),
+                            variable = Variable("NetworkConfigurationPriority"),
+                        )
+                    )
+                )
+            ),
+            version = OcppVersion.V201,
+        )
+        event(station, "SecurityProfileNetworkAccepted", "$slot → $order")
+    }
+
+    private fun priorityCompleted(event: CommandCompleted) {
+        val request = db.decode(event.command.request).path("setVariableData")
+        if (request.size() != 1 || request.path(0).path("variable").path("name").asText() != "NetworkConfigurationPriority") return
+        val station = requested(event) ?: return
+        val status = if (event.success) event.result.path("setVariableResult").path(0).path("attributeStatus").asText() else null
+        if (status !in setOf("Accepted", "RebootRequired")) return abandon(station, "NetworkConfigurationPriority", status)
+        parameters.save(
+            (parameters.findById(StationParameterKey(station.key.tenantId, station.key.stationId, PRIORITY_KEY)).orElse(null)
+                ?: StationParameterEntity(StationParameterKey(station.key.tenantId, station.key.stationId, PRIORITY_KEY)))
+                .apply {
+                    value = request.path(0).path("attributeValue").asText()
+                    updatedAt = Instant.now()
+                }
+        )
+        queue.command(
+            station.key.tenantId,
+            station.key.stationId,
+            "Reset",
+            Ocpp201Codec.encode(ResetRequest(ResetEnum.OnIdle)),
+            version = OcppVersion.V201,
+        )
+        event(station, "SecurityProfilePriority$status")
+    }
+
+    private fun resetCompleted(event: CommandCompleted) {
+        val station = requested(event) ?: return
+        val status = if (event.success) event.result.path("status").asText() else null
+        if (status !in setOf("Accepted", "Scheduled")) return abandon(station, "Reset", status)
+        event(station, "SecurityProfileReset$status")
+    }
+
     @Scheduled(cron = "0 15 6 * * *")
     fun expiringCertificates() {
         val limit = Instant.now().plus(Duration.ofDays(30))
-        stations.findAll().filter { !it.deleted && it.certificateExpiresAt?.isBefore(limit) == true }.forEach { station ->
-            val expired = station.certificateExpiresAt!!.isBefore(Instant.now())
+        stations.findAll().filter { !it.deleted }.flatMap { station ->
+            listOfNotNull(
+                station.certificateExpiresAt?.takeIf { it.isBefore(limit) }?.let { Triple(station, it, station.certificateFingerprint) },
+                station.v2gCertificateExpiresAt?.takeIf { it.isBefore(limit) }?.let { Triple(station, it, "v2g:${station.v2gCertificateSubject}") },
+            )
+        }.forEach { (station, expiresAt, fingerprint) ->
+            val expired = expiresAt.isBefore(Instant.now())
             runCatching {
                 notifications.notifyAdmins(
                     station.key.tenantId,
@@ -383,12 +603,12 @@ class StationSecurityService(
                             if (expired) "notification.certificate_expired.body" else "notification.certificate_expiring.body",
                             station.name,
                             station.key.stationId,
-                            station.certificateExpiresAt?.let {
+                            expiresAt.let {
                                 DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(I18n.locale()).withZone(ZoneId.of("Europe/Paris")).format(it)
                             },
                         )
                     },
-                    dedupeKey = "certificate:${station.key.stationId}:${station.certificateFingerprint}",
+                    dedupeKey = "certificate:${station.key.stationId}:$fingerprint",
                     window = Duration.ofDays(7),
                 )
             }
@@ -430,10 +650,14 @@ class StationSecurityService(
         const val SECURITY_PROFILE_KEY = "SecurityProfile"
         const val AUTHORIZATION_KEY = "AuthorizationKey"
         const val REDACTED = "********"
+        const val PRIORITY_KEY = "OCPPCommCtrlr/NetworkConfigurationPriority"
+        const val MESSAGE_TIMEOUT_KEY = "OCPPCommCtrlr/MessageTimeout:Default"
         val CERTIFICATE_ACTIONS = setOf("CertificateSigned", "InstallCertificate", "DeleteCertificate")
         val ADMIN_CERTIFICATE_ACTIONS = setOf("InstallCertificate", "DeleteCertificate", "ExtendedTriggerMessage")
 
         fun protectedKey(key: String) =
-            key.equals(SECURITY_PROFILE_KEY, ignoreCase = true) || key.equals(AUTHORIZATION_KEY, ignoreCase = true)
+            key.equals(SECURITY_PROFILE_KEY, ignoreCase = true) ||
+                key.equals(AUTHORIZATION_KEY, ignoreCase = true) ||
+                Ocpp201Variables.protected(key)
     }
 }

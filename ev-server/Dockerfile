@@ -21,6 +21,10 @@ WORKDIR /app
 
 COPY --from=build /app/target/ev-server-0.0.1-SNAPSHOT.jar app.jar
 
+RUN mkdir -p /app/certificates && chown 10001 /app/certificates
+
+ENV OCPP_CERTIFICATES_DIR=/app/certificates
+
 USER 10001
 
 ENV JAVA_TOOL_OPTIONS="-Xms64m -Xmx256m -XX:ActiveProcessorCount=1"

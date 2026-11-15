@@ -96,6 +96,14 @@ class StationController(
         @AuthenticationPrincipal user: AppPrincipal,
     ) = CommandReceipt(security.certificateCommand(user, id, input.action, input.payload))
 
+    @PostMapping("/{id}/iso15118/{action}")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun iso15118(
+        @PathVariable id: String,
+        @PathVariable action: String,
+        @AuthenticationPrincipal user: AppPrincipal,
+    ) = security.iso15118Command(user, id, action).map(::CommandReceipt)
+
     @PutMapping("/{id}/ocpp-settings")
     @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")
     fun changeOcppSettings(

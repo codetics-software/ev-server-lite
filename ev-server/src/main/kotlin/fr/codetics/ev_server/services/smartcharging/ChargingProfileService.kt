@@ -213,5 +213,6 @@ class ChargingProfileService(
     companion object {
         const val POWER_LIMIT_ID = 900
         const val SMART_CHARGING_ID = 1000
+        const val EV_NEEDS_ID = 1200
     }
 }

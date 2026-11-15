@@ -72,6 +72,12 @@ data class AppProperties(
         val allowUnauthenticated: Boolean = false,
         val heartbeatSeconds: Int = 60,
         val publicUrl: String = "",
+        val certificatesDir: String = "certificates",
+        val iso15118Enabled: Boolean = false,
+        val v2gCertificateDays: Long = 365,
+        val contractServiceUrl: String = "",
+        val contractServiceToken: String = "",
+        val ocspAllowPrivate: Boolean = false,
     ) {
         fun heartbeatInterval() = heartbeatSeconds.coerceIn(10, 300)
     }

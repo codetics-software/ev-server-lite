@@ -40,7 +40,13 @@ import {
   unpinStation,
   type RevealedSecret,
 } from "./station-security-dialogs";
-import type { ProvisionedStation, Station } from "./station-types";
+import { StationIso15118 } from "./station-iso15118";
+import {
+  ocppTransport,
+  ocppVersionOf,
+  type ProvisionedStation,
+  type Station,
+} from "./station-types";
 import { t, translated } from "@/lib/i18n";
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
@@ -446,6 +452,14 @@ export function StationSecurityPanel({
         </CardContent>
       </Card>
       {operate && <InstalledCertificates station={station} admin={admin} />}
+      {operate && ocppVersionOf(station) === "2.0.1" && (
+        <StationIso15118
+          station={station}
+          iso={capabilities?.iso15118}
+          admin={admin}
+          onQueued={queuedCommand}
+        />
+      )}
       <Commissioning station={station} publicUrl={capabilities?.ocpp_public_url} />
       <SecretDialog value={secret} online={station.connected} onClose={() => setSecret(null)} />
     </div>
@@ -470,7 +484,7 @@ function Commissioning({ station, publicUrl }: { station: Station; publicUrl?: s
           <Detail label={t("Adresse OCPP")}>
             <CopyField value={url} label={t("Adresse OCPP")} />
             <span className="mt-1 block text-xs text-muted-foreground">
-              {t("OCPP 1.6 JSON, sous-protocole ocpp1.6.")}
+              {ocppTransport(station.ocpp_protocol ?? "1.6")}
               {!publicUrl &&
                 ` ${t("Adaptez le nom d’hôte si le serveur OCPP est publié à une autre adresse que ce tableau de bord.")}`}
             </span>
@@ -497,10 +511,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function certificateHashes(result: unknown): CertificateHash[] {
-  if (!isRecord(result) || !Array.isArray(result.certificateHashData)) {
+  if (!isRecord(result)) {
     return [];
   }
-  return result.certificateHashData.filter(
+  const items = Array.isArray(result.certificateHashData)
+    ? result.certificateHashData
+    : Array.isArray(result.certificateHashDataChain)
+      ? result.certificateHashDataChain.map((entry) =>
+          isRecord(entry) ? entry.certificateHashData : null,
+        )
+      : [];
+  return items.filter(
     (item): item is CertificateHash =>
       isRecord(item) &&
       ["hashAlgorithm", "issuerNameHash", "issuerKeyHash", "serialNumber"].every(

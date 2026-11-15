@@ -112,6 +112,10 @@ service.beta.kubernetes.io/azure-load-balancer-tcp-idle-timeout: "30"
 
 `externalTrafficPolicy: Local` conserve l’adresse des bornes. `--network-policy azure` (ou Cilium) fait appliquer la NetworkPolicy fournie.
 
+## ISO 15118
+
+Suivez [Certificats ISO 15118](README.md#certificats-iso-15118-plug--charge). Sur une VM, déposez les fichiers dans `deploy/certificates` ; sur AKS, créez le secret `ev-iso15118-certificates` (ou montez-le depuis Key Vault avec le pilote CSI Secrets Store sur `/app/certificates`). Autorisez la sortie HTTP(S) vers les répondeurs OCSP et le service de certificats de contrat.
+
 ## Dimensionnement et coûts
 
 | Parc | VM | PostgreSQL |

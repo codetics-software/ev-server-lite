@@ -1,11 +1,13 @@
 package fr.codetics.ev_server.models.stations
 
 import fr.codetics.ev_server.core.msg
+import fr.codetics.ev_server.models.commands.CommandState
 import fr.codetics.ev_server.models.entities.ConnectorEntity
 import fr.codetics.ev_server.models.entities.StationEntity
 import fr.codetics.ev_server.models.entities.StationEventEntity
 import fr.codetics.ev_server.models.entities.StationParameterEntity
 import fr.codetics.ev_server.models.entities.TransactionEntity
+import fr.codetics.ev_server.ocpp.v201.CertificateSummary
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -13,7 +15,12 @@ import java.util.UUID
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 
-data class StationInput(val id: String, val name: String, val siteAreaId: UUID? = null)
+data class StationInput(
+    val id: String,
+    val name: String,
+    val siteAreaId: UUID? = null,
+    val ocppProtocol: String = "AUTO",
+)
 
 data class ConnectorInput(
     val connectorId: Int,
@@ -32,11 +39,15 @@ data class StationUpdate(
     val maximumPowerKw: BigDecimal? = null,
     val excludeFromSmartCharging: Boolean = false,
     val connectors: List<ConnectorInput>? = null,
+    val ocppProtocol: String? = null,
 )
 
 data class ParameterInput(val key: String, val value: String)
 
 data class AutoChargeSetting(val enabled: Boolean)
+
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+data class AutoChargeChange(val id: UUID?, val state: CommandState?)
 
 data class PowerLimitInput(val connectorId: Int = 0, val limitKw: BigDecimal)
 
@@ -53,6 +64,7 @@ data class StationResponse(
     val connectors: List<ConnectorResponse>? = null,
     val lastBoot: Instant? = null,
     val ocppVersion: String = "1.6",
+    val ocppProtocol: String = "1.6",
     val siteAreaId: UUID? = null,
     val siteId: UUID? = null,
     val public: Boolean = false,
@@ -75,6 +87,8 @@ data class StationResponse(
     val heartbeatInterval: Int? = null,
     val dataTransferVendors: List<String> = emptyList(),
     val logStatus: String? = null,
+    val v2gCertificateSubject: String? = null,
+    val v2gCertificateExpiresAt: Instant? = null,
 ) {
     companion object {
         fun from(
@@ -94,6 +108,7 @@ data class StationResponse(
                 connectors = connectors,
                 lastBoot = station.lastBoot,
                 ocppVersion = station.ocppVersion,
+                ocppProtocol = station.ocppProtocol,
                 siteAreaId = station.siteAreaId,
                 siteId = siteId,
                 public = station.publicStation,
@@ -117,6 +132,8 @@ data class StationResponse(
                 dataTransferVendors =
                     station.dataTransferVendors.split(',').map(String::trim).filter(String::isNotBlank),
                 logStatus = station.logStatus,
+                v2gCertificateSubject = station.v2gCertificateSubject,
+                v2gCertificateExpiresAt = station.v2gCertificateExpiresAt,
             )
     }
 }
@@ -228,6 +245,8 @@ data class SecurityProfileInput(
     val securityProfile: Int,
     val pinnedCertificateFingerprint: String? = null,
     val sendToStation: Boolean = true,
+    val configurationSlot: Int? = null,
+    val ocppInterface: String? = null,
 )
 
 data class OcppSettingsInput(
@@ -251,4 +270,15 @@ data class OcppSecurityCapabilities(
     val certificateSigning: Boolean,
     val defaultHeartbeatInterval: Int,
     val ocppPublicUrl: String?,
+    val iso15118: Iso15118Capabilities = Iso15118Capabilities(),
+)
+
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+data class Iso15118Capabilities(
+    val enabled: Boolean = false,
+    val certificatesDirectory: String? = null,
+    val v2gRoots: List<CertificateSummary> = emptyList(),
+    val cpoChain: List<CertificateSummary> = emptyList(),
+    val moRoots: List<CertificateSummary> = emptyList(),
+    val contractService: Boolean = false,
 )

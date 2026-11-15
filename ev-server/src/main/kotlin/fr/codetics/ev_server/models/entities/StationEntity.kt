@@ -43,6 +43,7 @@ class StationEntity(
     var deleted: Boolean = false,
     var lastBoot: Instant? = null,
     var ocppVersion: String = "1.6",
+    var ocppProtocol: String = "1.6",
     var firmwareStatus: String? = null,
     var diagnosticsStatus: String? = null,
     var autoCharge: Boolean = false,
@@ -58,5 +59,7 @@ class StationEntity(
     var heartbeatInterval: Int? = null,
     var dataTransferVendors: String = "",
     var logStatus: String? = null,
+    var v2gCertificateSubject: String? = null,
+    var v2gCertificateExpiresAt: Instant? = null,
     var createdAt: Instant = Instant.now(),
 )

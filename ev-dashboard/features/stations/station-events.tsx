@@ -29,6 +29,17 @@ const types = [
   "SECURITY",
   "CERTIFICATE",
   "LOG",
+  "EVENT",
+  "REPORT",
+  "TRANSACTION",
+  "RESERVATION",
+  "CHARGING_LIMIT",
+  "CHARGING_PROFILES",
+  "EV_CHARGING_NEEDS",
+  "EV_CHARGING_SCHEDULE",
+  "DISPLAY",
+  "CUSTOMER",
+  "MONITORING",
 ];
 
 function eventTone(event: StationEvent): Tone {

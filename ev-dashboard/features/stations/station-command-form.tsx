@@ -18,11 +18,9 @@ import { revalidateLogic, useForm, useStore } from "@tanstack/react-form";
 import { useState } from "react";
 
 import { valueLabel } from "@/lib/labels";
-import { commands, isCommandAction, type CommandAction } from "./station-commands";
+import { commandTemplates, type CommandVersion } from "./station-commands";
 import { isProtectedKey, protectedKeyMessage } from "./station-security";
 import { t } from "@/lib/i18n";
-
-const initialAction: CommandAction = "GetConfiguration";
 
 function parsePayload(payload: string): object | null {
   try {
@@ -44,22 +42,42 @@ const jsonObject: Rule<string> = (value) => {
     : t("Renseignez un objet JSON pour les paramètres de la commande.");
 };
 
+function protectedVariable(entry: unknown) {
+  const data = entry as { component?: { name?: unknown }; variable?: { name?: unknown } } | null;
+  return isProtectedKey(`${String(data?.component?.name)}/${String(data?.variable?.name)}`);
+}
+
 function protectedPayload(action: string): Rule<string> {
   return (value) => {
     const payload = parsePayload(value) as Record<string, unknown> | null;
-    return action === "ChangeConfiguration" &&
+    const legacy =
+      action === "ChangeConfiguration" &&
       typeof payload?.key === "string" &&
-      isProtectedKey(payload.key)
-      ? protectedKeyMessage()
-      : undefined;
+      isProtectedKey(payload.key);
+    const modern =
+      action === "SetVariables" &&
+      Array.isArray(payload?.setVariableData) &&
+      payload.setVariableData.some(protectedVariable);
+    return legacy || modern || action === "SetNetworkProfile" ? protectedKeyMessage() : undefined;
   };
 }
 
-export function StationCommandForm({ station }: { station: string }) {
+export function StationCommandForm({
+  station,
+  version,
+}: {
+  station: string;
+  version: CommandVersion;
+}) {
+  const templates = commandTemplates(version);
+  const initialAction = Object.keys(templates)[0];
   const [message, setMessage] = useState("");
   const [failure, setFailure] = useState("");
   const form = useForm({
-    defaultValues: { action: initialAction, payload: "{}" },
+    defaultValues: {
+      action: initialAction,
+      payload: JSON.stringify(templates[initialAction], null, 2),
+    },
     validationLogic: revalidateLogic(),
     onSubmit: async ({ value }) => {
       setFailure("");
@@ -67,7 +85,11 @@ export function StationCommandForm({ station }: { station: string }) {
       try {
         const result = await api<Row>(`stations/${encodeURIComponent(station)}/commands`, {
           method: "POST",
-          body: JSON.stringify({ action: value.action, payload: parsePayload(value.payload) }),
+          body: JSON.stringify({
+            action: value.action,
+            payload: parsePayload(value.payload),
+            ocppVersion: version === "2.0.1" ? version : undefined,
+          }),
         });
         setMessage(
           t("Commande enregistrée : {id}. Consultez sa réponse dans le suivi des commandes.", {
@@ -94,17 +116,19 @@ export function StationCommandForm({ station }: { station: string }) {
           name="action"
           listeners={{
             onChange: ({ value }) =>
-              form.setFieldValue("payload", JSON.stringify(commands[value], null, 2)),
+              form.setFieldValue("payload", JSON.stringify(templates[value] ?? {}, null, 2)),
           }}
         >
           {(field) => (
             <Field>
-              <FieldLabel>{t("Commande OCPP 1.6")}</FieldLabel>
+              <FieldLabel>
+                {version === "2.0.1" ? t("Commande OCPP 2.0.1") : t("Commande OCPP 1.6")}
+              </FieldLabel>
               <Select
                 name={field.name}
                 value={field.state.value}
                 onValueChange={(value) => {
-                  if (value && isCommandAction(value)) {
+                  if (value && Object.hasOwn(templates, value)) {
                     field.handleChange(value);
                   }
                 }}
@@ -116,7 +140,7 @@ export function StationCommandForm({ station }: { station: string }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {Object.keys(commands).map((name) => (
+                    {Object.keys(templates).map((name) => (
                       <SelectItem key={name} value={name}>
                         {valueLabel(name)}
                       </SelectItem>

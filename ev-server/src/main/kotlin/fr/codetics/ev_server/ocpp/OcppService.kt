@@ -29,12 +29,14 @@ import fr.codetics.ev_server.repositories.UserRepository
 import fr.codetics.ev_server.services.billing.ChargingPaymentLifecycle
 import fr.codetics.ev_server.services.organization.Organization
 import fr.codetics.ev_server.services.pricing.PricingService
+import fr.codetics.ev_server.ocpp.v201.Ocpp201Service
 import fr.codetics.ev_server.services.reservations.ReservationService
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import tools.jackson.databind.JsonNode
@@ -66,6 +68,7 @@ class OcppService(
     private val certificates: ChargerCertificates,
     private val properties: AppProperties,
     private val reservations: ReservationService,
+    private val v201: ObjectProvider<Ocpp201Service>,
 ) {
     fun call(
         tenant: UUID,
@@ -74,8 +77,11 @@ class OcppService(
         action: String,
         payload: JsonNode,
         connection: String = "",
+        version: OcppVersion = OcppVersion.V16,
     ): String {
-        OcppValidation.validate(action, payload)
+        val request = if (version == OcppVersion.V201) v201.getObject().decode(action, payload) else null
+        val prepared = request?.let { v201.getObject().prepare(station, it) }
+        if (version == OcppVersion.V16) OcppValidation.validate(action, payload)
 
         return db.atomic {
             val device =
@@ -104,7 +110,8 @@ class OcppService(
             }
 
             device.lastSeen = Instant.now()
-            val result = handle(device, action, payload)
+            val result =
+                if (request != null) v201.getObject().handle(device, action, request, prepared) else handle(device, action, payload)
             val response = db.encode(listOf(3, id, result))
             calls.save(
                 (previous ?: OcppCallEntity(key = key)).apply {
@@ -241,10 +248,10 @@ class OcppService(
         }
     }
 
-    private fun dataTransferVendors(station: StationEntity) =
+    internal fun dataTransferVendors(station: StationEntity) =
         station.dataTransferVendors.split(',').map(String::trim).filter(String::isNotBlank).toSet()
 
-    private fun signCertificate(station: StationEntity, csr: String): String {
+    internal fun signCertificate(station: StationEntity, csr: String): String {
         if (!certificates.signingConfigured) {
             record(station, "CERTIFICATE", status = "Rejected", info = "Aucune autorité de signature configurée.")
             return "Rejected"
@@ -270,7 +277,7 @@ class OcppService(
         }
     }
 
-    private data class Decision(
+    internal data class Decision(
         val status: AuthorizationStatus,
         val userId: UUID? = null,
         val partnerId: UUID? = null,
@@ -284,13 +291,13 @@ class OcppService(
             }
     }
 
-    private fun rejected(station: StationEntity, uid: String, status: AuthorizationStatus) {
+    internal fun rejected(station: StationEntity, uid: String, status: AuthorizationStatus) {
         if (status == AuthorizationStatus.Accepted) return
         if (VehicleIds.isVid(uid) && status == AuthorizationStatus.Invalid) return
         events.publishEvent(BadgeRejected(station, uid, status))
     }
 
-    private fun authorize(
+    internal fun authorize(
         station: StationEntity,
         uid: String,
         connector: Int? = null,
@@ -386,7 +393,7 @@ class OcppService(
         return Decision(AuthorizationStatus.Accepted, token.userId, parentIdTag = token.parentIdTag)
     }
 
-    private fun connector(station: StationEntity, number: Int): ConnectorEntity {
+    internal fun connector(station: StationEntity, number: Int): ConnectorEntity {
         val key = ConnectorKey(station.key.tenantId, station.key.stationId, number)
 
         return connectors.findById(key).orElse(null)
@@ -394,8 +401,25 @@ class OcppService(
     }
 
     private fun updateStatus(station: StationEntity, payload: JsonNode) {
-        val connector = connector(station, payload.path("connectorId").intValue())
-        val timestamp = payload.get("timestamp")?.asText()?.let(OcppTime::parse) ?: Instant.now()
+        applyStatus(
+            station,
+            payload.path("connectorId").intValue(),
+            payload.path("status").asText(),
+            payload.path("errorCode").asText(),
+            payload.get("timestamp")?.asText()?.let(OcppTime::parse) ?: Instant.now(),
+            listOf(payload.get("vendorErrorCode")?.asText(), payload.get("info")?.asText()),
+        )
+    }
+
+    internal fun applyStatus(
+        station: StationEntity,
+        number: Int,
+        status: String,
+        reported: String,
+        timestamp: Instant,
+        details: List<String?> = emptyList(),
+    ) {
+        val connector = connector(station, number)
 
         if (timestamp.isBefore(connector.statusAt)) {
             return
@@ -403,8 +427,7 @@ class OcppService(
 
         val previous = connector.status
         val previousError = connector.errorCode
-        connector.status = payload.path("status").asText()
-        val reported = payload.path("errorCode").asText()
+        connector.status = status
         connector.errorCode = if (reported in OcppValidation.errors) reported else "OtherError"
         connector.statusAt = timestamp
         if (connector.status in VehicleIds.PLUGGED && previous !in VehicleIds.PLUGGED) {
@@ -423,11 +446,8 @@ class OcppService(
                 connector.key.connectorId,
                 connector.status,
                 connector.errorCode,
-                listOfNotNull(
-                        reported.takeUnless { it in OcppValidation.errors },
-                        payload.get("vendorErrorCode")?.asText(),
-                        payload.get("info")?.asText(),
-                    )
+                (listOf(reported.takeUnless { it in OcppValidation.errors }) + details)
+                    .filterNotNull()
                     .joinToString(" / ")
                     .take(500)
                     .ifBlank { null },
@@ -574,7 +594,7 @@ class OcppService(
         events.publishEvent(TransactionStopped(station, transaction))
     }
 
-    private fun verifyTransaction(
+    internal fun verifyTransaction(
         station: StationEntity,
         id: Int,
         connector: Int? = null,
@@ -596,7 +616,7 @@ class OcppService(
         return transaction
     }
 
-    private fun saveMeters(
+    internal fun saveMeters(
         station: StationEntity,
         connector: Int,
         transaction: Int?,
@@ -700,7 +720,7 @@ class OcppService(
         transaction.lastMeterAt = reading.at
     }
 
-    private fun record(
+    internal fun record(
         station: StationEntity,
         type: String,
         connector: Int? = null,
@@ -723,6 +743,6 @@ class OcppService(
 
     companion object {
         val IDLE_W = BigDecimal(100)
-        val RETRIED = setOf("StartTransaction", "StopTransaction", "MeterValues")
+        val RETRIED = setOf("StartTransaction", "StopTransaction", "MeterValues", "TransactionEvent")
     }
 }

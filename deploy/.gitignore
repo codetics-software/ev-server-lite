@@ -1,3 +1,5 @@
 server.env
 caddy/sites/*.caddy
 caddy/sites/*.pem
+certificates/*
+!certificates/.gitkeep

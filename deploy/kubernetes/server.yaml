@@ -25,6 +25,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 10001
         runAsGroup: 10001
+        fsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -53,6 +54,10 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
+          volumeMounts:
+            - name: iso15118-certificates
+              mountPath: /app/certificates
+              readOnly: true
           startupProbe:
             httpGet:
               path: /actuator/health/readiness
@@ -72,6 +77,12 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 6
+      volumes:
+        - name: iso15118-certificates
+          secret:
+            secretName: ev-iso15118-certificates
+            optional: true
+            defaultMode: 0440
 ---
 apiVersion: v1
 kind: Service
