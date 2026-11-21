@@ -103,6 +103,9 @@ ul.plain { padding-left: 1.1em; margin: 0; }
 ul.plain li { margin: 6px 0; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
 pre { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; overflow-x: auto; font-size: .9rem; }
+.metric .value { font-size: 1.6rem; font-weight: 700; margin: 4px 0; color: var(--fg); font-variant-numeric: tabular-nums; }
+.metrics { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.actions.spaced { margin-top: 24px; }
 footer { padding: 40px 0 56px; border-top: 1px solid var(--line); color: var(--muted); font-size: .95rem; }
 </style>
 </head>
@@ -113,7 +116,7 @@ footer { padding: 40px 0 56px; border-top: 1px solid var(--line); color: var(--m
     <nav aria-label="Navigation principale">
       <a href="#fonctionnalites">Fonctionnalités</a>
       <a href="#deploiement">Déploiement</a>
-      <a href="../reports/">Rapport de tests</a>
+      <a href="#tests">Tests et couverture</a>
       <a href="https://github.com/codetics-software/ev-server-lite">GitHub</a>
       <a href="../" hreflang="en" lang="en">English</a>
     </nav>
@@ -157,6 +160,30 @@ footer { padding: 40px 0 56px; border-top: 1px solid var(--line); color: var(--m
         </div>
         <img src="../images/04-detail-borne.png" alt="Détail d’une borne de recharge et commandes OCPP" width="1440" height="1000" loading="lazy">
       </div>
+    </section>
+
+    <section id="tests">
+      <h2>Tests et couverture du code</h2>
+      <p>Chaque modification exécute les tests du serveur, du tableau de bord et des applications Android et iOS sur GitHub Actions. Les chiffres ci-dessous proviennent de la dernière exécution sur la branche principale.</p>
+      <div class="grid metrics">
+        <div class="card metric"><h3>Tests</h3><p class="value" data-badge="tests">—</p><p>tous les composants</p></div>
+        <div class="card metric"><h3>Serveur</h3><p class="value" data-badge="server-coverage">—</p><p>couverture des lignes</p></div>
+        <div class="card metric"><h3>Tableau de bord</h3><p class="value" data-badge="dashboard-coverage">—</p><p>couverture des lignes</p></div>
+        <div class="card metric"><h3>Android</h3><p class="value" data-badge="android-coverage">—</p><p>couverture des lignes</p></div>
+        <div class="card metric"><h3>iOS</h3><p class="value" data-badge="ios-coverage">—</p><p>couverture des lignes</p></div>
+      </div>
+      <div class="actions spaced">
+        <a class="button primary" href="../reports/">Ouvrir le rapport de tests complet</a>
+        <a class="button" href="https://github.com/codetics-software/ev-server-lite/actions/workflows/tests.yml">Voir les exécutions</a>
+      </div>
+      <script>
+        document.querySelectorAll("[data-badge]").forEach(function (node) {
+          fetch("../badges/" + node.dataset.badge + ".json", { cache: "no-store" })
+            .then(function (response) { return response.ok ? response.json() : null; })
+            .then(function (badge) { if (badge && badge.message) node.textContent = badge.message; })
+            .catch(function () {});
+        });
+      </script>
     </section>
 
     <section id="deploiement">

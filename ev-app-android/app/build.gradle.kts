@@ -114,6 +114,15 @@ abstract class VerifyAppConfiguration : DefaultTask() {
     }
 }
 
+plugins.withType<JacocoPlugin> {
+    tasks.withType<Test>().configureEach {
+        extensions.configure<JacocoTaskExtension> {
+            isIncludeNoLocationClasses = true
+            excludes = listOf("jdk.internal.*")
+        }
+    }
+}
+
 listOf("Debug" to false, "Release" to true).forEach { (variant, isStrict) ->
     val task =
         tasks.register<VerifyAppConfiguration>("verify${variant}Configuration") {
@@ -171,6 +180,8 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.car.app.testing)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -34,7 +34,7 @@ nonisolated final class DemoServer: @unchecked Sendable {
         let createdAt: Date
     }
 
-    private let lock = NSLock()
+    private let lock = NSRecursiveLock()
     private let iso = ISO8601DateFormatter()
     private var live: Live?
     private var finished: [[String: Any]] = []
