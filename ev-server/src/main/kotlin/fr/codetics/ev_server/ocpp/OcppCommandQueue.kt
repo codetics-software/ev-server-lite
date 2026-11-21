@@ -174,6 +174,9 @@ class OcppCommandQueue(
                     )
                     .isNotEmpty()
             if (waiting) return@atomic emptyList()
+            val registration = stations.findById(StationKey(station.tenant, station.station)).orElse(null)?.registrationStatus
+            if (registration == StationRegistration.REJECTED) return@atomic emptyList()
+            val restricted = registration == StationRegistration.PENDING
             val pending =
                 commands
                     .findAllByTenantIdAndStationIdAndStateAndDeadlineAfterOrderByCreatedAt(
@@ -181,8 +184,10 @@ class OcppCommandQueue(
                         station.station,
                         CommandState.QUEUED,
                         now,
-                        PageRequest.of(0, 1),
+                        PageRequest.of(0, if (restricted) 50 else 1),
                     )
+                    .filter { !restricted || StationRegistration.allowsCommand(registration, it.action) }
+                    .take(1)
                     .mapNotNull { db.lock<CommandEntity>(it.id) }
                     .filter { it.state == CommandState.QUEUED && it.deadline.isAfter(now) }
 

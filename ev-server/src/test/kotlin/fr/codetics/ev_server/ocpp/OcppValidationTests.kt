@@ -43,7 +43,7 @@ class OcppValidationTests {
     @Test
     fun `les parametres obligatoires et leurs types sont verifies`() {
         assertEquals("TypeConstraintViolation", fault("Heartbeat", "[]"))
-        assertEquals("OccurrenceConstraintViolation", fault("Authorize", "{}"))
+        assertEquals("OccurenceConstraintViolation", fault("Authorize", "{}"))
         assertEquals(
             "TypeConstraintViolation",
             fault("UnlockConnector", """{"connectorId":-1}""", serverInitiated = true),
@@ -85,7 +85,7 @@ class OcppValidationTests {
             "TypeConstraintViolation",
             fault("MeterValues", meterValues("""{"value":true}""")),
         )
-        assertEquals("OccurrenceConstraintViolation", fault("MeterValues", meterValues("")))
+        assertEquals("OccurenceConstraintViolation", fault("MeterValues", meterValues("")))
     }
 
     @Test
@@ -138,7 +138,7 @@ class OcppValidationTests {
             fault("InstallCertificate", """{"certificateType":"Other","certificate":"x"}""", serverInitiated = true),
         )
         assertEquals(
-            "OccurrenceConstraintViolation",
+            "OccurenceConstraintViolation",
             fault("SignedUpdateFirmware", """{"requestId":1,"firmware":{"location":"https://fw"}}""", serverInitiated = true),
         )
     }

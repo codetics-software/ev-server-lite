@@ -44,6 +44,8 @@ class StationEntity(
     var lastBoot: Instant? = null,
     var ocppVersion: String = "1.6",
     var ocppProtocol: String = "1.6",
+    var bootPolicy: String = "Accepted",
+    var registrationStatus: String? = null,
     var firmwareStatus: String? = null,
     var diagnosticsStatus: String? = null,
     var autoCharge: Boolean = false,

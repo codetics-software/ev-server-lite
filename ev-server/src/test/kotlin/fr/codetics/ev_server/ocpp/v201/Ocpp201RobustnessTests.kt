@@ -12,6 +12,7 @@ import fr.codetics.ev_server.models.entities.TransactionEntity
 import fr.codetics.ev_server.models.entities.UserEntity
 import fr.codetics.ev_server.models.people.UserRole
 import fr.codetics.ev_server.ocpp.OcppCommandQueue
+import fr.codetics.ev_server.ocpp.OcppFault
 import fr.codetics.ev_server.ocpp.OcppService
 import fr.codetics.ev_server.ocpp.OcppTime
 import fr.codetics.ev_server.ocpp.OcppVersion
@@ -40,6 +41,7 @@ import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfig
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -106,8 +108,43 @@ constructor(
                 lastSeen = Instant.now()
             }
         )
+        stations.save(StationEntity(StationKey(tenant.id, "CS-16"), "Borne 1.6", "unused", connected = true))
         chargingTokens.save(ChargingTokenEntity(ChargingTokenKey(tenant.id, "TAG-1")))
     }
+
+    private fun policy(station: String, value: String) {
+        stations.save(stations.findById(StationKey(tenant.id, station)).orElseThrow().apply { bootPolicy = value })
+    }
+
+    private fun boot201(): JsonNode =
+        call("BootNotification", mapOf("reason" to "PowerUp", "chargingStation" to mapOf("model" to "M1", "vendorName" to "Acme")))[2]
+
+    private fun boot16(): JsonNode =
+        db.decode(
+            ocpp.call(
+                tenant.id,
+                "CS-16",
+                UUID.randomUUID().toString(),
+                "BootNotification",
+                db.json.valueToTree(mapOf("chargePointVendor" to "Acme", "chargePointModel" to "M1")),
+            )
+        )[2]
+
+    private fun queued(station: String, action: String, payload: Map<String, Any?>) =
+        queue.command(tenant.id, station, action, db.json.valueToTree(payload))
+
+    private fun drain(station: String, version: OcppVersion): List<String> {
+        val identity = StationIdentity(tenant.id, station)
+        val sent = mutableListOf<String>()
+        repeat(10) {
+            val command = queue.claim(identity, version).singleOrNull() ?: return sent
+            sent += command.action
+            queue.complete(identity, db.json.valueToTree(listOf(3, command.id.toString(), mapOf("status" to "Accepted"))))
+        }
+        return sent
+    }
+
+    private fun bearer() = "Bearer ${accounts.issue(requireNotNull(accounts.findUser(admin.id)))}"
 
     private fun call(action: String, payload: Map<String, Any?>): JsonNode =
         db.decode(
@@ -145,6 +182,67 @@ constructor(
         val identity = StationIdentity(tenant.id, "CS-201")
         assertTrue(queue.claim(identity, OcppVersion.V201).any { it.id == id })
         queue.complete(identity, db.json.valueToTree(listOf(3, id.toString(), result)))
+    }
+
+    @Test
+    fun `une borne en attente ne recoit que des commandes de configuration et ne peut pas recharger`() {
+        policy("CS-201", "Pending")
+        val boot = boot201()
+        assertEquals("Pending", boot.path("status").asText())
+        assertTrue(boot.path("interval").intValue() > 0)
+
+        val fault = assertThrows(OcppFault::class.java) { event("Started", 0, "Authorized", token = mapOf("idToken" to "TAG-1", "type" to "ISO14443")) }
+        assertEquals("SecurityError", fault.code)
+        assertNull(transaction())
+        assertEquals(3, call("Heartbeat", emptyMap())[0].intValue())
+
+        val start = queued("CS-201", "RemoteStartTransaction", mapOf("idTag" to "TAG-1", "connectorId" to 1))
+        queued("CS-201", "GetConfiguration", emptyMap())
+        val sent = drain("CS-201", OcppVersion.V201)
+        assertTrue("GetConfiguration" in sent, sent.toString())
+        assertFalse("RemoteStartTransaction" in sent, sent.toString())
+        assertEquals("QUEUED", commands.findById(start).orElseThrow().state.name)
+    }
+
+    @Test
+    fun `une borne refusee ne recoit aucune commande et ses messages sont refuses`() {
+        policy("CS-201", "Rejected")
+        assertEquals("Rejected", boot201().path("status").asText())
+        assertEquals("SecurityError", assertThrows(OcppFault::class.java) { call("Heartbeat", emptyMap()) }.code)
+        queued("CS-201", "GetConfiguration", emptyMap())
+        assertTrue(queue.claim(StationIdentity(tenant.id, "CS-201"), OcppVersion.V201).isEmpty())
+
+        policy("CS-201", "Accepted")
+        assertEquals("Accepted", boot201().path("status").asText())
+        assertEquals(3, call("Heartbeat", emptyMap())[0].intValue())
+    }
+
+    @Test
+    fun `une borne 1_6 suit les memes regles d enregistrement`() {
+        policy("CS-16", "Pending")
+        assertEquals("Pending", boot16().path("status").asText())
+        policy("CS-16", "Rejected")
+        assertEquals("Rejected", boot16().path("status").asText())
+        policy("CS-16", "Accepted")
+        assertEquals("Accepted", boot16().path("status").asText())
+    }
+
+    @Test
+    fun `accepter une borne en attente lui demande un nouveau BootNotification`() {
+        policy("CS-201", "Pending")
+        boot201()
+        mvc.perform(
+                put("/api/v1/stations/CS-201")
+                    .header(HttpHeaders.AUTHORIZATION, bearer())
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"name":"Borne 2.0.1","bootPolicy":"Accepted"}""")
+            )
+            .andExpect(status().isOk)
+        val trigger = commands.findAll().single { it.tenantId == tenant.id && it.stationId == "CS-201" && it.action == "TriggerMessage" }
+        assertEquals("BootNotification", db.decode(trigger.request).path("requestedMessage").asText())
+        assertTrue("TriggerMessage" in drain("CS-201", OcppVersion.V201))
+        assertEquals("Accepted", boot201().path("status").asText())
     }
 
     @Test

@@ -1173,6 +1173,21 @@ const messages: Messages = {
   "État reçu {time}": { en: "Status received {time}", es: "Estado recibido {time}" },
   Événement: { en: "Event", es: "Evento" },
   Événements: { en: "Events", es: "Eventos" },
+  "Accepter la borne": { en: "Accept the station", es: "Aceptar el punto de recarga" },
+  "Mettre en attente pour configuration": {
+    en: "Hold for configuration",
+    es: "Poner en espera para configuración",
+  },
+  "Refuser la borne": { en: "Reject the station", es: "Rechazar el punto de recarga" },
+  "Réponse au démarrage (BootNotification)": {
+    en: "Boot response (BootNotification)",
+    es: "Respuesta al arranque (BootNotification)",
+  },
+  "En attente, la borne ne reçoit que des commandes de configuration et ne peut pas recharger ; l’accepter lui demande aussitôt un nouveau démarrage. Refusée, elle ne reçoit aucune commande. Dernière réponse envoyée : {status}.":
+    {
+      en: "While pending, the station only receives configuration commands and cannot charge; accepting it immediately asks it for a new boot. When rejected, it receives no commands. Last response sent: {status}.",
+      es: "En espera, el punto de recarga solo recibe comandos de configuración y no puede cargar; aceptarlo le solicita de inmediato un nuevo arranque. Rechazado, no recibe ningún comando. Última respuesta enviada: {status}.",
+    },
 };
 
 export default messages;

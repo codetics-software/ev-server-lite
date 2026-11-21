@@ -11,7 +11,14 @@ import { asText, maxLength, optionalNumber, required, rules, toNumber } from "@/
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { connectorTypes, ocppProtocols, ocppVersionOf, type Station } from "./station-types";
+import {
+  bootPolicies,
+  bootPolicyLabel,
+  connectorTypes,
+  ocppProtocols,
+  ocppVersionOf,
+  type Station,
+} from "./station-types";
 import { t } from "@/lib/i18n";
 
 type ConnectorDraft = { connectorId: string; type: string; maximumPowerKw: string; phases: string };
@@ -40,6 +47,7 @@ export function StationProperties({
       maximumPowerKw: asText(station.maximum_power_kw),
       excludeFromSmartCharging: station.exclude_from_smart_charging === true,
       ocppProtocol: station.ocpp_protocol ?? "1.6",
+      bootPolicy: station.boot_policy ?? "Accepted",
       connectors: (station.connectors ?? []).map((connector): ConnectorDraft => ({
         connectorId: String(connector.connector_id),
         type: asText(connector.type),
@@ -63,6 +71,7 @@ export function StationProperties({
             maximumPowerKw: toNumber(value.maximumPowerKw) ?? null,
             excludeFromSmartCharging: value.excludeFromSmartCharging,
             ocppProtocol: value.ocppProtocol,
+            bootPolicy: value.bootPolicy,
             connectors: value.connectors.map((connector) => ({
               connectorId: Number(connector.connectorId),
               type: connector.type || null,
@@ -129,6 +138,19 @@ export function StationProperties({
                           )
                     }
                     options={ocppProtocols()}
+                  />
+                )}
+              </form.Field>
+              <form.Field name="bootPolicy">
+                {(field) => (
+                  <FormSelect
+                    field={field}
+                    label={t("Réponse au démarrage (BootNotification)")}
+                    description={t(
+                      "En attente, la borne ne reçoit que des commandes de configuration et ne peut pas recharger ; l’accepter lui demande aussitôt un nouveau démarrage. Refusée, elle ne reçoit aucune commande. Dernière réponse envoyée : {status}.",
+                      { status: bootPolicyLabel(station.registration_status) },
+                    )}
+                    options={bootPolicies()}
                   />
                 )}
               </form.Field>

@@ -62,6 +62,10 @@ class OcppGateway(
         session.attributes["ocpp"] as? OcppVersion ?: OcppVersion.V16
 
     override fun afterConnectionEstablished(session: WebSocketSession) {
+        if (session.attributes.containsKey(UNSUPPORTED_PROTOCOL)) {
+            session.close(CloseStatus.PROTOCOL_ERROR)
+            return
+        }
         session.setTextMessageSizeLimit(262144)
         activity[session.id] = Instant.now()
         val station = identity(session)
@@ -153,6 +157,7 @@ class OcppGateway(
     }
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
+        if (session.attributes.containsKey(UNSUPPORTED_PROTOCOL)) return
         val station = identity(session)
         val version = version(session)
         activity[session.id] = Instant.now()

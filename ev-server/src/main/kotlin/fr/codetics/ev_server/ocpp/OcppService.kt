@@ -109,6 +109,10 @@ class OcppService(
                 }
             }
 
+            if (!StationRegistration.acceptsCall(device.registrationStatus, action)) {
+                throw OcppFault("SecurityError", "La borne n’est pas acceptée par le serveur.")
+            }
+
             device.lastSeen = Instant.now()
             val result =
                 if (request != null) v201.getObject().handle(device, action, request, prepared) else handle(device, action, payload)
@@ -127,6 +131,16 @@ class OcppService(
         }
     }
 
+    fun register(station: StationEntity): String {
+        val registration = StationRegistration.policy(station.bootPolicy)
+        station.registrationStatus = registration
+        return registration
+    }
+
+    fun bootInterval(station: StationEntity, registration: String): Int =
+        if (registration == StationRegistration.ACCEPTED) station.heartbeatInterval ?: properties.ocpp.heartbeatInterval()
+        else properties.ocpp.heartbeatInterval()
+
     private fun handle(station: StationEntity, action: String, payload: JsonNode): Any {
         val tenant = station.key.tenantId
         val identity = station.key.stationId
@@ -139,13 +153,14 @@ class OcppService(
                 station.firmwareVersion = payload.get("firmwareVersion")?.asText()?.take(100)
                 station.metadata = db.encode(payload)
                 station.lastBoot = Instant.now()
-                record(station, "BOOT", info = "${station.vendor} ${station.model}")
-                events.publishEvent(StationBooted(station, firstBoot))
+                val registration = register(station)
+                record(station, "BOOT", status = registration.takeIf { it != StationRegistration.ACCEPTED }, info = "${station.vendor} ${station.model}")
+                if (registration != StationRegistration.REJECTED) events.publishEvent(StationBooted(station, firstBoot))
 
                 mapOf(
-                    "status" to "Accepted",
+                    "status" to registration,
                     "currentTime" to OcppTime.now(),
-                    "interval" to (station.heartbeatInterval ?: properties.ocpp.heartbeatInterval()),
+                    "interval" to bootInterval(station, registration),
                 )
             }
             "Heartbeat" -> {

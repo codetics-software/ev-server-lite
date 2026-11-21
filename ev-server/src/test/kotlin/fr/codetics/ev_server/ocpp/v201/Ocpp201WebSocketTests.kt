@@ -77,7 +77,13 @@ constructor(
 
     private class Frames : WebSocket.Listener {
         val received = LinkedBlockingQueue<String>()
+        val closed = LinkedBlockingQueue<Int>()
         private val buffer = StringBuilder()
+
+        override fun onClose(webSocket: WebSocket, statusCode: Int, reason: String): CompletionStage<*>? {
+            closed.add(statusCode)
+            return null
+        }
 
         override fun onText(webSocket: WebSocket, data: CharSequence, last: Boolean): CompletionStage<*>? {
             buffer.append(data)
@@ -142,6 +148,12 @@ constructor(
         throw IllegalStateException()
     }
 
+    private fun assertProtocolRefused(connection: Connection?) {
+        val refused = requireNotNull(connection)
+        assertEquals("", refused.socket.subprotocol)
+        assertEquals(1002, refused.frames.closed.poll(5, TimeUnit.SECONDS))
+    }
+
     private fun reload(id: String): StationEntity {
         val deadline = System.currentTimeMillis() + 5000
         while (System.currentTimeMillis() < deadline) {
@@ -176,13 +188,14 @@ constructor(
         assertEquals("ocpp1.6", requireNotNull(connect("FORCED-16", "ocpp2.0.1", "ocpp1.6")).socket.subprotocol)
 
         station("FORCED-201", "2.0.1")
-        assertNull(connect("FORCED-201", "ocpp1.6"))
+        assertProtocolRefused(connect("FORCED-201", "ocpp1.6"))
         assertTrue("OCPP 2.0.1 non proposé par la borne" in rejections("FORCED-201"))
         assertEquals("ocpp2.0.1", requireNotNull(connect("FORCED-201", "ocpp1.6", "ocpp2.0.1")).socket.subprotocol)
 
         station("LEGACY", "1.6")
-        assertNull(connect("LEGACY", "ocpp2.0.1"))
-        assertNull(connect("LEGACY", "ocpp1.5"))
+        assertProtocolRefused(connect("LEGACY", "ocpp2.0.1"))
+        assertProtocolRefused(connect("LEGACY", "ocpp1.5"))
+        assertFalse(reload("LEGACY").connected)
     }
 
     @Test
@@ -242,7 +255,7 @@ constructor(
     fun `une borne 1_6 garde les codes d erreur OCPP 1_6`() {
         station("CS-16", "1.6")
         val connection = requireNotNull(connect("CS-16", "ocpp1.6"))
-        assertEquals("OccurrenceConstraintViolation", connection.exchange("""[2,"e-1","BootNotification",{}]""", "e-1")[2].asText())
+        assertEquals("OccurenceConstraintViolation", connection.exchange("""[2,"e-1","BootNotification",{}]""", "e-1")[2].asText())
         assertEquals("ProtocolError", connection.exchange("""[7,"e-2",{}]""", "e-2")[2].asText())
         assertEquals("NotSupported", connection.exchange("""[2,"e-3","Coffee",{}]""", "e-3")[2].asText())
     }

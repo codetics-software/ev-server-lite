@@ -68,12 +68,13 @@ Details: [architecture](docs/architecture.md), [authentication](docs/authenticat
 
 All 65 OCPP 2.0.1 actions are implemented with schema-level validation: 25 messages sent by stations and 40 commands sent by the server. Highlights:
 
+- Registration with `Accepted`, `Pending` (provisioning) and `Rejected` boot responses, for OCPP 1.6 and 2.0.1.
 - Boot, heartbeat, status, `TransactionEvent` (including authorize-first and plug-first flows), meter values with signed data, reservations, local authorization lists and remote start/stop.
 - Device model: `NotifyReport`, `GetBaseReport`, `GetReport`, `GetVariables`, `SetVariables`, monitoring and events.
 - Smart charging: `SetChargingProfile`, `GetCompositeSchedule`, `NotifyEVChargingNeeds` and charging limits.
 - Security: security profiles 1 to 3, certificate signing, installation and revocation, security events and network profiles.
 - ISO 15118 Plug & Charge: `Get15118EVCertificate`, `GetCertificateStatus` (OCSP) and contract certificate checks.
-- OCPP-J framing rules: one outstanding call per direction, RPC framework errors, message id checks, millisecond timestamps and WebSocket ping liveness.
+- OCPP-J rules: subprotocol negotiation and refusal, one outstanding call per direction, RPC framework errors, message id checks, millisecond timestamps and WebSocket ping liveness.
 
 The full list is in [docs/ocpp-2.0.1.md](docs/ocpp-2.0.1.md).
 

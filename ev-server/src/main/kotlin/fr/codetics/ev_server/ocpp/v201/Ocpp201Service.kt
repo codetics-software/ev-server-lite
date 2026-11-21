@@ -18,6 +18,7 @@ import fr.codetics.ev_server.ocpp.OcppService
 import fr.codetics.ev_server.ocpp.OcppTime
 import fr.codetics.ev_server.ocpp.StationBooted
 import fr.codetics.ev_server.ocpp.StationNotification
+import fr.codetics.ev_server.ocpp.StationRegistration
 import fr.codetics.ev_server.ocpp.TransactionStarted
 import fr.codetics.ev_server.ocpp.VehicleIds
 import fr.codetics.ev_server.repositories.ConnectorRepository
@@ -184,12 +185,18 @@ class Ocpp201Service(
         station.firmwareVersion = request.chargingStation.firmwareVersion?.take(100)
         station.metadata = db.encode(Ocpp201Codec.encode(request))
         station.lastBoot = Instant.now()
-        ocpp.record(station, "BOOT", status = request.reason.name, info = "${station.vendor} ${station.model}")
-        events.publishEvent(StationBooted(station, firstBoot))
+        val registration = ocpp.register(station)
+        ocpp.record(
+            station,
+            "BOOT",
+            status = listOfNotNull(request.reason.name, registration.takeIf { it != StationRegistration.ACCEPTED }).joinToString(" / "),
+            info = "${station.vendor} ${station.model}",
+        )
+        if (registration != StationRegistration.REJECTED) events.publishEvent(StationBooted(station, firstBoot))
         return BootNotificationResponse(
             currentTime = OcppTime.now(),
-            interval = station.heartbeatInterval ?: properties.ocpp.heartbeatInterval(),
-            status = RegistrationStatusEnum.Accepted,
+            interval = ocpp.bootInterval(station, registration),
+            status = RegistrationStatusEnum.valueOf(registration),
         )
     }
 

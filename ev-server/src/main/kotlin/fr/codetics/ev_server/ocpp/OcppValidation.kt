@@ -198,7 +198,7 @@ object OcppValidation {
 
         required[action].orEmpty().forEach { key ->
             if (!payload.hasNonNull(key)) {
-                throw OcppFault("OccurrenceConstraintViolation", "Paramètre manquant : $key")
+                throw OcppFault("OccurenceConstraintViolation", "Paramètre manquant : $key")
             }
         }
         validatePrimitives(payload, action)
@@ -303,14 +303,14 @@ object OcppValidation {
             "GetLog" -> {
                 enumeration(payload, "logType", setOf("DiagnosticsLog", "SecurityLog"))
                 if (!payload.path("log").path("remoteLocation").isString) {
-                    throw OcppFault("OccurrenceConstraintViolation", "Paramètre manquant : log.remoteLocation")
+                    throw OcppFault("OccurenceConstraintViolation", "Paramètre manquant : log.remoteLocation")
                 }
             }
             "SignedUpdateFirmware" -> {
                 val firmware = payload.path("firmware")
                 listOf("location", "retrieveDateTime", "signingCertificate", "signature").forEach { key ->
                     if (!firmware.path(key).isString) {
-                        throw OcppFault("OccurrenceConstraintViolation", "Paramètre manquant : firmware.$key")
+                        throw OcppFault("OccurenceConstraintViolation", "Paramètre manquant : firmware.$key")
                     }
                 }
                 timestamp(firmware.path("retrieveDateTime"), "firmware.retrieveDateTime")
@@ -319,7 +319,7 @@ object OcppValidation {
                 val hash = payload.path("certificateHashData")
                 listOf("hashAlgorithm", "issuerNameHash", "issuerKeyHash", "serialNumber").forEach { key ->
                     if (!hash.path(key).isString) {
-                        throw OcppFault("OccurrenceConstraintViolation", "Paramètre manquant : certificateHashData.$key")
+                        throw OcppFault("OccurenceConstraintViolation", "Paramètre manquant : certificateHashData.$key")
                     }
                 }
             }
@@ -367,7 +367,7 @@ object OcppValidation {
 
             if (!samples.isArray || samples.isEmpty) {
                 throw OcppFault(
-                    "OccurrenceConstraintViolation",
+                    "OccurenceConstraintViolation",
                     "Les valeurs de mesure sont manquantes.",
                 )
             }

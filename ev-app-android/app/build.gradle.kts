@@ -131,6 +131,9 @@ listOf("Debug" to false, "Release" to true).forEach { (variant, isStrict) ->
 }
 
 dependencies {
+    constraints {
+        implementation(libs.guava)
+    }
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

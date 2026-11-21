@@ -40,6 +40,7 @@ data class StationUpdate(
     val excludeFromSmartCharging: Boolean = false,
     val connectors: List<ConnectorInput>? = null,
     val ocppProtocol: String? = null,
+    val bootPolicy: String? = null,
 )
 
 data class ParameterInput(val key: String, val value: String)
@@ -65,6 +66,8 @@ data class StationResponse(
     val lastBoot: Instant? = null,
     val ocppVersion: String = "1.6",
     val ocppProtocol: String = "1.6",
+    val bootPolicy: String = "Accepted",
+    val registrationStatus: String? = null,
     val siteAreaId: UUID? = null,
     val siteId: UUID? = null,
     val public: Boolean = false,
@@ -109,6 +112,8 @@ data class StationResponse(
                 lastBoot = station.lastBoot,
                 ocppVersion = station.ocppVersion,
                 ocppProtocol = station.ocppProtocol,
+                bootPolicy = station.bootPolicy,
+                registrationStatus = station.registrationStatus,
                 siteAreaId = station.siteAreaId,
                 siteId = siteId,
                 public = station.publicStation,

@@ -196,7 +196,9 @@ Authorization: Basic <base64(identifiant-borne:mot-de-passe)>
 
 Le Plug & Charge (ISO 15118) demande des certificats V2G déposés avant le démarrage du serveur : voir [Certificats ISO 15118](docs/deploiement/README.md#certificats-iso-15118-plug--charge).
 
-En détection automatique, le serveur retient la première version proposée par la borne dans `Sec-WebSocket-Protocol`. Une version imposée refuse les connexions qui ne la proposent pas. Les bornes existantes restent en OCPP 1.6 imposé.
+En détection automatique, le serveur retient la première version proposée par la borne dans `Sec-WebSocket-Protocol`. Une version imposée refuse les connexions qui ne la proposent pas : conformément à OCPP-J, le serveur termine la poignée de main sans sous-protocole puis ferme la connexion. Les bornes existantes restent en OCPP 1.6 imposé.
+
+La **réponse au démarrage** de chaque borne (BootNotification) se règle dans ses propriétés : **acceptée** (par défaut), **en attente** pour la configurer avant sa mise en service (elle ne reçoit alors que des commandes de configuration et ne peut pas recharger), ou **refusée**. Accepter une borne en attente lui demande aussitôt un nouveau démarrage.
 
 Les commandes sont persistées et suivies jusqu’à la réponse ou au dépassement de leur délai. Une réponse positive à une commande de démarrage ne prouve pas que le véhicule recharge.
 

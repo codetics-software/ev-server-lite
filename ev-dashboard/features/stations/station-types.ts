@@ -28,6 +28,8 @@ export type Station = {
   last_boot?: string | null;
   ocpp_version?: string | null;
   ocpp_protocol?: OcppProtocol | null;
+  boot_policy?: BootPolicy | null;
+  registration_status?: BootPolicy | null;
   site_area_id?: string | null;
   site_id?: string | null;
   public?: boolean;
@@ -117,6 +119,20 @@ export type RegistrationToken = {
 export type ProvisionedStation = { id: string; secret: string; message: string };
 
 export type OcppProtocol = "AUTO" | "1.6" | "2.0.1";
+
+export type BootPolicy = "Accepted" | "Pending" | "Rejected";
+
+export function bootPolicies() {
+  return [
+    { value: "Accepted", label: t("Accepter la borne") },
+    { value: "Pending", label: t("Mettre en attente pour configuration") },
+    { value: "Rejected", label: t("Refuser la borne") },
+  ];
+}
+
+export function bootPolicyLabel(value: string | null | undefined) {
+  return bootPolicies().find((policy) => policy.value === value)?.label ?? t("Aucune");
+}
 
 export function ocppProtocols() {
   return [

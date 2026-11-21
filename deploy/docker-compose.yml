@@ -74,7 +74,7 @@ services:
         ipv4_address: 172.30.0.30
 
   caddy:
-    image: caddy:2.10-alpine
+    image: caddy:2.11-alpine
     restart: unless-stopped
     ports:
       - "80:80"

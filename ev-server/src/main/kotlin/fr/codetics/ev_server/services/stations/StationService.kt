@@ -33,6 +33,7 @@ import fr.codetics.ev_server.models.stations.TemplateApplication
 import fr.codetics.ev_server.ocpp.OcppCommandQueue
 import fr.codetics.ev_server.ocpp.OcppGateway
 import fr.codetics.ev_server.ocpp.OcppVersion
+import fr.codetics.ev_server.ocpp.StationRegistration
 import fr.codetics.ev_server.ocpp.ocpp
 import fr.codetics.ev_server.ocpp.v201.Ocpp201Variables
 import fr.codetics.ev_server.ocpp.STATION_ID
@@ -202,6 +203,7 @@ class StationService(
             ensure(connector.type == null || connector.type.length <= 30) { msg("connector.invalid_type") }
         }
         ensure(input.ocppProtocol == null || input.ocppProtocol in OcppVersion.PROTOCOLS) { msg("ocpp.version.invalid") }
+        ensure(input.bootPolicy == null || input.bootPolicy in StationRegistration.POLICIES) { msg("ocpp.boot_policy.invalid") }
 
         db.atomic {
             val station =
@@ -212,6 +214,12 @@ class StationService(
             val renegotiate =
                 station.connected && OcppVersion.fromLabel(station.ocppVersion) !in OcppVersion.allowed(protocol)
             station.ocppProtocol = protocol
+            val released =
+                input.bootPolicy == StationRegistration.ACCEPTED &&
+                    station.bootPolicy != StationRegistration.ACCEPTED &&
+                    station.registrationStatus == StationRegistration.PENDING &&
+                    station.connected
+            input.bootPolicy?.let { station.bootPolicy = it }
             station.name = input.name.trim()
             station.siteAreaId = input.siteAreaId
             station.enabled = input.enabled
@@ -230,6 +238,9 @@ class StationService(
                 connectors.save(connector)
             }
             db.audit(user.tenantId, user.id.toString(), "STATION_UPDATE", stationId)
+            if (released && !disabled && !renegotiate) {
+                queue.command(user.tenantId, stationId, "TriggerMessage", db.json.valueToTree(mapOf("requestedMessage" to "BootNotification")))
+            }
             if (disabled || renegotiate) gateway.disconnect(StationIdentity(user.tenantId, stationId))
         }
         return find(user.tenantId, stationId)

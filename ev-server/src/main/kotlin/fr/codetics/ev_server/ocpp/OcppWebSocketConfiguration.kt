@@ -53,6 +53,7 @@ class OcppWebSocketConfiguration(
 }
 
 val STATION_ID = Regex("[A-Za-z0-9._:*-]{1,100}")
+const val UNSUPPORTED_PROTOCOL = "unsupportedProtocol"
 private val TENANT_SLUG = Regex("[a-z0-9-]{1,63}")
 
 private val negotiated = ThreadLocal<OcppVersion?>()
@@ -100,7 +101,7 @@ private class StationHandshake(
                 request.headers["Sec-WebSocket-Protocol"].orEmpty().flatMap { header ->
                     header.split(',').map(String::trim)
                 }
-            require(path.size == 3 && (protocols.isEmpty() || protocols.any { OcppVersion.fromSubprotocol(it) != null }))
+            require(path.size == 3)
 
             val slug = path[1]
             val station = path[2]
@@ -133,9 +134,6 @@ private class StationHandshake(
                 known ?: password?.let { registrations.register(tenant.id, station, it) }
                     ?: throw IllegalArgumentException("Borne inconnue.")
             if (!device.enabled) throw Rejected("borne désactivée")
-            val version =
-                OcppVersion.negotiate(device.ocppProtocol, protocols)
-                    ?: throw Rejected("OCPP ${device.ocppProtocol} non proposé par la borne")
 
             var promote = false
             val basic =
@@ -186,6 +184,13 @@ private class StationHandshake(
             }
 
             attributes["station"] = StationIdentity(tenant.id, station)
+            val version = OcppVersion.negotiate(device.ocppProtocol, protocols)
+            if (version == null) {
+                val refusal = Rejected(if (device.ocppProtocol == OcppVersion.AUTO) "aucune version OCPP prise en charge proposée" else "OCPP ${device.ocppProtocol} non proposé par la borne")
+                reject(device, refusal)
+                attributes[UNSUPPORTED_PROTOCOL] = refusal.reason
+                return true
+            }
             attributes["security"] = ConnectionSecurity(effective, certificate, promote)
             attributes["connection"] = UUID.randomUUID().toString()
             attributes["ocpp"] = version
