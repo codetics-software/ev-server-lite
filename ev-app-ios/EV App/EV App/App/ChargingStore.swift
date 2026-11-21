@@ -12,6 +12,7 @@ import Observation
 final class ChargingStore {
     private(set) var active: [ChargingSessionResponse] = []
     private(set) var tokens: [ChargingTokenResponse] = []
+    @ObservationIgnored private var generation = 0
 
     var current: ChargingSessionResponse? { active.first }
 
@@ -23,6 +24,7 @@ final class ChargingStore {
     }
 
     func reset() {
+        generation += 1
         active = []
         tokens = []
     }
@@ -30,14 +32,18 @@ final class ChargingStore {
     func refresh() async {
         let model = AppModel.shared
         guard let api = model.api, model.isSignedIn else { return }
+        let started = generation
         do {
             async let sessions = api.sessions(status: "active", limit: 10)
             async let owned = api.tokens()
-            active = try await sessions.items
-            tokens = try await owned
+            let (page, badges) = try await (sessions, owned)
+            guard started == generation else { return }
+            active = page.items
+            tokens = badges
         } catch is CancellationError {
             return
         } catch APIError.unauthorized {
+            guard started == generation else { return }
             model.sessionExpired()
         } catch {
             return
