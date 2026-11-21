@@ -777,7 +777,7 @@ private fun LiveSessionGauge(session: ChargingSessionResponse) {
         }
         Text(model.stations.station(session.stationId)?.name ?: session.stationId, style = MaterialTheme.typography.titleMedium)
         if (!session.isActive) {
-            session.stopReason?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            session.stopReason?.let { Text(stopReasonLabel(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
 }

@@ -356,4 +356,25 @@
     <string name="your_session">Su sesión</string>
     <string name="your_session_appears_here_once_it_starts">Su sesión aparecerá aquí en cuanto comience.</string>
     <string name="your_session_has_expired_sign_in_again">Su sesión ha caducado. Vuelva a iniciar sesión.</string>
+    <string name="stop_reason_stopped_at_the_station">Detenida en el punto de recarga</string>
+    <string name="stop_reason_stopped_remotely">Detenida a distancia</string>
+    <string name="stop_reason_vehicle_unplugged">Vehículo desconectado</string>
+    <string name="stop_reason_emergency_stop">Parada de emergencia</string>
+    <string name="stop_reason_power_outage">Corte de alimentación</string>
+    <string name="stop_reason_station_restarted">Reinicio del punto de recarga</string>
+    <string name="stop_reason_connector_unlocked_remotely">Conector desbloqueado a distancia</string>
+    <string name="stop_reason_authorization_withdrawn">Autorización retirada</string>
+    <string name="stop_reason_stopped_by_the_vehicle">Detenida por el vehículo</string>
+    <string name="stop_reason_battery_limit_reached">Límite de batería alcanzado</string>
+    <string name="stop_reason_time_limit_reached">Límite de tiempo alcanzado</string>
+    <string name="stop_reason_energy_limit_reached">Límite de energía alcanzado</string>
+    <string name="stop_reason_stop_timed_out">Tiempo agotado</string>
+    <string name="stop_reason_stopped_with_a_master_pass">Detenida con una tarjeta maestra</string>
+    <string name="stop_reason_credit_exhausted">Crédito agotado</string>
+    <string name="stop_reason_ground_fault">Fallo de tierra</string>
+    <string name="stop_reason_overcurrent">Sobrecorriente</string>
+    <string name="stop_reason_power_quality_issue">Problema de calidad de la alimentación</string>
+    <string name="stop_reason_closed_without_news_from_the_station">Cerrada sin noticias del punto de recarga</string>
+    <string name="stop_reason_closed_by_the_operator">Cerrada por el operador</string>
+    <string name="stop_reason_other_reason">Otro motivo</string>
 </resources>

@@ -356,4 +356,25 @@
     <string name="your_session">Votre session</string>
     <string name="your_session_appears_here_once_it_starts">Votre session apparaîtra ici dès son démarrage.</string>
     <string name="your_session_has_expired_sign_in_again">Votre session a expiré. Reconnectez-vous.</string>
+    <string name="stop_reason_stopped_at_the_station">Arrêtée sur la borne</string>
+    <string name="stop_reason_stopped_remotely">Arrêtée à distance</string>
+    <string name="stop_reason_vehicle_unplugged">Véhicule débranché</string>
+    <string name="stop_reason_emergency_stop">Arrêt d’urgence</string>
+    <string name="stop_reason_power_outage">Coupure d’alimentation</string>
+    <string name="stop_reason_station_restarted">Redémarrage de la borne</string>
+    <string name="stop_reason_connector_unlocked_remotely">Connecteur déverrouillé à distance</string>
+    <string name="stop_reason_authorization_withdrawn">Autorisation retirée</string>
+    <string name="stop_reason_stopped_by_the_vehicle">Arrêtée par le véhicule</string>
+    <string name="stop_reason_battery_limit_reached">Limite de batterie atteinte</string>
+    <string name="stop_reason_time_limit_reached">Durée maximale atteinte</string>
+    <string name="stop_reason_energy_limit_reached">Limite d’énergie atteinte</string>
+    <string name="stop_reason_stop_timed_out">Délai dépassé</string>
+    <string name="stop_reason_stopped_with_a_master_pass">Arrêtée avec un badge maître</string>
+    <string name="stop_reason_credit_exhausted">Crédit épuisé</string>
+    <string name="stop_reason_ground_fault">Défaut de terre</string>
+    <string name="stop_reason_overcurrent">Surintensité</string>
+    <string name="stop_reason_power_quality_issue">Problème de qualité de l’alimentation</string>
+    <string name="stop_reason_closed_without_news_from_the_station">Clôturée sans nouvelles de la borne</string>
+    <string name="stop_reason_closed_by_the_operator">Clôturée par l’exploitant</string>
+    <string name="stop_reason_other_reason">Autre motif</string>
 </resources>

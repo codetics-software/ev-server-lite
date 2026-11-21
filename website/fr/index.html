@@ -1,0 +1,185 @@
+<!doctype html>
+<!-- EV Supervision Lite — built by Kevin Vavelin, Codetics — https://codetics.fr — LicenseRef-Codetics-Attribution-1.0 -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EV Supervision Lite · Supervision de bornes de recharge open source (OCPP 1.6 et 2.0.1)</title>
+<meta name="description" content="EV Supervision Lite est une solution de supervision de bornes de recharge pour véhicules électriques (IRVE) : serveur OCPP 1.6 et OCPP 2.0.1, tableau de bord Next.js, applications iOS et Android en marque blanche, paiement par QR code avec Stripe, itinérance OCPI 2.1.1.">
+<meta name="keywords" content="supervision bornes de recharge, supervision IRVE, logiciel de supervision de recharge, CSMS, serveur OCPP 2.0.1, OCPP 1.6, supervision open source, application de recharge en marque blanche, OCPI, ISO 15118">
+<meta name="author" content="Kevin Vavelin, Codetics">
+<link rel="canonical" href="https://codetics-software.github.io/ev-server-lite/fr/">
+<link rel="alternate" hreflang="en" href="https://codetics-software.github.io/ev-server-lite/">
+<link rel="alternate" hreflang="fr" href="https://codetics-software.github.io/ev-server-lite/fr/">
+<link rel="alternate" hreflang="x-default" href="https://codetics-software.github.io/ev-server-lite/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EV Supervision Lite">
+<meta property="og:title" content="EV Supervision Lite · Supervision de bornes de recharge open source">
+<meta property="og:description" content="Serveur OCPP 1.6 et 2.0.1, tableau de bord, applications mobiles en marque blanche et paiement par QR code. Auto-hébergé, multi-espaces, sans commission sur les recharges.">
+<meta property="og:url" content="https://codetics-software.github.io/ev-server-lite/fr/">
+<meta property="og:image" content="https://codetics-software.github.io/ev-server-lite/images/02-reseau-ordinateur.png">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:locale:alternate" content="en_GB">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "EV Supervision Lite",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "EV charging station management system (CSMS)",
+      "operatingSystem": "Linux, macOS, Windows, iOS, Android",
+      "description": "Logiciel libre de supervision de bornes de recharge : serveur OCPP 1.6 et OCPP 2.0.1, tableau de bord, applications iOS et Android en marque blanche, paiement par QR code avec Stripe, itinérance OCPI 2.1.1 et Plug & Charge ISO 15118.", "inLanguage": "fr",
+      "url": "https://codetics-software.github.io/ev-server-lite/fr/",
+      "image": "https://codetics-software.github.io/ev-server-lite/images/02-reseau-ordinateur.png",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+      "author": { "@id": "https://codetics.fr/#organization" },
+      "featureList": [
+        "OCPP 1.6 and OCPP 2.0.1 (OCPP-J) server",
+        "Multi-tenant workspaces",
+        "White-label iOS and Android driver apps with CarPlay and Android Auto",
+        "Public charging with QR code and Stripe Checkout",
+        "OCPI 2.1.1 roaming",
+        "Smart charging",
+        "ISO 15118 Plug & Charge certificates"
+      ]
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "name": "ev-server-lite",
+      "codeRepository": "https://github.com/codetics-software/ev-server-lite",
+      "programmingLanguage": ["Kotlin", "TypeScript", "Swift"],
+      "author": { "@id": "https://codetics.fr/#organization" }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://codetics.fr/#organization",
+      "name": "Codetics",
+      "url": "https://codetics.fr",
+      "founder": { "@type": "Person", "name": "Kevin Vavelin" }
+    }
+  ]
+}
+</script>
+<style>
+:root {
+  --bg: #f6f6f3; --surface: #ffffff; --fg: #1b1b19; --muted: #5a5a55; --line: #deded8;
+  --accent: #0f6b4f; --accent-fg: #ffffff; --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #121211; --surface: #1b1b19; --fg: #ecece8; --muted: #a2a29b; --line: #31312d; --accent: #4cc39a; --accent-fg: #0b0b0a; }
+}
+:root[data-theme="dark"] { --bg: #121211; --surface: #1b1b19; --fg: #ecece8; --muted: #a2a29b; --line: #31312d; --accent: #4cc39a; --accent-fg: #0b0b0a; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: inherit; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+header.top { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 0; }
+header.top nav { display: flex; gap: 16px; flex-wrap: wrap; font-size: .95rem; }
+header.top nav a { text-decoration: none; color: var(--muted); }
+header.top nav a:hover { color: var(--fg); }
+.brand { font-weight: 700; text-decoration: none; }
+.hero { padding: 56px 0 40px; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.12; margin: 0 0 20px; max-width: 18ch; letter-spacing: -0.01em; }
+.hero p { font-size: 1.15rem; color: var(--muted); max-width: 62ch; margin: 0 0 28px; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.button { display: inline-block; padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; border: 1px solid var(--line); background: var(--surface); }
+.button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.shot { margin: 40px 0 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+.shot img { display: block; width: 100%; height: auto; }
+section { padding: 48px 0; border-top: 1px solid var(--line); }
+section h2 { font-size: 1.6rem; margin: 0 0 24px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.card h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.card p { margin: 0; color: var(--muted); font-size: .97rem; }
+.split { display: grid; grid-template-columns: 1.1fr .9fr; gap: 32px; align-items: center; }
+.split img { width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--line); }
+@media (max-width: 760px) { .split { grid-template-columns: 1fr; } }
+ul.plain { padding-left: 1.1em; margin: 0; }
+ul.plain li { margin: 6px 0; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+pre { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; overflow-x: auto; font-size: .9rem; }
+footer { padding: 40px 0 56px; border-top: 1px solid var(--line); color: var(--muted); font-size: .95rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./">EV Supervision Lite</a>
+    <nav aria-label="Navigation principale">
+      <a href="#fonctionnalites">Fonctionnalités</a>
+      <a href="#deploiement">Déploiement</a>
+      <a href="../reports/">Rapport de tests</a>
+      <a href="https://github.com/codetics-software/ev-server-lite">GitHub</a>
+      <a href="../" hreflang="en" lang="en">English</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Supervision de bornes de recharge open source, OCPP 1.6 et 2.0.1</h1>
+      <p>EV Supervision Lite est une solution de supervision de recharge (CSMS) que vous hébergez vous-même : un serveur OCPP en Kotlin, un tableau de bord web, des applications conducteurs iOS et Android en marque blanche et la recharge publique payée par QR code. Opérateurs, installateurs et collectivités l’exploitent sous leur propre marque, sans commission sur les recharges.</p>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/codetics-software/ev-server-lite">Voir le code source</a>
+        <a class="button" href="https://codetics.fr/fr/supervision-recharge-lite">Faire déployer par Codetics</a>
+      </div>
+      <figure class="shot">
+        <img src="../images/02-reseau-ordinateur.png" alt="Tableau de bord EV Supervision Lite : vue d’ensemble du réseau de recharge" width="1440" height="1000" loading="eager">
+      </figure>
+    </div>
+
+    <section id="fonctionnalites">
+      <h2>Ce que couvre la solution</h2>
+      <div class="grid">
+        <div class="card"><h3>OCPP 1.6 et OCPP 2.0.1</h3><p>Serveur OCPP-J avec détection automatique de la version, file de commandes persistée, modèle de données des bornes, profils de recharge intelligente, micrologiciel, journaux, réservations et profils de sécurité 0 à 3.</p></div>
+        <div class="card"><h3>Espaces clients</h3><p>Chaque client dispose de ses bornes, utilisateurs, badges RFID, tarifs, véhicules et compte Stripe, isolés par le serveur.</p></div>
+        <div class="card"><h3>Applications en marque blanche</h3><p>Applications natives iOS et Android avec CarPlay et Android Auto, lecture de QR code, réservations et suivi de session, publiées sur vos comptes développeur.</p></div>
+        <div class="card"><h3>Paiement par QR code</h3><p>Le conducteur scanne, paie avec Stripe Checkout et recharge sans compte. Le montant final est calculé d’après les relevés de la borne et le solde est remboursé.</p></div>
+        <div class="card"><h3>Itinérance et Plug &amp; Charge</h3><p>Itinérance OCPI 2.1.1 (badges partenaires, sessions, relevés) et gestion des certificats ISO 15118 pour le Plug &amp; Charge sur les bornes OCPP 2.0.1.</p></div>
+        <div class="card"><h3>Testée publiquement</h3><p>Chaque modification exécute les tests du serveur, du tableau de bord et des applications Android et iOS. Résultats et couverture sont <a href="../reports/">publiés ici</a>.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="split">
+        <div>
+          <h2>Pensée pour les exploitants</h2>
+          <ul class="plain">
+            <li>Détail de chaque borne : état des connecteurs, journal des événements OCPP et commandes à distance.</li>
+            <li>Tarifs par espace, site, zone, borne ou connecteur : énergie, temps, stationnement et forfait.</li>
+            <li>Facturation des conducteurs, vente de cartes de recharge, statistiques, notifications et exports CSV.</li>
+            <li>PostgreSQL ou MongoDB, Docker Compose ou Kubernetes, chez l’hébergeur de votre choix.</li>
+          </ul>
+        </div>
+        <img src="../images/04-detail-borne.png" alt="Détail d’une borne de recharge et commandes OCPP" width="1440" height="1000" loading="lazy">
+      </div>
+    </section>
+
+    <section id="deploiement">
+      <h2>Déployer</h2>
+      <p>Prérequis : Java 25 et Node.js 24. Démarrage local du serveur et du tableau de bord :</p>
+<pre><code>cd ev-server &amp;&amp; SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
+cd ev-dashboard &amp;&amp; npm ci &amp;&amp; npm run dev</code></pre>
+      <p>Les guides de production couvrent Docker Compose, Kubernetes, Google Cloud, AWS, Azure, Scaleway et Oracle Cloud : consultez le <a href="https://github.com/codetics-software/ev-server-lite/blob/main/docs/deploiement/README.md">guide de déploiement</a> et l’<a href="https://github.com/codetics-software/ev-server-lite/blob/main/docs/architecture.md">architecture</a>.</p>
+    </section>
+
+    <section>
+      <h2>Soutenir le projet</h2>
+      <p>EV Supervision Lite est développée et maintenue par Codetics. Soutenez-la en commandant un déploiement clé en main, la publication de vos applications en marque blanche, la maintenance ou un développement sur mesure sur <a href="https://codetics.fr">codetics.fr</a>.</p>
+      <div class="actions">
+        <a class="button primary" href="https://codetics.fr/fr/contact?project=mobility">Contacter Codetics</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>EV Supervision Lite — built by Kevin Vavelin, Codetics · <a href="https://codetics.fr">https://codetics.fr</a></p>
+    <p>Distribuée sous la <a href="https://github.com/codetics-software/ev-server-lite/blob/main/LICENSE">licence d’attribution Codetics 1.0</a>. OCPP et OCPI sont des spécifications de l’Open Charge Alliance et de l’EVRoaming Foundation ; leur mention n’implique aucune approbation.</p>
+  </footer>
+</div>
+</body>
+</html>

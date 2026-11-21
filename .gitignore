@@ -15,4 +15,5 @@
 *.mp4
 **/*.mp4
 promotion/
-promotion/**/*
+promotion/**/***/coverage/
+**/test-results/

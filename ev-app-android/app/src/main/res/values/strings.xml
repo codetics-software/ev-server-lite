@@ -357,4 +357,25 @@
     <string name="your_session">Your session</string>
     <string name="your_session_appears_here_once_it_starts">Your session appears here once it starts.</string>
     <string name="your_session_has_expired_sign_in_again">Your session has expired. Sign in again.</string>
+    <string name="stop_reason_stopped_at_the_station">Stopped at the station</string>
+    <string name="stop_reason_stopped_remotely">Stopped remotely</string>
+    <string name="stop_reason_vehicle_unplugged">Vehicle unplugged</string>
+    <string name="stop_reason_emergency_stop">Emergency stop</string>
+    <string name="stop_reason_power_outage">Power outage</string>
+    <string name="stop_reason_station_restarted">Station restarted</string>
+    <string name="stop_reason_connector_unlocked_remotely">Connector unlocked remotely</string>
+    <string name="stop_reason_authorization_withdrawn">Authorization withdrawn</string>
+    <string name="stop_reason_stopped_by_the_vehicle">Stopped by the vehicle</string>
+    <string name="stop_reason_battery_limit_reached">Battery limit reached</string>
+    <string name="stop_reason_time_limit_reached">Time limit reached</string>
+    <string name="stop_reason_energy_limit_reached">Energy limit reached</string>
+    <string name="stop_reason_stop_timed_out">Timed out</string>
+    <string name="stop_reason_stopped_with_a_master_pass">Stopped with a master pass</string>
+    <string name="stop_reason_credit_exhausted">Credit exhausted</string>
+    <string name="stop_reason_ground_fault">Ground fault</string>
+    <string name="stop_reason_overcurrent">Overcurrent</string>
+    <string name="stop_reason_power_quality_issue">Power quality issue</string>
+    <string name="stop_reason_closed_without_news_from_the_station">Closed without news from the station</string>
+    <string name="stop_reason_closed_by_the_operator">Closed by the operator</string>
+    <string name="stop_reason_other_reason">Other reason</string>
 </resources>

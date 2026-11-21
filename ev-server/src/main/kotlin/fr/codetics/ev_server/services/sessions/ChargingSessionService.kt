@@ -259,7 +259,8 @@ class ChargingSessionService(
             throw ResponseStatusException(HttpStatus.FORBIDDEN, msg("sessions.badge_not_yours"))
         }
         ensure(token.enabled) { msg("tokens.disabled") }
-        if (sessions.existsByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(user.tenantId, input.stationId, input.connectorId)) {
+        val open = sessions.findFirstByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(user.tenantId, input.stationId, input.connectorId)
+        if (open != null && open.tokenUid.isNotEmpty()) {
             throw ResponseStatusException(HttpStatus.CONFLICT, msg("sessions.connector_busy"))
         }
         val id =

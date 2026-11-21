@@ -55,6 +55,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            enableUnitTestCoverage = true
+        }
         release {
             if (keystoreFile.isFile) signingConfig = signingConfigs.getByName("release")
             optimization {

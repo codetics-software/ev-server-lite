@@ -597,6 +597,112 @@ const messages: Messages = {
   Langue: { en: "Language", es: "Idioma" },
   "Dernière connexion": { en: "Last sign-in", es: "Último inicio de sesión" },
   "Information complémentaire": { en: "Additional information", es: "Información adicional" },
+  "Demander un rapport de base": { en: "Request a base report", es: "Solicitar un informe base" },
+  "Demander un rapport": { en: "Request a report", es: "Solicitar un informe" },
+  "Lire des variables": { en: "Read variables", es: "Leer variables" },
+  "Modifier des variables": { en: "Change variables", es: "Modificar variables" },
+  "Lire l’état d’une session": { en: "Read a session status", es: "Leer el estado de una sesión" },
+  "Lire les profils de recharge": {
+    en: "Read charging profiles",
+    es: "Leer los perfiles de carga",
+  },
+  "Publier un micrologiciel": { en: "Publish firmware", es: "Publicar un firmware" },
+  "Retirer un micrologiciel publié": {
+    en: "Unpublish firmware",
+    es: "Retirar un firmware publicado",
+  },
+  "Afficher un message": { en: "Display a message", es: "Mostrar un mensaje" },
+  "Lire les messages affichés": {
+    en: "Read displayed messages",
+    es: "Leer los mensajes mostrados",
+  },
+  "Effacer un message affiché": {
+    en: "Clear a displayed message",
+    es: "Borrar un mensaje mostrado",
+  },
+  "Définir la surveillance de base": {
+    en: "Set the monitoring base",
+    es: "Definir la supervisión base",
+  },
+  "Définir le niveau de surveillance": {
+    en: "Set the monitoring level",
+    es: "Definir el nivel de supervisión",
+  },
+  "Demander un rapport de surveillance": {
+    en: "Request a monitoring report",
+    es: "Solicitar un informe de supervisión",
+  },
+  "Surveiller des variables": { en: "Monitor variables", es: "Supervisar variables" },
+  "Arrêter la surveillance de variables": {
+    en: "Stop monitoring variables",
+    es: "Detener la supervisión de variables",
+  },
+  "Données d’un client": { en: "Customer information", es: "Datos de un cliente" },
+  "Mettre à jour le coût": { en: "Update the cost", es: "Actualizar el coste" },
+  "Définir un profil réseau": { en: "Set a network profile", es: "Definir un perfil de red" },
+  "Événement de session": { en: "Session event", es: "Evento de sesión" },
+  "État du micrologiciel": { en: "Firmware status", es: "Estado del firmware" },
+  "État de la publication du micrologiciel": {
+    en: "Firmware publication status",
+    es: "Estado de la publicación del firmware",
+  },
+  "Certificat ISO 15118 de la borne": {
+    en: "Station ISO 15118 certificate",
+    es: "Certificado ISO 15118 del punto de recarga",
+  },
+  "Certificats client et ISO 15118 de la borne": {
+    en: "Station client and ISO 15118 certificates",
+    es: "Certificados de cliente e ISO 15118 del punto de recarga",
+  },
+  "Arrêt par le véhicule": { en: "Stopped by the vehicle", es: "Detenida por el vehículo" },
+  "Limite de charge atteinte": {
+    en: "State of charge limit reached",
+    es: "Límite de carga alcanzado",
+  },
+  "Durée maximale atteinte": { en: "Time limit reached", es: "Límite de tiempo alcanzado" },
+  "Limite d’énergie atteinte": { en: "Energy limit reached", es: "Límite de energía alcanzado" },
+  "Autorisation retirée": { en: "Authorization withdrawn", es: "Autorización retirada" },
+  "Redémarrage immédiat": { en: "Immediate reset", es: "Reinicio inmediato" },
+  "Déverrouillage à distance": { en: "Remote unlock", es: "Desbloqueo remoto" },
+  "Délai expiré": { en: "Timed out", es: "Tiempo agotado" },
+  "Badge maître": { en: "Master pass", es: "Tarjeta maestra" },
+  "Crédit local épuisé": { en: "Local credit exhausted", es: "Crédito local agotado" },
+  "Qualité de l’alimentation": { en: "Power quality", es: "Calidad de la alimentación" },
+  "Autre motif": { en: "Other reason", es: "Otro motivo" },
+  "Envoi annulé et remplacé": {
+    en: "Upload cancelled and replaced",
+    es: "Envío cancelado y sustituido",
+  },
+  "Racine V2G": { en: "V2G root", es: "Raíz V2G" },
+  "Racine de l’opérateur de mobilité": {
+    en: "Mobility operator root",
+    es: "Raíz del operador de movilidad",
+  },
+  "Chaîne de certificats V2G": { en: "V2G certificate chain", es: "Cadena de certificados V2G" },
+  "Le serveur n’a pas pu s’authentifier": {
+    en: "The server failed to authenticate",
+    es: "El servidor no pudo autenticarse",
+  },
+  "Connexion de maintenance acceptée": {
+    en: "Maintenance login accepted",
+    es: "Acceso de mantenimiento aceptado",
+  },
+  "Connexion de maintenance refusée": {
+    en: "Maintenance login failed",
+    es: "Acceso de mantenimiento rechazado",
+  },
+  "Installation des racines ISO 15118 sur une borne": {
+    en: "Installation of ISO 15118 roots on a station",
+    es: "Instalación de las raíces ISO 15118 en un punto de recarga",
+  },
+  "Demande du certificat ISO 15118 d’une borne": {
+    en: "Request for a station ISO 15118 certificate",
+    es: "Solicitud del certificado ISO 15118 de un punto de recarga",
+  },
+  "Lecture des certificats ISO 15118 d’une borne": {
+    en: "Reading of a station ISO 15118 certificates",
+    es: "Lectura de los certificados ISO 15118 de un punto de recarga",
+  },
 };
 
 export default messages;

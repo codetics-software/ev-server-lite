@@ -135,6 +135,9 @@ export const criticalSecurityEvents = new Set([
   "InvalidFirmwareSigningCertificate",
   "InvalidCentralSystemCertificate",
   "InvalidChargePointCertificate",
+  "InvalidCsmsCertificate",
+  "InvalidChargingStationCertificate",
+  "MaintenanceLoginFailed",
   "FirmwareUpdated",
 ]);
 
@@ -155,7 +158,7 @@ const failedLogs = new Set([
 ]);
 
 function failedOutcome(status: string) {
-  return /(Rejected|NotSupported|TIMED_OUT|FAILED|CANCELLED)$/.test(status);
+  return /(Rejected|NotSupported|TIMED_OUT|FAILED|Failed|CANCELLED|REVOKED|UNKNOWN)$/.test(status);
 }
 
 export function securityEventTone(event: StationEvent): Tone | null {
@@ -175,7 +178,7 @@ export function securityEventTone(event: StationEvent): Tone | null {
       if (failedOutcome(status)) {
         return "danger";
       }
-      return /(Accepted|Signed)$/.test(status) ? "success" : "neutral";
+      return /(Accepted|Signed|GOOD)$/.test(status) ? "success" : "neutral";
     case "LOG":
       if (failedLogs.has(status)) {
         return "danger";

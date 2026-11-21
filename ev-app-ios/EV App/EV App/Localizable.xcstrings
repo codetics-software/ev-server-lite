@@ -601,6 +601,22 @@
         }
       }
     },
+    "Authorization withdrawn": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorización retirada"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorisation retirée"
+          }
+        }
+      }
+    },
     "Automatic charging": {
       "localizations": {
         "es": {
@@ -821,6 +837,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Batterie (kWh)"
+          }
+        }
+      }
+    },
+    "Battery limit reached": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Límite de batería alcanzado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite de batterie atteinte"
           }
         }
       }
@@ -1273,6 +1305,38 @@
         }
       }
     },
+    "Closed by the operator": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrada por el operador"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clôturée par l’exploitant"
+          }
+        }
+      }
+    },
+    "Closed without news from the station": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerrada sin noticias del punto de recarga"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clôturée sans nouvelles de la borne"
+          }
+        }
+      }
+    },
     "Connecting to the server…": {
       "localizations": {
         "es": {
@@ -1301,6 +1365,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Connecteur"
+          }
+        }
+      }
+    },
+    "Connector unlocked remotely": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conector desbloqueado a distancia"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecteur déverrouillé à distance"
           }
         }
       }
@@ -1413,6 +1493,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Crédit"
+          }
+        }
+      }
+    },
+    "Credit exhausted": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédito agotado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédit épuisé"
           }
         }
       }
@@ -1769,6 +1865,22 @@
         }
       }
     },
+    "Emergency stop": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parada de emergencia"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêt d’urgence"
+          }
+        }
+      }
+    },
     "Enable with the session on %@": {
       "localizations": {
         "es": {
@@ -1829,6 +1941,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Énergie"
+          }
+        }
+      }
+    },
+    "Energy limit reached": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Límite de energía alcanzado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite d’énergie atteinte"
           }
         }
       }
@@ -2149,6 +2277,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Itinéraire"
+          }
+        }
+      }
+    },
+    "Ground fault": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fallo de tierra"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Défaut de terre"
           }
         }
       }
@@ -3097,6 +3241,22 @@
         }
       }
     },
+    "Other reason": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otro motivo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autre motif"
+          }
+        }
+      }
+    },
     "Out of order": {
       "localizations": {
         "es": {
@@ -3109,6 +3269,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hors service"
+          }
+        }
+      }
+    },
+    "Overcurrent": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sobrecorriente"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Surintensité"
           }
         }
       }
@@ -3541,6 +3717,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Puissance"
+          }
+        }
+      }
+    },
+    "Power outage": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corte de alimentación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coupure d’alimentation"
+          }
+        }
+      }
+    },
+    "Power quality issue": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Problema de calidad de la alimentación"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Problème de qualité de l’alimentation"
           }
         }
       }
@@ -4489,6 +4697,22 @@
         }
       }
     },
+    "Station restarted": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reinicio del punto de recarga"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redémarrage de la borne"
+          }
+        }
+      }
+    },
     "Stations": {
       "localizations": {
         "es": {
@@ -4565,6 +4789,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "Arrêter cette recharge ?"
+          }
+        }
+      }
+    },
+    "Stopped at the station": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detenida en el punto de recarga"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêtée sur la borne"
+          }
+        }
+      }
+    },
+    "Stopped by the vehicle": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detenida por el vehículo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêtée par le véhicule"
+          }
+        }
+      }
+    },
+    "Stopped remotely": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detenida a distancia"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêtée à distance"
+          }
+        }
+      }
+    },
+    "Stopped with a master pass": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detenida con una tarjeta maestra"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrêtée avec un badge maître"
           }
         }
       }
@@ -5209,6 +5497,38 @@
         }
       }
     },
+    "Time limit reached": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Límite de tiempo alcanzado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durée maximale atteinte"
+          }
+        }
+      }
+    },
+    "Timed out": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiempo agotado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Délai dépassé"
+          }
+        }
+      }
+    },
     "To fix": {
       "localizations": {
         "es": {
@@ -5493,6 +5813,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Catalogue de véhicules"
+          }
+        }
+      }
+    },
+    "Vehicle unplugged": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vehículo desconectado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Véhicule débranché"
           }
         }
       }

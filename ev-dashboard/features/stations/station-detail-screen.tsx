@@ -308,6 +308,7 @@ export function StationDetailScreen({ id }: { id: string }) {
                   )}
             </p>
             <StationCommandForm
+              key={ocppVersionOf(station)}
               station={station.id}
               version={ocppVersionOf(station) === "2.0.1" ? "2.0.1" : "1.6"}
             />

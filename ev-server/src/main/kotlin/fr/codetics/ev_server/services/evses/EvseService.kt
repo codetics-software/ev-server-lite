@@ -129,11 +129,11 @@ class EvseService(
                 station.enabled &&
                 connector.status in setOf("Available", "Preparing") &&
                 !payments.existsByEvseIdAndStateIn(evse.id, PaymentState.OPEN) &&
-                !transactions.existsByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(
+                transactions.findFirstByTenantIdAndStationIdAndConnectorIdAndStoppedAtIsNull(
                     tenant.id,
                     evse.stationId,
                     evse.connectorId,
-                )
+                )?.tokenUid.isNullOrEmpty()
         return PortalEvseResponse(
             evse.id,
             tenant.name,

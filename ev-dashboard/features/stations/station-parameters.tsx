@@ -85,7 +85,7 @@ export function StationParameters({ stationId, canEdit }: { stationId: string; c
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Modifier ${parameter.key}`}
+            aria-label={t("Modifier {name}", { name: parameter.key })}
             onClick={() => setEditing(parameter)}
           >
             <IconPencil />
@@ -212,7 +212,7 @@ function ParameterForm({
         <DialogTitle>{t("Modifier {name}", { name: parameter.key })}</DialogTitle>
         <DialogDescription>
           {t(
-            "La valeur est enregistrée lorsque la borne accepte la modification (ChangeConfiguration).",
+            "La valeur est enregistrée lorsque la borne accepte la modification (ChangeConfiguration en OCPP 1.6, SetVariables en OCPP 2.0.1).",
           )}
         </DialogDescription>
       </DialogHeader>

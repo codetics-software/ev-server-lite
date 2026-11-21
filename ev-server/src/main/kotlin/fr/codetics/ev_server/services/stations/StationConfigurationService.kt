@@ -12,7 +12,10 @@ import fr.codetics.ev_server.ocpp.OcppCommandQueue
 import fr.codetics.ev_server.ocpp.OcppVersion
 import fr.codetics.ev_server.ocpp.StationBooted
 import fr.codetics.ev_server.ocpp.ocpp
+import fr.codetics.ev_server.ocpp.v201.Component
+import fr.codetics.ev_server.ocpp.v201.Ocpp201Codec
 import fr.codetics.ev_server.ocpp.v201.Ocpp201Variables
+import fr.codetics.ev_server.ocpp.v201.Variable
 import fr.codetics.ev_server.repositories.ConnectorRepository
 import fr.codetics.ev_server.repositories.StationParameterRepository
 import fr.codetics.ev_server.repositories.StationRepository
@@ -134,8 +137,51 @@ class StationConfigurationService(
                 parameter.updatedAt = Instant.now()
                 parameters.save(parameter)
             }
+            "GetVariables" -> {
+                if (command.ocppVersion != OcppVersion.V201.label) return
+                val now = Instant.now()
+                event.result.path("getVariableResult").forEach { entry ->
+                    if (entry.path("attributeStatus").asText() != "Accepted") return@forEach
+                    if ((entry.get("attributeType")?.asText() ?: "Actual") != "Actual") return@forEach
+                    val name = variableKey(entry) ?: return@forEach
+                    val key = StationParameterKey(command.tenantId, command.stationId, name)
+                    val parameter = parameters.findById(key).orElse(null) ?: StationParameterEntity(key)
+                    parameter.value = entry.get("attributeValue")?.asText()?.take(5000)
+                    parameter.updatedAt = now
+                    parameters.save(parameter)
+                }
+            }
+            "SetVariables" -> {
+                if (command.ocppVersion != OcppVersion.V201.label) return
+                val now = Instant.now()
+                val accepted =
+                    event.result.path("setVariableResult")
+                        .filter { it.path("attributeStatus").asText() in setOf("Accepted", "RebootRequired") }
+                        .filter { (it.get("attributeType")?.asText() ?: "Actual") == "Actual" }
+                        .mapNotNull(::variableKey)
+                        .toSet()
+                db.decode(command.request).path("setVariableData").forEach { entry ->
+                    if ((entry.get("attributeType")?.asText() ?: "Actual") != "Actual") return@forEach
+                    val name = variableKey(entry)?.takeIf { it in accepted } ?: return@forEach
+                    val key = StationParameterKey(command.tenantId, command.stationId, name)
+                    val parameter = parameters.findById(key).orElse(null) ?: StationParameterEntity(key)
+                    parameter.value = entry.path("attributeValue").asText().take(5000)
+                    parameter.updatedAt = now
+                    parameters.save(parameter)
+                }
+            }
         }
     }
+
+    private fun variableKey(entry: JsonNode): String? =
+        runCatching {
+                Ocpp201Variables.key(
+                    Ocpp201Codec.mapper.treeToValue(entry.path("component"), Component::class.java),
+                    Ocpp201Codec.mapper.treeToValue(entry.path("variable"), Variable::class.java),
+                )
+            }
+            .getOrNull()
+            ?.takeIf { it.length <= 255 && !it.equals(Ocpp201Variables.BASIC_AUTH_PASSWORD, true) }
 
     private fun stored(key: String): String =
         Ocpp201Variables.parse(key)?.let { Ocpp201Variables.key(it.component, it.variable) } ?: key

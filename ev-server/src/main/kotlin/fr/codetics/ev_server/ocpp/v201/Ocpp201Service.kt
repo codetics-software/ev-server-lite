@@ -32,6 +32,7 @@ import java.math.RoundingMode
 import java.time.Duration
 import java.math.BigDecimal
 import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import tools.jackson.databind.JsonNode
@@ -57,6 +58,10 @@ class Ocpp201Service(
     private val queue: OcppCommandQueue,
 ) {
     data class AuthorizeCheck(val verdict: ContractVerdict?, val ocsp: List<OcspOutcome>)
+
+    private data class PendingStart(val uid: String?, val reservationId: Int?, val at: Instant)
+
+    private val pendingStarts = ConcurrentHashMap<String, PendingStart>()
 
     fun prepare(stationId: String, request: Any): Any? =
         when (request) {
@@ -92,7 +97,7 @@ class Ocpp201Service(
         Ocpp201Codec.encode(
             when (request) {
                 is BootNotificationRequest -> boot(station, request)
-                is HeartbeatRequest -> HeartbeatResponse(Instant.now().toString())
+                is HeartbeatRequest -> HeartbeatResponse(OcppTime.now())
                 is AuthorizeRequest -> authorize(station, request, prepared as? AuthorizeCheck)
                 is StatusNotificationRequest -> status(station, request)
                 is TransactionEventRequest -> transactionEvent(station, request)
@@ -182,7 +187,7 @@ class Ocpp201Service(
         ocpp.record(station, "BOOT", status = request.reason.name, info = "${station.vendor} ${station.model}")
         events.publishEvent(StationBooted(station, firstBoot))
         return BootNotificationResponse(
-            currentTime = Instant.now().toString(),
+            currentTime = OcppTime.now(),
             interval = station.heartbeatInterval ?: properties.ocpp.heartbeatInterval(),
             status = RegistrationStatusEnum.Accepted,
         )
@@ -268,7 +273,7 @@ class Ocpp201Service(
                     put(
                         "chargingSchedule",
                         buildMap {
-                            put("startSchedule", now.toString())
+                            put("startSchedule", OcppTime.format(now))
                             duration?.let { put("duration", it.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()) }
                             put("chargingRateUnit", if (ac) "A" else "W")
                             put(
@@ -342,19 +347,22 @@ class Ocpp201Service(
         val readings = meters(request.meterValue)
         val uid = request.idToken?.let(::uid)
         val existing = transactions.findFirstByTenantIdAndStationIdAndOcppTransactionId(tenant, identity, reference)
-        val number =
-            existing?.connectorId
-                ?: request.evse?.id
-                ?: throw OcppFault("OccurrenceConstraintViolation", msg("ocpp.payload.missing", "evse"))
+        val pendingKey = "$tenant/$identity/$reference"
+        if (existing == null && request.evse == null) {
+            return withoutEvse(station, request, pendingKey, uid)
+        }
+        val number = existing?.connectorId ?: requireNotNull(request.evse).id
         if (number <= 0) throw OcppFault("PropertyConstraintViolation", msg("ocpp.payload.invalid", "evse.id"))
         if (request.evse != null && existing != null && request.evse.id != existing.connectorId) {
-            throw OcppFault("PropertyConstraintViolation", msg("ocpp.transaction.other_evse"))
+            ocpp.record(station, "TRANSACTION", existing.connectorId, "OtherEvse", info = "$reference → ${request.evse.id}")
         }
 
         var decision: OcppService.Decision? = null
         var transaction = existing
         if (transaction == null) {
-            val started = start(station, number, reference, at, readings, uid, request.reservationId)
+            val pending = pendingStarts.remove(pendingKey)
+            val started =
+                start(station, number, reference, at, readings, uid ?: pending?.uid, request.reservationId ?: pending?.reservationId)
             transaction = started.first
             decision = started.second
         } else if (uid != null && transaction.tokenUid.isEmpty() && transaction.stoppedAt == null) {
@@ -382,11 +390,36 @@ class Ocpp201Service(
 
         val tokenInfo =
             when {
-                request.idToken == null -> null
+                request.idToken == null || uid == null -> null
                 decision != null -> info(decision)
                 else -> info(OcppService.Decision(transaction.authorizationStatus, transaction.userId))
             }
         return TransactionEventResponse(idTokenInfo = tokenInfo)
+    }
+
+    private fun withoutEvse(
+        station: StationEntity,
+        request: TransactionEventRequest,
+        key: String,
+        uid: String?,
+    ): TransactionEventResponse {
+        val now = Instant.now()
+        pendingStarts.entries.removeIf { it.value.at.isBefore(now.minus(PENDING_TTL)) }
+        if (request.eventType == TransactionEventEnum.Ended) {
+            pendingStarts.remove(key)
+        } else if (pendingStarts.size < PENDING_LIMIT || pendingStarts.containsKey(key)) {
+            val previous = pendingStarts[key]
+            pendingStarts[key] = PendingStart(uid ?: previous?.uid, request.reservationId ?: previous?.reservationId, now)
+        }
+        ocpp.record(
+            station,
+            "TRANSACTION",
+            status = "${request.eventType.name}:${request.triggerReason.name}",
+            info = listOfNotNull(request.transactionInfo.transactionId, uid).joinToString(" / "),
+        )
+        val decision = uid?.let { ocpp.authorize(station, it) }
+        uid?.let { ocpp.rejected(station, it, decision?.status ?: AuthorizationStatus.Invalid) }
+        return TransactionEventResponse(idTokenInfo = decision?.let(::info))
     }
 
     private fun start(
@@ -470,9 +503,13 @@ class Ocpp201Service(
         reason: ReasonEnum?,
     ) {
         if (transaction.stoppedAt != null && !transaction.softStopped) return
-        if (at.isBefore(transaction.startedAt)) {
-            throw OcppFault("PropertyConstraintViolation", msg("ocpp.transaction.end_before_start"))
-        }
+        val stoppedAt =
+            if (at.isBefore(transaction.startedAt)) {
+                ocpp.record(station, "TRANSACTION", transaction.connectorId, "EndBeforeStart", info = "$at < ${transaction.startedAt}")
+                transaction.startedAt
+            } else {
+                at
+            }
         val final =
             readings.toList()
                 .filter { reading -> reading.path("sampledValue").any { it.path("context").asText() == "Transaction.End" } }
@@ -481,11 +518,11 @@ class Ocpp201Service(
                 .lastOrNull { it.energyWh != null }
                 ?.energyWh
         val meterStop = (final ?: transaction.lastEnergyWh ?: transaction.meterStartWh).max(transaction.meterStartWh)
-        ocpp.close(station, transaction, at, meterStop, reason?.name ?: "Local")
+        ocpp.close(station, transaction, stoppedAt, meterStop, reason?.name ?: "Local")
         payments.stopped(transaction)
         val connector = ocpp.connector(station, transaction.connectorId)
         if (connector.status in VehicleIds.PLUGGED) {
-            ocpp.applyStatus(station, transaction.connectorId, "Finishing", "NoError", maxOf(at, connector.statusAt))
+            ocpp.applyStatus(station, transaction.connectorId, "Finishing", "NoError", maxOf(stoppedAt, connector.statusAt))
         }
     }
 
@@ -681,6 +718,9 @@ class Ocpp201Service(
         )
 
     companion object {
+        private val PENDING_TTL: Duration = Duration.ofHours(24)
+        private const val PENDING_LIMIT = 10_000
+
         fun uid(token: IdToken): String? =
             when (token.type) {
                 IdTokenEnum.NoAuthorization -> null

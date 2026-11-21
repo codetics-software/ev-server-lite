@@ -43,7 +43,7 @@ struct LiveSessionGauge: View {
             .accessibilityElement(children: .combine)
             Text(station?.name ?? session.stationId).font(.headline)
             if let reason = session.stopReason, !session.isActive {
-                Text(reason).font(.caption).foregroundStyle(.secondary)
+                Text(StopReason.label(for: reason)).font(.caption).foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity)

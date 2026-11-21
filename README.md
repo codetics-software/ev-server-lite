@@ -1,63 +1,93 @@
-# Codetics Supervision Lite
+# EV Supervision Lite: open-source EV charging supervision (OCPP 1.6 & OCPP 2.0.1)
 
-> **Licence à accepter avant toute copie.** Lisez la [licence d’attribution Codetics](LICENSE) avant de télécharger, cloner ou forker ce dépôt. Télécharger, cloner ou forker ce dépôt, en tout ou en partie, vaut acceptation de cette licence. Si vous n’en acceptez pas les conditions, ne le téléchargez pas, ne le clonez pas et ne le forkez pas.
+[![Tests](https://github.com/codetics-software/ev-server-lite/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/codetics-software/ev-server-lite/actions/workflows/tests.yml)
+[![Test results](https://img.shields.io/endpoint?url=https%3A%2F%2Fcodetics-software.github.io%2Fev-server-lite%2Fbadges%2Ftests.json)](https://codetics-software.github.io/ev-server-lite/reports/)
+[![Server coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fcodetics-software.github.io%2Fev-server-lite%2Fbadges%2Fserver-coverage.json)](https://codetics-software.github.io/ev-server-lite/reports/server/index.html)
+[![Dashboard coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fcodetics-software.github.io%2Fev-server-lite%2Fbadges%2Fdashboard-coverage.json)](https://codetics-software.github.io/ev-server-lite/reports/dashboard/index.html)
+[![Android coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fcodetics-software.github.io%2Fev-server-lite%2Fbadges%2Fandroid-coverage.json)](https://codetics-software.github.io/ev-server-lite/reports/android/index.html)
+[![iOS coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fcodetics-software.github.io%2Fev-server-lite%2Fbadges%2Fios-coverage.json)](https://codetics-software.github.io/ev-server-lite/reports/)
+[![Licence](https://img.shields.io/badge/licence-Codetics%20Attribution%201.0-0f6b4f)](LICENSE)
 
-Une supervision de recharge volontairement légère : un serveur **Kotlin / Spring Boot**, un tableau de bord **Next.js**, une base **PostgreSQL** ou **MongoDB**. Développée par Kevin Vavelin, [Codetics](https://codetics.fr).
+**[Français](README.fr.md)** · **[Website](https://codetics-software.github.io/ev-server-lite/)** · **[Test report](https://codetics-software.github.io/ev-server-lite/reports/)** · **[Support the project](#support-the-project)**
 
-Le produit couvre les bornes et connecteurs, les commandes OCPP 1.6 et 2.0.1, les sessions, les utilisateurs et badges RFID, les sites, les tarifs et le paiement public par QR code. L’enregistrement d’un véhicule reste facultatif. Pour des besoins de supervision plus avancés, contactez Codetics.
+> **Accept the licence before copying.** Read the [Codetics Attribution License](LICENSE) before you download, clone or fork this repository. Downloading, cloning or forking it, in whole or in part, means you accept this licence. If you do not accept its terms, do not download, clone or fork it.
 
-Applications conducteurs : [iOS](ev-app-ios/README.md) et [Android](ev-app-android/README.md). Règles de licence pour les agents et outils d’IA : [AGENTS.md](AGENTS.md).
+EV Supervision Lite is a self-hosted **EV charging station management system (CSMS)**. It supervises charging stations over **OCPP 1.6 and OCPP 2.0.1**, and ships with a web dashboard, white-label **iOS and Android driver apps** (with CarPlay and Android Auto), public charging paid by **QR code with Stripe**, **OCPI 2.1.1 roaming** and **ISO 15118 Plug & Charge** certificates. It is built by Kevin Vavelin, [Codetics](https://codetics.fr).
 
-## Proposer la recharge à vos clients, sous votre marque
+Charge point operators, installers, integrators, energy suppliers, local authorities and fleet managers can deploy it on their own infrastructure and offer it to their customers under their own brand. The software takes no commission on charging sessions.
 
-Un opérateur, un installateur, un intégrateur, un énergéticien, une collectivité ou un gestionnaire de flotte peut déployer ce serveur sur sa propre infrastructure, puis l’offrir à ses clients comme son propre service :
+![Network overview in the dashboard](screenshots/02-reseau-ordinateur.png)
 
-- **Un espace par client.** Chaque espace a ses bornes, ses utilisateurs, ses badges RFID, ses tarifs, ses véhicules et son compte Stripe ; les encaissements arrivent directement sur ce compte. Le serveur isole les espaces et déduit l’espace autorisé de la session. L’administrateur de l’espace téléverse son logo, affiché dans le tableau de bord et sur le portail de paiement par QR code.
-- **Des applications à votre marque.** Les applications natives [iOS](ev-app-ios/README.md) et [Android](ev-app-android/README.md), avec CarPlay et Android Auto, se configurent avec `BRAND_NAME`, `API_URL`, `PORTAL_URL`, `WORKSPACE_SLUG`, `SUPPORT_EMAIL` et `PRIVACY_POLICY_URL`, puis se publient sur vos propres comptes développeur. Chaque compilation vise un espace : publiez une application pour votre réseau, ou une par client. CarPlay demande une autorisation d’Apple, Android Auto un examen de Google.
-- **Votre service, vos conditions.** Le logiciel ne prélève aucune commission sur les recharges. Vous facturez à vos clients la mise en service, l’abonnement ou la maintenance comme vous l’entendez.
+## Contents
 
-La [licence d’attribution Codetics](LICENSE) autorise l’usage commercial, la modification et la revente. Votre nom, votre logo, votre domaine et vos applications passent au premier plan ; la mention « EV Supervision Lite — built by Kevin Vavelin, Codetics » et https://codetics.fr restent visibles dans l’écran **À propos** des applications, et le crédit Codetics en pied de page du tableau de bord et du portail. Le [guide de personnalisation en marque blanche](docs/marque-blanche.md) indique ce qui se change et ce qui doit rester.
+- [Features](#features)
+- [How it works](#how-it-works)
+- [OCPP 2.0.1 support](#ocpp-201-support)
+- [Quick start](#quick-start)
+- [Deployment](#deployment)
+- [Documentation](#documentation)
+- [Tests and coverage](#tests-and-coverage)
+- [Support the project](#support-the-project)
+- [Licence](#licence)
 
-### Déploiement par Codetics
+## Features
 
-Si vous préférez ne pas l’installer vous-même, Codetics déploie le serveur, le tableau de bord, la base de données, HTTPS, la connexion des bornes et Stripe, puis compile et soumet les applications à votre nom sur l’App Store et Google Play, à prix fixe. Le déploiement se fait chez l’hébergeur de votre choix : AWS, Google Cloud, Microsoft Azure, OVHcloud, Scaleway, Oracle Cloud, Hostinger, Cloudflare, Vercel ou votre propre serveur. Le tableau de bord Next.js peut être hébergé sur une plateforme comme Vercel ; le serveur Java demande une machine virtuelle ou un conteneur capable de garder ouvertes les connexions WebSocket des bornes. Détails : [codetics.fr](https://codetics.fr/fr/supervision-recharge-lite). Demande : [codetics.fr/fr/contact](https://codetics.fr/fr/contact?project=mobility).
+- **Stations and connectors**: provisioning, OCPP version (auto, 1.6 or 2.0.1), passwords and security profiles 0 to 3, OCPP parameters and device model, configuration templates, charging profiles, firmware, logs, event history and auto-registration tokens.
+- **Sessions**: price computed at the end of each session, consumption curve, idle time, state of charge, remote or local stop, CSV export and anomaly detection.
+- **Tariffs**: scope (workspace, site, area, station, connector), validity, days, time slots, energy and duration thresholds, energy, time, parking and flat prices.
+- **Multi-tenant workspaces**: each customer has its own stations, users, RFID badges, tariffs, vehicles and Stripe account. The server isolates workspaces and derives the allowed workspace from the session.
+- **Public charging by QR code**: drivers pay with Stripe Checkout without an account. The final price is computed from meter values, capped at the paid credit, and the balance is refunded.
+- **Driver billing and charging cards**: payment methods and Stripe invoices on each workspace's connected account, RFID card sales and activation in the mobile app.
+- **Smart charging**: power shared across sessions in an area, with a 6 A minimum, building consumption and OCPP `TxProfile` profiles.
+- **Energy assets**: Schneider, GreenCom, IoThink, Lacroix, WIT or direct push by token.
+- **OCPI 2.1.1 roaming**: locations, tariffs, sessions and CDRs, remote commands and partner badge authorization.
+- **Notifications, statistics and audit log** per workspace and per user.
+- **White-label mobile apps**: native [iOS](ev-app-ios/README.md) and [Android](ev-app-android/README.md) apps configured with `BRAND_NAME`, `API_URL`, `PORTAL_URL` and `WORKSPACE_SLUG`, published under your own developer accounts.
 
-## Organisation
+## How it works
 
-```text
-ev-server/src/main/kotlin/fr/codetics/ev_server/
-  controllers/     Points d’entrée HTTP par domaine
-  services/        Règles de gestion par domaine
-  models/          Entités persistées et modèles des échanges
-  repositories/    Accès aux données JPA
-  security/        Comptes, sessions et autorisations
-  ocpp/            Échanges avec les bornes et file de commandes
-  ocpi/            Interfaces d’itinérance OCPI 2.1.1
-  stripe/          Adaptateur Stripe
-  core/            Configuration et utilitaires communs
-
-ev-dashboard/
-  app/             Routes et mises en page Next.js
-  features/        Écrans, composants et logique par fonctionnalité
-  components/ui/   Composants d’interface partagés
-  lib/             Client HTTP, formats, libellés et traductions (lib/i18n)
+```mermaid
+flowchart LR
+  CS[Charging stations] -- "OCPP-J 1.6 / 2.0.1<br/>WebSocket + TLS" --> S[Kotlin server<br/>Spring Boot]
+  S --- DB[(PostgreSQL<br/>or MongoDB)]
+  D[Next.js dashboard] -- "server-side proxy" --> S
+  A[iOS / Android apps] -- "REST API" --> S
+  P[QR code portal] --> D
+  S -- "Checkout, Connect, webhooks" --> ST[Stripe]
+  S -- "OCPI 2.1.1" --> R[Roaming partners]
 ```
 
-## Démarrage local
+- Stations connect to `wss://<server>/ocpp/{workspace}/{station}` with HTTP Basic authentication or client certificates. The server negotiates `ocpp2.0.1` or `ocpp1.6` from `Sec-WebSocket-Protocol`.
+- Every command sent to a station is persisted, sent one at a time per station and tracked until its response or timeout. Commands written for OCPP 1.6 are translated automatically for OCPP 2.0.1 stations.
+- The dashboard never talks to stations: it calls the server API through a server-side proxy, so the Java server can stay private.
+- Data lives in PostgreSQL (Flyway migrations) or MongoDB 8 (replica set, transactions), chosen from `DATABASE_URL`.
 
-Prérequis : **Java 25 ou supérieur**, **Node.js 22.23.4, 24.22.1, 26.12.1 ou une version corrective ultérieure de ces branches**. Maven est fourni par le projet.
+Details: [architecture](docs/architecture.md), [authentication](docs/authentication.md).
 
-Dans un premier terminal :
+## OCPP 2.0.1 support
+
+All 65 OCPP 2.0.1 actions are implemented with schema-level validation: 25 messages sent by stations and 40 commands sent by the server. Highlights:
+
+- Boot, heartbeat, status, `TransactionEvent` (including authorize-first and plug-first flows), meter values with signed data, reservations, local authorization lists and remote start/stop.
+- Device model: `NotifyReport`, `GetBaseReport`, `GetReport`, `GetVariables`, `SetVariables`, monitoring and events.
+- Smart charging: `SetChargingProfile`, `GetCompositeSchedule`, `NotifyEVChargingNeeds` and charging limits.
+- Security: security profiles 1 to 3, certificate signing, installation and revocation, security events and network profiles.
+- ISO 15118 Plug & Charge: `Get15118EVCertificate`, `GetCertificateStatus` (OCSP) and contract certificate checks.
+- OCPP-J framing rules: one outstanding call per direction, RPC framework errors, message id checks, millisecond timestamps and WebSocket ping liveness.
+
+The full list is in [docs/ocpp-2.0.1.md](docs/ocpp-2.0.1.md).
+
+## Quick start
+
+Requirements: **Java 25 or later** and **Node.js 22.23.4, 24.22.1 or 26.12.1** (or a later patch release of these lines). Maven is provided by the project.
 
 ```sh
 cd ev-server
 SPRING_PROFILES_ACTIVE=local \
 BOOTSTRAP_EMAIL=admin@example.test \
-BOOTSTRAP_PASSWORD='une-phrase-de-passe-locale-a-remplacer' \
+BOOTSTRAP_PASSWORD='a-local-passphrase-to-replace' \
 ./mvnw spring-boot:run
 ```
-
-Dans un deuxième terminal :
 
 ```sh
 cd ev-dashboard
@@ -65,121 +95,72 @@ npm ci
 npm run dev
 ```
 
-Ouvrez `http://localhost:3000/auth/login`. L’identifiant de l’espace initial est `codetics`. Le profil `local` utilise une base H2 en mémoire : ses données disparaissent à l’arrêt. Le compte initial est créé uniquement lorsque la base ne contient aucun utilisateur. Retirez ensuite ses identifiants de la configuration.
+Open `http://localhost:3000/auth/login`. The initial workspace identifier is `codetics`. The `local` profile uses an in-memory H2 database, whose data is lost when the server stops.
 
-## Déploiement
+## Deployment
 
-Le serveur s’exécute comme une application Java classique ; le tableau de bord comme une application Node.js Next.js. Aucune plateforme d’hébergement particulière n’est imposée.
-
-```sh
-cd ev-server
-./mvnw verify
-java -jar target/ev-server-0.0.1-SNAPSHOT.jar
-```
+The server runs as a standard Java application and the dashboard as a Node.js Next.js application. No hosting platform is imposed.
 
 ```sh
-cd ev-dashboard
-npm ci
-npm run build
-npm run start
+cd ev-server && ./mvnw verify && java -jar target/ev-server-0.0.1-SNAPSHOT.jar
+cd ev-dashboard && npm ci && npm run build && npm run start
 ```
 
-Copiez les exemples [du serveur](ev-server/.env.example) et [du tableau de bord](ev-dashboard/.env.example) dans la configuration de votre hébergeur. Spring Boot ne charge pas automatiquement un fichier `.env` : transmettez ces valeurs comme variables d’environnement.
+In production, use HTTPS and PostgreSQL or MongoDB. The reverse proxy must forward OCPP WebSocket connections to the Java server. Ready-made Docker Compose and Kubernetes files are in [`deploy/`](deploy).
 
-En production, utilisez HTTPS et PostgreSQL ou MongoDB. Le serveur choisit sa base d’après `DATABASE_URL` :
+- [Deployment guide](docs/deploiement/README.md): container images, OCPP ingress, security profiles, environment variables, scaling, backups.
+- Cloud guides: [Google Cloud](docs/deploiement/gcp.md), [AWS](docs/deploiement/aws.md), [Azure](docs/deploiement/azure.md), [Scaleway](docs/deploiement/scaleway.md), [Oracle Cloud](docs/deploiement/oracle-cloud.md).
+- [ISO 15118 certificates](docs/deploiement/README.md#certificats-iso-15118-plug--charge) for Plug & Charge.
 
-- `jdbc:postgresql://hôte:5432/base` : PostgreSQL, avec `DATABASE_USER` et `DATABASE_PASSWORD`. Flyway applique les migrations ; Hibernate vérifie le schéma sans modifier les tables.
-- `mongodb://utilisateur:secret@hôte:27017/base?replicaSet=rs0` ou `mongodb+srv://…` : MongoDB 8, en replica set ou derrière `mongos`, car les opérations de paiement et OCPP reposent sur des transactions. Les index sont créés au démarrage.
+**Prefer not to install it yourself?** Codetics deploys the server, dashboard, database, HTTPS, station connection and Stripe, then builds and submits the apps under your name on the App Store and Google Play, at a fixed price, on the cloud of your choice. [Learn more](https://codetics.fr/fr/supervision-recharge-lite) or [request a deployment](https://codetics.fr/fr/contact?project=mobility).
 
-Toute autre adresse arrête le démarrage. Le mandataire inverse doit transmettre les connexions WebSocket OCPP au serveur Java. `EV_SERVER_URL` reste une variable privée du tableau de bord.
+## Documentation
 
-Le [guide de déploiement](docs/deploiement/README.md) décrit les images de conteneur, l’entrée des connexions OCPP, les profils de sécurité et une installation Docker Compose ou Kubernetes (`deploy/`), avec des guides pour [Google Cloud](docs/deploiement/gcp.md), [AWS](docs/deploiement/aws.md), [Azure](docs/deploiement/azure.md), [Scaleway](docs/deploiement/scaleway.md) et [Oracle Cloud](docs/deploiement/oracle-cloud.md).
+The detailed guides are written in French.
 
-## Espaces clients
+| Topic | Document |
+| --- | --- |
+| Architecture and code layout | [docs/architecture.md](docs/architecture.md) |
+| Sign-in, sessions and providers | [docs/authentication.md](docs/authentication.md) |
+| Deployment (all clouds) | [docs/deploiement/README.md](docs/deploiement/README.md) |
+| White-label customization | [docs/marque-blanche.md](docs/marque-blanche.md) |
+| OCPP 2.0.1 support | [docs/ocpp-2.0.1.md](docs/ocpp-2.0.1.md) |
+| Web dashboard | [ev-dashboard/README.md](ev-dashboard/README.md) |
+| iOS app | [ev-app-ios/README.md](ev-app-ios/README.md) |
+| Android app | [ev-app-android/README.md](ev-app-android/README.md) |
+| Screenshots | [screenshots/README.md](screenshots/README.md) |
+| Rules for AI agents | [AGENTS.md](AGENTS.md) |
 
-Tous les espaces partagent la même application et peuvent utiliser la même adresse web. La connexion demande explicitement l’identifiant de l’espace. Le serveur déduit l’espace autorisé de la session, jamais du nom de domaine ni d’un identifiant d’espace envoyé avec une opération métier.
+The API description is available to administrators at `/api/v1/openapi` on the Java server.
 
-Les rôles sont **administrateur**, **exploitant**, **lecteur** et **conducteur**. Les conducteurs consultent leurs propres sessions. Chaque espace possède ses bornes, ses utilisateurs, ses badges, ses tarifs et son compte Stripe.
+## Tests and coverage
 
-La création d’espaces depuis `/auth/create-workspace` s’active avec `WORKSPACE_SIGNUP_ENABLED=true`, `MAIL_ENABLED=true` et un serveur SMTP. Le premier administrateur doit vérifier son adresse électronique. L’inscription libre de conducteurs dans l’espace défini par `PUBLIC_TENANT` est une option séparée, désactivée par défaut.
+Every push and pull request runs the [Tests workflow](.github/workflows/tests.yml): the licence check, the server tests (JUnit and JaCoCo), the dashboard checks and tests (ESLint, Prettier, i18n, Vitest), the Android unit tests (Robolectric and JaCoCo) and the iOS unit tests (XCTest and Swift Testing). Results appear in each run's summary and as check runs on pull requests. On `main`, the combined report and coverage are published at **[codetics-software.github.io/ev-server-lite/reports](https://codetics-software.github.io/ev-server-lite/reports/)**, and the badges above are updated.
 
-## Fonctionnalités
-
-Chaque espace active ses modules dans **Espace client** : organisation, tarifs, facturation, itinérance, recharge intelligente, statistiques, équipements, véhicules et paiement public.
-
-- **Organisation** : entreprises, sites, zones et équipements. Les bornes sont rattachées à une zone. Un site peut réserver la recharge aux utilisateurs qui lui sont affectés et être publié en itinérance.
-- **Bornes** : édition, suppression, rotation du mot de passe, paramètres OCPP, historique des événements, modèles de configuration appliqués au démarrage, profils de charge, limitation de puissance et jetons d’enregistrement automatique.
-- **Sessions** : prix calculé à la fin de chaque session, courbe de consommation, inactivité, état de charge, arrêt à distance ou local, export CSV et détection des anomalies.
-- **Tarifs** : portée (espace, site, zone, borne, connecteur), validité, jours, plages horaires, seuils d’énergie et de durée, prix d’énergie, de temps, de stationnement et forfait.
-- **Facturation des conducteurs** : moyens de paiement et factures Stripe sur le compte connecté de l’espace, par session ou mensuelle.
-- **Cartes de recharge** : vente de cartes RFID aux conducteurs sur le compte Stripe de l’espace, préparation des commandes par l’exploitant et activation dans l’application mobile.
-- **Recharge intelligente** : partage de la puissance d’une zone entre les sessions, avec minimum de 6 A, consommation des équipements et profils OCPP `TxProfile`.
-- **Équipements** : relevés Schneider, GreenCom, IoThink, Lacroix, WIT ou envoi direct par jeton.
-- **Itinérance OCPI 2.1.1** : publication des sites, tarifs, sessions et relevés, commandes à distance, autorisation des badges partenaires, envois et récupérations manuels.
-- **Notifications, statistiques et journal** : courriels selon les préférences de chaque utilisateur, statistiques mensuelles exportables, journal filtrable.
-
-Les tâches planifiées signalent les bornes hors ligne et ferment les sessions abandonnées. Elles purgent aussi les historiques selon `app.retention`.
-
-## Paiement public et QR code
-
-1. Créez un tarif en euros dans **Tarifs**.
-2. Dans **Paiements**, connectez le compte Stripe de l’espace et terminez la vérification chez Stripe. Activez les paiements publics.
-3. Dans **Points de charge publics**, associez une borne, un connecteur physique et un tarif. Publiez le portail et téléchargez son QR code.
-4. Le QR ouvre `/charge/{espace}/{point-de-charge}`. Le conducteur branche son véhicule, choisit un crédit entre 5 € et 100 € et paie via Stripe Checkout, sans créer de compte.
-
-Les encaissements sont effectués directement sur le compte connecté de chaque espace. Le serveur attend une notification Stripe signée confirmant le paiement avant de demander le démarrage. Seul le message de démarrage de la borne confirme une recharge en cours.
-
-Le tarif est figé au début de la demande. À la fin réelle de la recharge, le serveur calcule le montant à partir des mesures de la borne, plafonne la facturation au crédit payé et rembourse le solde. Un refus de démarrage ou l’absence de démarrage sous cinq minutes entraîne un remboursement intégral. Les reprises utilisent des clés d’idempotence Stripe.
-
-À l’épuisement du crédit, le serveur demande l’arrêt. Cette commande dépend de la connexion et de la réponse de la borne : elle ne constitue pas une coupure physique garantie. Si la borne ne confirme pas l’arrêt, la session reste en attente du relevé final. Un remboursement refusé est signalé dans **Paiements** pour intervention de l’exploitant.
-
-Configurez `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et une clé `APP_ENCRYPTION_KEY` de 32 octets aléatoires encodés en Base64. Dans Stripe, créez une destination de notifications **pour les comptes connectés**, vers l’adresse publique `/api/backend/api/v1/stripe/webhook`, avec ces événements :
-
-```text
-checkout.session.completed
-checkout.session.async_payment_succeeded
-checkout.session.async_payment_failed
-checkout.session.expired
-invoice.paid
-invoice.payment_failed
-invoice.finalized
-```
-
-L’adresse peut aussi viser directement `/api/v1/stripe/webhook` sur le serveur Java si celui-ci est exposé. Utilisez des clés et une destination de test pour les essais, puis les équivalents de production. Les paiements réels nécessitent un compte Stripe actif et une borne compatible ; les tests locaux utilisent un adaptateur réservé aux tests.
-
-## Connexion des bornes
-
-Ajoutez une borne dans le tableau de bord et conservez son mot de passe, affiché une seule fois. Choisissez sa version OCPP : détection automatique, OCPP 1.6 ou OCPP 2.0.1. Configurez OCPP-J (JSON), le sous-protocole `ocpp2.0.1` ou `ocpp1.6` et l’authentification Basic :
-
-```text
-wss://adresse-du-serveur/ocpp/{espace}/{identifiant-borne}
-Authorization: Basic <base64(identifiant-borne:mot-de-passe)>
-```
-
-Le Plug & Charge (ISO 15118) demande des certificats V2G déposés avant le démarrage du serveur : voir [Certificats ISO 15118](docs/deploiement/README.md#certificats-iso-15118-plug--charge).
-
-En détection automatique, le serveur retient la première version proposée par la borne dans `Sec-WebSocket-Protocol`. Une version imposée refuse les connexions qui ne la proposent pas. Les bornes existantes restent en OCPP 1.6 imposé.
-
-Les commandes sont persistées et suivies jusqu’à la réponse ou au dépassement de leur délai. Une réponse positive à une commande de démarrage ne prouve pas que le véhicule recharge.
-
-## Vérifications et documentation
+Run them locally:
 
 ```sh
-cd ev-server
-./mvnw test
+cd ev-server && ./mvnw test                         # report: target/site/jacoco/index.html
+cd ev-dashboard && npm run test:coverage            # report: coverage/index.html
+cd ev-app-android && ./gradlew testDebugUnitTest createDebugUnitTestCoverageReport
+cd "ev-app-ios/EV App" && xcodebuild test -project "EV App.xcodeproj" -scheme "EV App" \
+  -only-testing:"EV AppTests" -destination 'platform=iOS Simulator,name=iPhone 17' -enableCodeCoverage YES
+bash scripts/verify-attribution.sh
 ```
 
-```sh
-cd ev-dashboard
-npm run lint
-npm run format:check
-npm run build
-```
+These tests cover permissions, workspace isolation, OCPP exchanges and the payment cycle with a test Stripe adapter. They do not replace tests with PostgreSQL, Stripe and real stations on your target installation.
 
-Les essais locaux couvrent les droits, l’isolation des espaces, les échanges de session et le cycle de paiement avec un adaptateur Stripe de test. Ils ne remplacent pas les essais PostgreSQL, Stripe et bornes de l’installation cible.
+## Support the project
 
-Consultez [l’architecture](docs/architecture.md), [l’authentification](docs/authentication.md) et les [captures d’écran en français](screenshots/README.md). La description de l’API est réservée aux administrateurs à `/api/v1/openapi` sur le serveur Java.
+EV Supervision Lite is developed and maintained by Codetics. The best way to support it is to work with us at **[codetics.fr](https://codetics.fr)**:
+
+- a turnkey deployment on your cloud or server;
+- building and publishing your white-label iOS and Android apps;
+- maintenance, monitoring and updates;
+- custom features and integrations (hardware, billing, roaming).
+
+[Contact Codetics](https://codetics.fr/fr/contact?project=mobility). The **Sponsor** button of this repository also links to [codetics.fr](https://codetics.fr).
 
 ## Licence
 
-Le code original est distribué sous la [licence d’attribution Codetics](LICENSE). Télécharger, cloner ou forker ce dépôt vaut acceptation de cette licence (section 7). Conservez le crédit visible à Kevin Vavelin, Codetics, ainsi que `NOTICE` et les licences des dépendances. Les textes juridiques tiers conservent leur version d’origine.
+The original code is distributed under the [Codetics Attribution License](LICENSE). Downloading, cloning or forking this repository means you accept this licence (section 7). Commercial use, modification and resale are allowed. The credit "EV Supervision Lite — built by Kevin Vavelin, Codetics" and https://codetics.fr must stay visible in the apps' **About** screen and in the dashboard and portal footer. Keep `NOTICE` and the dependency licences. Third-party legal texts keep their original version. See the [white-label guide](docs/marque-blanche.md) for what can change and what must stay.

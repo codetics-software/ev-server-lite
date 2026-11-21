@@ -366,6 +366,9 @@ class NotificationService(
                 "InvalidFirmwareSigningCertificate",
                 "InvalidCentralSystemCertificate",
                 "InvalidChargePointCertificate",
+                "InvalidCsmsCertificate",
+                "InvalidChargingStationCertificate",
+                "MaintenanceLoginFailed",
                 "FirmwareUpdated",
             )
     }

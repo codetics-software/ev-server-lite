@@ -189,6 +189,7 @@ class OcppCommandQueue(
             pending.forEach { command ->
                 command.state = CommandState.SENT
                 command.wireVersion = version.label
+                command.deadline = maxOf(command.deadline, now.plusSeconds(RESPONSE_SECONDS))
             }
             commands.saveAll(pending)
 
@@ -211,5 +212,9 @@ class OcppCommandQueue(
                 events.publishEvent(CommandCompleted(locked, false, result ?: db.json.nullNode()))
             }
         }
+    }
+
+    companion object {
+        const val RESPONSE_SECONDS = 60L
     }
 }

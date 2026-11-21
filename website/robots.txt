@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://codetics-software.github.io/ev-server-lite/sitemap.xml

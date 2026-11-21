@@ -227,7 +227,7 @@ Les migrations Flyway s’appliquent au démarrage. Sauvegardez la base avant ch
 
 ## Stripe
 
-La destination de notifications vise `https://APP_HOST/api/backend/api/v1/stripe/webhook`, avec les événements listés dans le [README](../../README.md#paiement-public-et-qr-code). Le corps doit arriver intact : aucun pare-feu applicatif ne doit le réécrire. Les appels sortants vers `api.stripe.com` doivent être autorisés.
+La destination de notifications vise `https://APP_HOST/api/backend/api/v1/stripe/webhook`, avec les événements listés dans le [README](../../README.fr.md#paiement-public-et-qr-code). Le corps doit arriver intact : aucun pare-feu applicatif ne doit le réécrire. Les appels sortants vers `api.stripe.com` doivent être autorisés.
 
 ## Courriel
 

@@ -599,10 +599,11 @@ const messages: Messages = {
     en: "The deletion was not sent",
     es: "No se ha enviado la eliminación",
   },
-  "La valeur est enregistrée lorsque la borne accepte la modification (ChangeConfiguration).": {
-    en: "The value is saved when the charging station accepts the change (ChangeConfiguration).",
-    es: "El valor se guarda cuando la estación acepta la modificación (ChangeConfiguration).",
-  },
+  "La valeur est enregistrée lorsque la borne accepte la modification (ChangeConfiguration en OCPP 1.6, SetVariables en OCPP 2.0.1).":
+    {
+      en: "The value is saved when the charging station accepts the change (ChangeConfiguration in OCPP 1.6, SetVariables in OCPP 2.0.1).",
+      es: "El valor se guarda cuando la estación acepta la modificación (ChangeConfiguration en OCPP 1.6, SetVariables en OCPP 2.0.1).",
+    },
   "Laissez vide pour utiliser la valeur du serveur.": {
     en: "Leave empty to use the server value.",
     es: "Déjelo vacío para usar el valor del servidor.",

@@ -6,6 +6,7 @@ import fr.codetics.ev_server.models.entities.ReservationKey
 import fr.codetics.ev_server.models.reservations.ReservationResponse
 import fr.codetics.ev_server.ocpp.CommandCompleted
 import fr.codetics.ev_server.ocpp.OcppTime
+import fr.codetics.ev_server.ocpp.OcppVersion
 import fr.codetics.ev_server.repositories.ReservationRepository
 import java.time.Instant
 import java.util.UUID
@@ -48,12 +49,21 @@ class ReservationService(private val reservations: ReservationRepository, privat
         when (command.action) {
             "ReserveNow" -> {
                 val request = db.decode(command.request)
-                val key = ReservationKey(command.tenantId, command.stationId, request.path("reservationId").intValue())
+                val native = command.ocppVersion == OcppVersion.V201.label
+                val id = request.path(if (native) "id" else "reservationId").intValue()
+                val key = ReservationKey(command.tenantId, command.stationId, id)
                 val reservation = reservations.findById(key).orElse(null) ?: ReservationEntity(key)
-                reservation.connectorId = request.path("connectorId").intValue()
-                reservation.idTag = request.path("idTag").asText()
-                reservation.parentIdTag = request.get("parentIdTag")?.asText()
-                reservation.expiryDate = OcppTime.parse(request.path("expiryDate").asText())
+                if (native) {
+                    reservation.connectorId = request.path("evseId").intValue()
+                    reservation.idTag = request.path("idToken").path("idToken").asText()
+                    reservation.parentIdTag = request.path("groupIdToken").get("idToken")?.asText()
+                    reservation.expiryDate = OcppTime.parse(request.path("expiryDateTime").asText())
+                } else {
+                    reservation.connectorId = request.path("connectorId").intValue()
+                    reservation.idTag = request.path("idTag").asText()
+                    reservation.parentIdTag = request.get("parentIdTag")?.asText()
+                    reservation.expiryDate = OcppTime.parse(request.path("expiryDate").asText())
+                }
                 reservation.status = if (event.success && status.isNotBlank()) status.uppercase() else "FAILED"
                 reservation.transactionId = null
                 reservation.commandId = command.id

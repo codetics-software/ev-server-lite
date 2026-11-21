@@ -144,12 +144,12 @@ class OcppService(
 
                 mapOf(
                     "status" to "Accepted",
-                    "currentTime" to Instant.now().toString(),
+                    "currentTime" to OcppTime.now(),
                     "interval" to (station.heartbeatInterval ?: properties.ocpp.heartbeatInterval()),
                 )
             }
             "Heartbeat" -> {
-                mapOf("currentTime" to Instant.now().toString())
+                mapOf("currentTime" to OcppTime.now())
             }
             "Authorize" -> {
                 val uid = payload.path("idTag").asText()

@@ -220,6 +220,25 @@ constructor(
     }
 
     @Test
+    fun `une reponse mal formee de la borne n entraine jamais de CALLERROR`() {
+        station("CS-FRAME", "2.0.1")
+        val connection = requireNotNull(connect("CS-FRAME", "ocpp2.0.1"))
+        connection.socket.sendText("""[3,"orphan-result"]""", true).get(5, TimeUnit.SECONDS)
+        connection.socket.sendText("""[4,"orphan-error","GenericError"]""", true).get(5, TimeUnit.SECONDS)
+        connection.socket.sendText("""[3,"${UUID.randomUUID()}",{"status":"Accepted"}]""", true).get(5, TimeUnit.SECONDS)
+        connection.socket.sendText("""[2,"frame-1","Heartbeat"]""", true).get(5, TimeUnit.SECONDS)
+
+        val seen = mutableListOf<JsonNode>()
+        val reply = connection.awaitFrame { frame -> seen.add(frame) && frame[1].asText() == "frame-1" }
+        assertEquals(4, reply[0].intValue())
+        assertEquals("RpcFrameworkError", reply[2].asText())
+        assertTrue(seen.none { it[0].intValue() == 4 && it[1].asText() != "frame-1" }, seen.toString())
+
+        val heartbeat = connection.exchange("""[2,"frame-2","Heartbeat",{}]""", "frame-2")
+        assertEquals(3, heartbeat[0].intValue())
+    }
+
+    @Test
     fun `une borne 1_6 garde les codes d erreur OCPP 1_6`() {
         station("CS-16", "1.6")
         val connection = requireNotNull(connect("CS-16", "ocpp1.6"))

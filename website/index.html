@@ -1,0 +1,185 @@
+<!doctype html>
+<!-- EV Supervision Lite — built by Kevin Vavelin, Codetics — https://codetics.fr — LicenseRef-Codetics-Attribution-1.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EV Supervision Lite · Open-source EV charging supervision (OCPP 1.6 &amp; 2.0.1 CSMS)</title>
+<meta name="description" content="EV Supervision Lite is an open-source EV charging station supervision platform (CSMS): OCPP 1.6 and OCPP 2.0.1 server, Next.js dashboard, white-label iOS and Android driver apps, QR code payment with Stripe, OCPI 2.1.1 roaming and ISO 15118 Plug &amp; Charge.">
+<meta name="keywords" content="EV charging supervision, EV supervision solution, CSMS, charge point management system, OCPP 2.0.1 server, OCPP 1.6 central system, open source CSMS, white-label EV charging app, OCPI 2.1.1, ISO 15118, Plug and Charge, EV charging software">
+<meta name="author" content="Kevin Vavelin, Codetics">
+<link rel="canonical" href="https://codetics-software.github.io/ev-server-lite/">
+<link rel="alternate" hreflang="en" href="https://codetics-software.github.io/ev-server-lite/">
+<link rel="alternate" hreflang="fr" href="https://codetics-software.github.io/ev-server-lite/fr/">
+<link rel="alternate" hreflang="x-default" href="https://codetics-software.github.io/ev-server-lite/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EV Supervision Lite">
+<meta property="og:title" content="EV Supervision Lite · Open-source EV charging supervision">
+<meta property="og:description" content="OCPP 1.6 and 2.0.1 CSMS, dashboard, white-label mobile apps and QR code payment. Self-hosted, multi-tenant, no commission on charging.">
+<meta property="og:url" content="https://codetics-software.github.io/ev-server-lite/">
+<meta property="og:image" content="https://codetics-software.github.io/ev-server-lite/images/02-reseau-ordinateur.png">
+<meta property="og:locale" content="en_GB">
+<meta property="og:locale:alternate" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "EV Supervision Lite",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "EV charging station management system (CSMS)",
+      "operatingSystem": "Linux, macOS, Windows, iOS, Android",
+      "description": "Open-source EV charging supervision platform with an OCPP 1.6 and OCPP 2.0.1 server, a web dashboard, white-label iOS and Android apps, Stripe QR code payment, OCPI 2.1.1 roaming and ISO 15118 Plug & Charge.",
+      "url": "https://codetics-software.github.io/ev-server-lite/",
+      "image": "https://codetics-software.github.io/ev-server-lite/images/02-reseau-ordinateur.png",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+      "author": { "@id": "https://codetics.fr/#organization" },
+      "featureList": [
+        "OCPP 1.6 and OCPP 2.0.1 (OCPP-J) server",
+        "Multi-tenant workspaces",
+        "White-label iOS and Android driver apps with CarPlay and Android Auto",
+        "Public charging with QR code and Stripe Checkout",
+        "OCPI 2.1.1 roaming",
+        "Smart charging",
+        "ISO 15118 Plug & Charge certificates"
+      ]
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "name": "ev-server-lite",
+      "codeRepository": "https://github.com/codetics-software/ev-server-lite",
+      "programmingLanguage": ["Kotlin", "TypeScript", "Swift"],
+      "author": { "@id": "https://codetics.fr/#organization" }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://codetics.fr/#organization",
+      "name": "Codetics",
+      "url": "https://codetics.fr",
+      "founder": { "@type": "Person", "name": "Kevin Vavelin" }
+    }
+  ]
+}
+</script>
+<style>
+:root {
+  --bg: #f6f6f3; --surface: #ffffff; --fg: #1b1b19; --muted: #5a5a55; --line: #deded8;
+  --accent: #0f6b4f; --accent-fg: #ffffff; --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #121211; --surface: #1b1b19; --fg: #ecece8; --muted: #a2a29b; --line: #31312d; --accent: #4cc39a; --accent-fg: #0b0b0a; }
+}
+:root[data-theme="dark"] { --bg: #121211; --surface: #1b1b19; --fg: #ecece8; --muted: #a2a29b; --line: #31312d; --accent: #4cc39a; --accent-fg: #0b0b0a; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: inherit; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+header.top { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 0; }
+header.top nav { display: flex; gap: 16px; flex-wrap: wrap; font-size: .95rem; }
+header.top nav a { text-decoration: none; color: var(--muted); }
+header.top nav a:hover { color: var(--fg); }
+.brand { font-weight: 700; text-decoration: none; }
+.hero { padding: 56px 0 40px; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.12; margin: 0 0 20px; max-width: 18ch; letter-spacing: -0.01em; }
+.hero p { font-size: 1.15rem; color: var(--muted); max-width: 62ch; margin: 0 0 28px; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.button { display: inline-block; padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; border: 1px solid var(--line); background: var(--surface); }
+.button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.shot { margin: 40px 0 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+.shot img { display: block; width: 100%; height: auto; }
+section { padding: 48px 0; border-top: 1px solid var(--line); }
+section h2 { font-size: 1.6rem; margin: 0 0 24px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.card h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.card p { margin: 0; color: var(--muted); font-size: .97rem; }
+.split { display: grid; grid-template-columns: 1.1fr .9fr; gap: 32px; align-items: center; }
+.split img { width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--line); }
+@media (max-width: 760px) { .split { grid-template-columns: 1fr; } }
+ul.plain { padding-left: 1.1em; margin: 0; }
+ul.plain li { margin: 6px 0; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+pre { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; overflow-x: auto; font-size: .9rem; }
+footer { padding: 40px 0 56px; border-top: 1px solid var(--line); color: var(--muted); font-size: .95rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./">EV Supervision Lite</a>
+    <nav aria-label="Main">
+      <a href="#features">Features</a>
+      <a href="#deploy">Deploy</a>
+      <a href="reports/">Test report</a>
+      <a href="https://github.com/codetics-software/ev-server-lite">GitHub</a>
+      <a href="fr/" hreflang="fr" lang="fr">Français</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Open-source EV charging supervision for OCPP 1.6 and 2.0.1</h1>
+      <p>EV Supervision Lite is a self-hosted charging station management system (CSMS). It includes a Kotlin OCPP server, a web dashboard, white-label iOS and Android driver apps, and public charging paid by QR code. Operators, installers and local authorities run it under their own brand, and pay no commission on charging sessions.</p>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/codetics-software/ev-server-lite">View the source code</a>
+        <a class="button" href="https://codetics.fr/fr/supervision-recharge-lite">Get it deployed by Codetics</a>
+      </div>
+      <figure class="shot">
+        <img src="images/02-reseau-ordinateur.png" alt="EV Supervision Lite dashboard showing the charging network overview" width="1440" height="1000" loading="eager">
+      </figure>
+    </div>
+
+    <section id="features">
+      <h2>What it covers</h2>
+      <div class="grid">
+        <div class="card"><h3>OCPP 1.6 and OCPP 2.0.1</h3><p>OCPP-J server with automatic version negotiation, persisted command queue, device model, smart charging profiles, firmware, logs, reservations and security profiles 0 to 3.</p></div>
+        <div class="card"><h3>Multi-tenant workspaces</h3><p>Each customer gets its own stations, users, RFID badges, tariffs, vehicles and Stripe account, isolated by the server.</p></div>
+        <div class="card"><h3>White-label mobile apps</h3><p>Native iOS and Android apps with CarPlay and Android Auto, QR code scanning, reservations and live session tracking, published under your own developer accounts.</p></div>
+        <div class="card"><h3>QR code payment</h3><p>Drivers scan, pay with Stripe Checkout and charge without an account. The final amount is computed from meter values and the balance is refunded.</p></div>
+        <div class="card"><h3>Roaming and Plug &amp; Charge</h3><p>OCPI 2.1.1 roaming with partner badges, sessions and CDRs, plus ISO 15118 certificate management for Plug &amp; Charge on OCPP 2.0.1 stations.</p></div>
+        <div class="card"><h3>Tested in the open</h3><p>Every commit runs the server, dashboard, Android and iOS test suites. Results and code coverage are <a href="reports/">published here</a>.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="split">
+        <div>
+          <h2>Built for operators</h2>
+          <ul class="plain">
+            <li>Station detail with live connector status, OCPP event log and remote commands.</li>
+            <li>Tariffs by workspace, site, area, station or connector, with energy, time, parking and flat fees.</li>
+            <li>Driver billing, charging card sales, statistics, notifications and CSV exports.</li>
+            <li>PostgreSQL or MongoDB, Docker Compose or Kubernetes, on any cloud or on your own server.</li>
+          </ul>
+        </div>
+        <img src="images/04-detail-borne.png" alt="Charging station detail with OCPP commands" width="1440" height="1000" loading="lazy">
+      </div>
+    </section>
+
+    <section id="deploy">
+      <h2>Deploy it</h2>
+      <p>Requirements: Java 25 and Node.js 24. Start the server and the dashboard locally:</p>
+<pre><code>cd ev-server &amp;&amp; SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run
+cd ev-dashboard &amp;&amp; npm ci &amp;&amp; npm run dev</code></pre>
+      <p>Production guides cover Docker Compose, Kubernetes, Google Cloud, AWS, Azure, Scaleway and Oracle Cloud: see the <a href="https://github.com/codetics-software/ev-server-lite/blob/main/docs/deploiement/README.md">deployment guide</a> and the <a href="https://github.com/codetics-software/ev-server-lite/blob/main/docs/architecture.md">architecture</a>.</p>
+    </section>
+
+    <section>
+      <h2>Support the project</h2>
+      <p>EV Supervision Lite is built and maintained by Codetics. You can support it by buying a turnkey deployment, a white-label app publication, maintenance or custom development at <a href="https://codetics.fr">codetics.fr</a>.</p>
+      <div class="actions">
+        <a class="button primary" href="https://codetics.fr/fr/contact?project=mobility">Contact Codetics</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>EV Supervision Lite — built by Kevin Vavelin, Codetics · <a href="https://codetics.fr">https://codetics.fr</a></p>
+    <p>Licensed under the <a href="https://github.com/codetics-software/ev-server-lite/blob/main/LICENSE">Codetics Attribution License 1.0</a>. OCPP and OCPI are specifications of the Open Charge Alliance and EVRoaming Foundation; their mention does not imply endorsement.</p>
+  </footer>
+</div>
+</body>
+</html>

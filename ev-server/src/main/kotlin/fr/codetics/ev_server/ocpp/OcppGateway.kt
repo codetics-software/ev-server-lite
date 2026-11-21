@@ -31,6 +31,9 @@ class OcppGateway(
 ) : TextWebSocketHandler(), SubProtocolCapable, SmartLifecycle {
     private val log = LoggerFactory.getLogger(javaClass)
     private val sessions = ConcurrentHashMap<StationIdentity, WebSocketSession>()
+    private val activity = ConcurrentHashMap<String, Instant>()
+    private val ponged = ConcurrentHashMap.newKeySet<String>()
+    private val handling = ConcurrentHashMap.newKeySet<StationIdentity>()
     @Volatile private var running = false
     @Volatile private var lastPing = Instant.now()
 
@@ -60,6 +63,7 @@ class OcppGateway(
 
     override fun afterConnectionEstablished(session: WebSocketSession) {
         session.setTextMessageSizeLimit(262144)
+        activity[session.id] = Instant.now()
         val station = identity(session)
         val previous = sessions.put(station, session)
         previous?.close(CloseStatus.POLICY_VIOLATION)
@@ -69,6 +73,8 @@ class OcppGateway(
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
         val station = identity(session)
+        activity.remove(session.id)
+        ponged.remove(session.id)
 
         if (sessions.remove(station, session)) {
             updateConnectivity(station, false)
@@ -141,13 +147,21 @@ class OcppGateway(
 
     fun isConnected(identity: StationIdentity) = sessions[identity]?.isOpen == true
 
+    override fun handlePongMessage(session: WebSocketSession, message: PongMessage) {
+        activity[session.id] = Instant.now()
+        ponged.add(session.id)
+    }
+
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         val station = identity(session)
         val version = version(session)
+        activity[session.id] = Instant.now()
         var id = ""
+        var response = false
 
         try {
             val frame = db.json.readTree(message.payload)
+            response = frame.isArray && frame.size() > 0 && frame[0].isIntegralNumber && frame[0].intValue() in 3..4
             validateFrame(frame)
             id = frame[1].asText()
 
@@ -156,17 +170,22 @@ class OcppGateway(
                     if (frame.size() != 4 || !frame[2].isString) {
                         throw OcppFault("FormationViolation", "Appel OCPP invalide.")
                     }
-                    val response =
-                        service.call(
-                            station.tenant,
-                            station.station,
-                            id,
-                            frame[2].asText(),
-                            frame[3],
-                            session.attributes["connection"].toString(),
-                            version,
-                        )
-                    send(session, response)
+                    handling.add(station)
+                    try {
+                        val answer =
+                            service.call(
+                                station.tenant,
+                                station.station,
+                                id,
+                                frame[2].asText(),
+                                frame[3],
+                                session.attributes["connection"].toString(),
+                                version,
+                            )
+                        send(session, answer)
+                    } finally {
+                        handling.remove(station)
+                    }
                 }
                 3,
                 4 -> {
@@ -180,17 +199,23 @@ class OcppGateway(
                 }
             }
         } catch (fault: OcppFault) {
-            if (version == OcppVersion.V201) {
+            if (response) {
+                log.warn("Réponse OCPP ignorée (borne {}/{}, message '{}') : {}", station.tenant, station.station, id, fault.message)
+            } else if (version == OcppVersion.V201) {
                 sendError(
                     session,
                     id.ifBlank { "-1" },
-                    if (fault.code == "FormationViolation") "FormatViolation" else fault.code,
+                    if (fault.code == "FormationViolation") "RpcFrameworkError" else fault.code,
                     fault.message.take(255),
                 )
             } else {
                 sendError(session, id, fault.code, fault.message)
             }
         } catch (error: Exception) {
+            if (response) {
+                log.warn("Réponse OCPP non traitée (borne {}/{}, message '{}')", station.tenant, station.station, id, error)
+                return
+            }
             log.warn(
                 "Message OCPP non traité (borne {}/{}, message '{}')",
                 station.tenant,
@@ -227,6 +252,13 @@ class OcppGateway(
         if (now.isBefore(lastPing.plusSeconds(PING_SECONDS))) return
         lastPing = now
         sessions.values.forEach { session ->
+            val seen = activity[session.id] ?: now
+            val limit = if (session.id in ponged) PING_SECONDS * MISSED_PINGS else SILENT_SECONDS
+            if (seen.isBefore(now.minusSeconds(limit))) {
+                log.warn("Connexion OCPP sans réponse fermée (borne {})", identity(session).station)
+                runCatching { session.close(CloseStatus.SESSION_NOT_RELIABLE) }
+                return@forEach
+            }
             runCatching {
                 synchronized(session) {
                     if (session.isOpen) session.sendMessage(PingMessage())
@@ -253,6 +285,7 @@ class OcppGateway(
         ping()
 
         sessions.forEach { (station, session) ->
+            if (station in handling) return@forEach
             val version = version(session)
             val pending = queue.claim(station, version)
 
@@ -291,5 +324,7 @@ class OcppGateway(
 
     companion object {
         const val PING_SECONDS = 30L
+        const val MISSED_PINGS = 3L
+        const val SILENT_SECONDS = 900L
     }
 }
