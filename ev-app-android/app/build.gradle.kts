@@ -123,6 +123,22 @@ plugins.withType<JacocoPlugin> {
     }
 }
 
+// Robolectric downloads its Android runtime jar on its own while tests run, without retries or
+// Gradle's cache, so a network hiccup fails every test. Gradle resolves the jar instead (with
+// retries and caching), and Robolectric runs offline against that copy.
+val robolectricRuntime: Configuration by configurations.creating { isTransitive = false }
+val robolectricRuntimeDir = layout.buildDirectory.dir("robolectric-runtime")
+val syncRobolectricRuntime =
+    tasks.register<Sync>("syncRobolectricRuntime") {
+        from(robolectricRuntime)
+        into(robolectricRuntimeDir)
+    }
+tasks.withType<Test>().configureEach {
+    dependsOn(syncRobolectricRuntime)
+    systemProperty("robolectric.offline", "true")
+    systemProperty("robolectric.dependency.dir", robolectricRuntimeDir.get().asFile.absolutePath)
+}
+
 listOf("Debug" to false, "Release" to true).forEach { (variant, isStrict) ->
     val task =
         tasks.register<VerifyAppConfiguration>("verify${variant}Configuration") {
@@ -177,6 +193,7 @@ dependencies {
     implementation(libs.google.pay)
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
+    robolectricRuntime(libs.robolectric.android.all)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.car.app.testing)
     testImplementation(libs.okhttp.mockwebserver)
