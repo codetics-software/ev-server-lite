@@ -94,7 +94,9 @@ describe("dashboard proxy", () => {
     expect(sent.get("tracestate")).toBe("caddy=1");
 
     await proxy(
-      request("api/v1/stations", { headers: { traceparent: "00-not-a-trace-id-01", tracestate: "a=1" } }),
+      request("api/v1/stations", {
+        headers: { traceparent: "00-not-a-trace-id-01", tracestate: "a=1" },
+      }),
       "api/v1/stations",
     );
     sent = new Headers(fetch.mock.calls[1][1].headers);
