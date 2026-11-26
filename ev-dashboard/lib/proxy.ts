@@ -23,6 +23,22 @@ function problem(request: NextRequest, status: number, detail: string) {
 }
 
 const ADDRESS = /^[0-9A-Fa-f.:]{2,45}$/;
+// Contexte de trace W3C posé par le mandataire (Caddy) : transmis au serveur Java pour que
+// la requête du navigateur et son traitement côté API forment une seule trace OpenTelemetry.
+const TRACEPARENT = /^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$/;
+const TRACESTATE = /^[\x20-\x7e]{1,512}$/;
+
+function traceContext(request: NextRequest, headers: Headers) {
+  const parent = request.headers.get("traceparent")?.trim().toLowerCase();
+  if (!parent || !TRACEPARENT.test(parent)) {
+    return;
+  }
+  headers.set("traceparent", parent);
+  const state = request.headers.get("tracestate")?.trim();
+  if (state && TRACESTATE.test(state)) {
+    headers.set("tracestate", state);
+  }
+}
 
 function forwardedFor(request: NextRequest) {
   const chain = (request.headers.get("x-forwarded-for") ?? "")
@@ -60,6 +76,7 @@ export async function proxy(request: NextRequest, path: string) {
       headers.set(key, value);
     }
   }
+  traceContext(request, headers);
   const forwarded = forwardedFor(request);
   if (forwarded) {
     headers.set("x-forwarded-for", forwarded);

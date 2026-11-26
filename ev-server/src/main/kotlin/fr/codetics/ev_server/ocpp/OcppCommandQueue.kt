@@ -29,7 +29,8 @@ class OcppCommandQueue(
     private val events: ApplicationEventPublisher,
     private val translator: Ocpp201Commands,
 ) {
-    fun complete(station: StationIdentity, frame: JsonNode) {
+    /** Enregistre la réponse de la borne ; renvoie l’action de la commande concernée, si elle existe. */
+    fun complete(station: StationIdentity, frame: JsonNode): String? {
         val success = frame[0].intValue() == 3
         val valid =
             if (success) {
@@ -46,10 +47,10 @@ class OcppCommandQueue(
             try {
                 UUID.fromString(frame[1].asText())
             } catch (_: IllegalArgumentException) {
-                return
+                return null
             }
 
-        db.atomic {
+        return db.atomic {
             val command =
                 db.lock<CommandEntity>(id)?.takeIf {
                     it.tenantId == station.tenant && it.stationId == station.station
@@ -63,6 +64,7 @@ class OcppCommandQueue(
                 commands.save(command)
                 events.publishEvent(CommandCompleted(command, success, result))
             }
+            command?.action
         }
     }
 

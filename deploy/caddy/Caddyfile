@@ -1,13 +1,31 @@
 {
 	email {$ACME_EMAIL}
+	# Bornes sans SNI (configurées par adresse IP, piles TLS anciennes) : Caddy leur présente
+	# le certificat de APP_HOST au lieu de couper la poignée de main TLS.
+	default_sni {$APP_HOST}
 	servers {
 		protocols h1 h2
 	}
 }
 
-# Tableau de bord, API, notifications Stripe, OCPI et bornes en profils 1 et 2.
+# TLS compatible avec les bornes OCPP (profils 2 et 3) :
+# - certificat RSA 2048 : les piles TLS embarquées ne gèrent pas toutes ECDSA, et la chaîne RSA
+#   de Let’s Encrypt remonte à ISRG Root X1, présente dans bien plus de magasins de bornes ;
+# - TLS 1.2 et 1.3, suites ECDHE-RSA AES-GCM et ChaCha20 (valeurs par défaut de Caddy).
+# Caddy ne propose aucune suite à échange de clé RSA statique (TLS_RSA_WITH_AES_*_GCM) :
+# pour une borne qui n’accepte que celles-ci, utiliser deploy/nginx (docs/ocpp-wss.md).
+(ocpp_tls) {
+	tls {
+		key_type rsa2048
+		protocols tls1.2 tls1.3
+	}
+}
+
+# Tableau de bord, API, notifications Stripe, OCPI et bornes en profils 0, 1 et 2.
 {$APP_HOST} {
-	encode zstd gzip
+	import ocpp_tls
+	# Traces OpenTelemetry facultatives : voir observability/tracing.caddy.example.
+	import /etc/caddy/observability/*.caddy
 
 	@protocols path /ocpp/* /ocpi/*
 	handle @protocols {
@@ -19,12 +37,14 @@
 
 	@app path /api/v1/*
 	handle @app {
+		encode zstd gzip
 		reverse_proxy server:8080 {
 			header_up -X-Client-Cert
 		}
 	}
 
 	handle {
+		encode zstd gzip
 		reverse_proxy dashboard:3000
 	}
 }

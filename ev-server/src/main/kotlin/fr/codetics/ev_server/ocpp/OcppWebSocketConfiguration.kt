@@ -27,6 +27,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.server.HandshakeInterceptor
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler
 
 @Configuration(proxyBeanMethods = false)
@@ -41,13 +42,24 @@ class OcppWebSocketConfiguration(
     private val certificates: ChargerCertificates,
     private val properties: AppProperties,
     private val stationEvents: StationEventRepository,
+    private val telemetry: OcppTelemetry,
 ) : WebSocketConfigurer {
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
         registry
             .addHandler(gateway, "/ocpp/{tenant}/{station}")
             .setHandshakeHandler(StationProtocol())
             .addInterceptors(
-                StationHandshake(stations, tenants, passwords, accounts, registrations, certificates, properties, stationEvents)
+                StationHandshake(
+                    stations,
+                    tenants,
+                    passwords,
+                    accounts,
+                    registrations,
+                    certificates,
+                    properties,
+                    stationEvents,
+                    telemetry,
+                )
             )
     }
 }
@@ -80,10 +92,13 @@ private class StationHandshake(
     private val certificates: ChargerCertificates,
     private val properties: AppProperties,
     private val stationEvents: StationEventRepository,
+    private val telemetry: OcppTelemetry,
 ) : HandshakeInterceptor {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    private class Rejected(val reason: String, val certificate: ClientCertificate? = null) : RuntimeException(reason)
+    /** [reason] est consigné dans les événements de la borne, [code] sert d’étiquette de métrique. */
+    private class Rejected(val reason: String, val code: String, val certificate: ClientCertificate? = null) :
+        RuntimeException(reason)
 
     private val reported = ConcurrentHashMap<String, Instant>()
 
@@ -94,6 +109,8 @@ private class StationHandshake(
         attributes: MutableMap<String, Any>,
     ): Boolean {
         var known: StationEntity? = null
+        var tls = false
+        var target = request.uri.path
         negotiated.remove()
         try {
             val path = request.uri.path.split('/').filter(String::isNotBlank)
@@ -101,12 +118,15 @@ private class StationHandshake(
                 request.headers["Sec-WebSocket-Protocol"].orEmpty().flatMap { header ->
                     header.split(',').map(String::trim)
                 }
-            require(path.size == 3)
+            if (path.size != 3) throw Rejected("adresse invalide", "bad_path")
 
             val slug = path[1]
             val station = path[2]
-            require(slug.matches(TENANT_SLUG))
-            require(station.matches(STATION_ID) && station != "." && station != "..")
+            if (!slug.matches(TENANT_SLUG)) throw Rejected("espace client invalide", "bad_path")
+            if (!station.matches(STATION_ID) || station == "." || station == "..") {
+                throw Rejected("identifiant de borne invalide", "bad_station_id")
+            }
+            target = "$slug/$station"
 
             val peer = request.remoteAddress?.address
             val proxied = certificates.trusted(peer)
@@ -115,25 +135,28 @@ private class StationHandshake(
             accounts.limit("ocpp:$client:$slug:$station", 60)
 
             val tenant =
-                tenants.findBySlugAndActiveTrue(slug)
-                    ?: throw IllegalArgumentException("Espace client inconnu.")
+                tenants.findBySlugAndActiveTrue(slug) ?: throw Rejected("espace client inconnu", "unknown_tenant")
             known =
                 stations.findById(StationKey(tenant.id, station)).orElse(null)?.takeUnless {
                     it.deleted
                 }
 
-            val tls = secure(request, proxied)
-            val password =
-                try {
-                    password(request.headers.getFirst("Authorization"), station)
-                } catch (_: Exception) {
-                    throw Rejected("en-tête d’authentification invalide")
-                }
+            tls = secure(request, proxied)
+            // Un en-tête illisible n’est refusé qu’une fois la borne connue : une borne en profil 0
+            // n’est pas authentifiée, l’en-tête résiduel que certains micrologiciels envoient
+            // (« Basic » vide, utilisateur par défaut du fabricant) ne doit pas la bloquer.
+            val header = request.headers.getFirst("Authorization")
+            val parsed = runCatching { password(header, station) }
+            val password = parsed.getOrNull()
 
             val device =
                 known ?: password?.let { registrations.register(tenant.id, station, it) }
-                    ?: throw IllegalArgumentException("Borne inconnue.")
-            if (!device.enabled) throw Rejected("borne désactivée")
+                    ?: throw Rejected("borne inconnue", "unknown_station")
+            if (!device.enabled) throw Rejected("borne désactivée", "station_disabled")
+            val open = device.securityProfile == 0 && properties.ocpp.allowUnauthenticated
+            if (parsed.isFailure && !open) {
+                throw Rejected("en-tête d’authentification invalide", "invalid_authorization")
+            }
 
             var promote = false
             val basic =
@@ -144,7 +167,8 @@ private class StationHandshake(
                         promote = true
                         true
                     }
-                    else -> throw Rejected("mot de passe invalide")
+                    open -> false
+                    else -> throw Rejected("mot de passe invalide", "invalid_password")
                 }
 
             val presented = if (tls) presented(request, certificates.certificateProxy(peer)) else null
@@ -158,7 +182,9 @@ private class StationHandshake(
                             device.issuedCertificateFingerprint,
                         )
                     } catch (refused: CertificateRefused) {
-                        if (device.securityProfile >= 3) throw Rejected(refused.reason, refused.certificate)
+                        if (device.securityProfile >= 3) {
+                            throw Rejected(refused.reason, "certificate_refused", refused.certificate)
+                        }
                         null
                     }
                 }
@@ -171,23 +197,27 @@ private class StationHandshake(
                     else -> 0
                 }
             if (effective < device.securityProfile) {
-                throw Rejected(
-                    when {
-                        device.securityProfile >= 2 && !tls -> "TLS requis"
-                        device.securityProfile == 3 -> "certificat absent"
-                        else -> "mot de passe absent"
-                    }
-                )
+                throw when {
+                    device.securityProfile >= 2 && !tls -> Rejected("TLS requis", "tls_required")
+                    device.securityProfile == 3 -> Rejected("certificat absent", "certificate_missing")
+                    else -> Rejected("mot de passe absent", "password_missing")
+                }
             }
             if (effective == 0 && !properties.ocpp.allowUnauthenticated) {
-                throw Rejected("profil 0 désactivé sur le serveur")
+                throw Rejected("profil 0 désactivé sur le serveur", "profile0_disabled")
             }
 
             attributes["station"] = StationIdentity(tenant.id, station)
             val version = OcppVersion.negotiate(device.ocppProtocol, protocols)
             if (version == null) {
-                val refusal = Rejected(if (device.ocppProtocol == OcppVersion.AUTO) "aucune version OCPP prise en charge proposée" else "OCPP ${device.ocppProtocol} non proposé par la borne")
+                val refusal =
+                    Rejected(
+                        if (device.ocppProtocol == OcppVersion.AUTO) "aucune version OCPP prise en charge proposée"
+                        else "OCPP ${device.ocppProtocol} non proposé par la borne",
+                        "unsupported_protocol",
+                    )
                 reject(device, refusal)
+                report(target, refusal, tls)
                 attributes[UNSUPPORTED_PROTOCOL] = refusal.reason
                 return true
             }
@@ -195,13 +225,41 @@ private class StationHandshake(
             attributes["connection"] = UUID.randomUUID().toString()
             attributes["ocpp"] = version
             negotiated.set(version)
+            telemetry.handshake("accepted", "none", tls, effective)
             return true
         } catch (error: Exception) {
-            log.debug("Connexion OCPP refusée : {}", error.message)
-            if (error is Rejected) known?.let { reject(it, error) }
-            response.setStatusCode(HttpStatus.UNAUTHORIZED)
+            val rejection =
+                when (error) {
+                    is Rejected -> error
+                    is ResponseStatusException if error.statusCode.value() == 429 ->
+                        Rejected("trop de tentatives de connexion", "rate_limited")
+                    else -> Rejected("requête invalide", "bad_request")
+                }
+            if (error !is Rejected && rejection.code == "bad_request") {
+                log.debug("Ouverture OCPP illisible ({})", target, error)
+            }
+            known?.let { reject(it, rejection) }
+            report(target, rejection, tls)
+            response.setStatusCode(
+                if (rejection.code == "rate_limited") HttpStatus.TOO_MANY_REQUESTS else HttpStatus.UNAUTHORIZED
+            )
             return false
         }
+    }
+
+    /**
+     * Journal visible de l’exploitant (INFO, une ligne par borne et motif par minute) et métrique.
+     * Le motif ne contient jamais de secret.
+     */
+    private fun report(target: String, rejection: Rejected, tls: Boolean) {
+        telemetry.handshake("rejected", rejection.code, tls)
+        val key = "log/$target/${rejection.code}"
+        val now = Instant.now()
+        val previous = reported[key]
+        if (previous != null && previous.isAfter(now.minusSeconds(60))) return
+        reported[key] = now
+        if (reported.size > 10000) reported.entries.removeIf { it.value.isBefore(now.minusSeconds(60)) }
+        log.info("Connexion OCPP refusée ({}, TLS {}) : {}", target.take(170), if (tls) "oui" else "non", rejection.reason)
     }
 
     private fun reject(station: StationEntity, rejection: Rejected) {
@@ -226,7 +284,7 @@ private class StationHandshake(
     }
 
     private fun password(authorization: String?, station: String): String? {
-        if (authorization == null) return null
+        if (authorization.isNullOrBlank()) return null
         require(authorization.startsWith("Basic ", ignoreCase = true) && authorization.length < 2048)
         val decoded = String(Base64.getDecoder().decode(authorization.substring(6).trim()), StandardCharsets.UTF_8)
         require(decoded.startsWith("$station:"))

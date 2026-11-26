@@ -1,0 +1,8 @@
+# Traces OpenTelemetry de Caddy : copier en tracing.caddy (même dossier) quand un collecteur
+# OTLP est disponible (profil observability de docker-compose.yml ou collecteur externe).
+# Caddy ouvre la trace de chaque requête et transmet traceparent au serveur et au tableau
+# de bord : une ouverture de connexion OCPP apparaît de bout en bout dans le même arbre.
+# Destination : OTEL_EXPORTER_OTLP_ENDPOINT et OTEL_EXPORTER_OTLP_PROTOCOL (service caddy).
+tracing {
+	span caddy
+}

@@ -94,8 +94,11 @@ Le mandataire placé devant le tableau de bord doit remplacer toute valeur de `X
 
 ## Profils de sécurité OCPP
 
+Réglages TLS acceptés par les bornes (certificat RSA, bornes sans SNI, suites RSA statiques), connexion `wss://` sans mot de passe (profil 0) et diagnostic des refus : [docs/ocpp-wss.md](../ocpp-wss.md) (en anglais).
+
 | Profil | Borne | Terminaison recommandée |
 |---|---|---|
+| 0 | `ws://` ou `wss://`, sans mot de passe | Réservé aux bornes placées en profil 0, avec `OCPP_ALLOW_UNAUTHENTICATED=true` |
 | 1 | `ws://` ou `wss://`, Basic | Comme le profil 2 ; évitez `ws://` hors réseau privé |
 | 2 | `wss://`, Basic | TLS terminé par l’équilibreur, `X-Forwarded-Proto: https` |
 | 3 | `wss://`, certificat client | mTLS vérifié par l’équilibreur, certificat transmis dans un en-tête |
@@ -265,6 +268,7 @@ Le port 25 sortant est bloqué ou restreint chez la plupart des fournisseurs. Ut
 | `OCPP_SIGNING_CA_KEY` | serveur | oui | clé PKCS#8 |
 | `OCPP_SIGNED_CERTIFICATE_DAYS` | serveur | | 365 |
 | `OCPP_ALLOW_UNAUTHENTICATED` | serveur | | `false` |
+| `OTEL_ENABLED`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SERVICE_NAME`, `OTEL_ENVIRONMENT`, `OTEL_TRACES_SAMPLING_PROBABILITY`, `OTEL_METRICS_STEP` | serveur | | export OpenTelemetry, voir [observability.md](../observability.md) |
 | `OCPP_HEARTBEAT_SECONDS` | serveur | | 60 (10 à 300) |
 | `OCPP_PUBLIC_URL` | serveur | | adresse `wss://…/ocpp` affichée dans la fiche de mise en service des bornes ; obligatoire pour relever à distance le profil d’une borne OCPP 2.0.1 |
 | `OCPP_ISO15118_ENABLED` | serveur | | `false` ; `true` exige le dossier des certificats complet au démarrage |
@@ -291,6 +295,8 @@ docker compose logs -f server
 
 - `COMPOSE_PROFILES=local-db` démarre PostgreSQL dans un volume local. Avec une base gérée, retirez ce profil et définissez `DATABASE_URL`.
 - Caddy (`deploy/caddy/Caddyfile`) obtient et renouvelle les certificats, transmet WebSocket et remplace `X-Forwarded-For` et `X-Forwarded-Proto`. Le serveur ne fait confiance qu’aux adresses fixes de Caddy (`172.30.0.10`, pour OCPP) et du tableau de bord (`172.30.0.30`, pour `APP_TRUSTED_PROXIES`).
+- Caddy présente un certificat RSA 2048 en TLS 1.2/1.3 et répond aux bornes sans SNI (`default_sni`). Sur une installation existante, supprimez une fois le certificat ECDSA conservé dans le volume `caddy-data` (commande dans [ocpp-wss.md](../ocpp-wss.md#upgrading-an-existing-installation)).
+- Observabilité : profil `observability` (Grafana, Tempo, Loki, Prometheus) et `OTEL_ENABLED=true`, voir [observability.md](../observability.md).
 - Profil 3 : copiez `caddy/sites/ocpp-mtls.caddy.example` en `caddy/sites/ocpp-mtls.caddy`, placez `caddy/sites/ocpp-client-ca.pem`, renseignez `OCPP_CLIENT_CA` (même contenu) et redémarrez Caddy.
 - ISO 15118 : `deploy/certificates` est monté en lecture seule sur `/app/certificates`. Déposez-y les fichiers (ou lancez `../scripts/create-iso15118-certificates.sh` pour une recette), donnez la clé à l’utilisateur 10001, puis définissez `OCPP_ISO15118_ENABLED=true` dans `server.env`.
 - Mise à jour : `git pull && docker compose up -d --build`.
@@ -351,7 +357,7 @@ curl --http1.1 -sS -o /dev/null -w '%{http_code}\n' \
   https://APP_HOST/ocpp/ESPACE/BORNE-INCONNUE
 ```
 
-1. La page de connexion répond 200 ; `/actuator/health` répond 404 depuis Internet.
+1. La page de connexion répond 200 ; `/actuator/health` répond 404 depuis Internet. `openssl s_client -connect APP_HOST:443 -servername APP_HOST -tls1_2` affiche une clé de 2048 bits.
 2. L’ouverture WebSocket sans identifiants répond 401 et un événement `CONNECTION_REJECTED` apparaît si la borne existe.
 3. Une borne de test reste connectée plus d’une heure sans reconnexion dans son historique.
 4. Profil 3 : une connexion sans certificat est refusée par le mandataire ; une requête vers `APP_HOST` avec un faux en-tête `X-Client-Cert` n’élève pas la borne au profil 3.

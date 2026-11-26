@@ -22,6 +22,8 @@ services:
   server:
     build:
       context: ../ev-server
+      # Images de base rafraîchies à chaque construction (correctifs de sécurité du système et du JRE).
+      pull: true
     image: ev-supervision/server:local
     restart: unless-stopped
     env_file:
@@ -40,6 +42,11 @@ services:
       OCPP_CLIENT_CERT_HEADER: X-Client-Cert
       APP_TRUSTED_PROXIES: 172.30.0.30/32,172.30.0.10/32
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError}
+      # OpenTelemetry (traces, métriques, journaux en OTLP/HTTP) : voir docs/observability.md.
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-lgtm:4318}
+      OTEL_SERVICE_NAME: ev-server
+      OTEL_ENVIRONMENT: ${OTEL_ENVIRONMENT:-production}
     volumes:
       - ./certificates:/app/certificates:ro
     depends_on:
@@ -61,6 +68,7 @@ services:
   dashboard:
     build:
       context: ../ev-dashboard
+      pull: true
     image: ev-supervision/dashboard:local
     restart: unless-stopped
     environment:
@@ -83,6 +91,10 @@ services:
       APP_HOST: ${APP_HOST}
       OCPP_HOST: ${OCPP_HOST:-}
       ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL manquant dans deploy/.env}
+      # Lu seulement si caddy/observability/tracing.caddy existe (OTLP/HTTP).
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${CADDY_OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-lgtm:4318}
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_SERVICE_NAME: caddy
     volumes:
       - ./caddy:/etc/caddy:ro
       - caddy-data:/data
@@ -93,6 +105,21 @@ services:
     networks:
       edge:
         ipv4_address: 172.30.0.10
+
+  # Profil facultatif « observability » : collecteur OTLP, Tempo, Loki, Prometheus et Grafana.
+  # Grafana n’écoute que sur la machine (http://127.0.0.1:3001, tunnel SSH depuis un poste).
+  otel-lgtm:
+    image: grafana/otel-lgtm:0.41.1
+    profiles: ["observability"]
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - otel-lgtm-data:/data
+    networks:
+      edge:
 
 networks:
   backend:
@@ -106,3 +133,4 @@ volumes:
   postgres-data:
   caddy-data:
   caddy-config:
+  otel-lgtm-data:

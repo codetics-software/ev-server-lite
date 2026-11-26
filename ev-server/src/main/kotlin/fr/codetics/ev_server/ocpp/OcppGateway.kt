@@ -28,6 +28,7 @@ class OcppGateway(
     private val stationEvents: StationEventRepository,
     private val events: ApplicationEventPublisher,
     private val translator: Ocpp201Commands,
+    private val telemetry: OcppTelemetry,
 ) : TextWebSocketHandler(), SubProtocolCapable, SmartLifecycle {
     private val log = LoggerFactory.getLogger(javaClass)
     private val sessions = ConcurrentHashMap<StationIdentity, WebSocketSession>()
@@ -36,6 +37,12 @@ class OcppGateway(
     private val handling = ConcurrentHashMap.newKeySet<StationIdentity>()
     @Volatile private var running = false
     @Volatile private var lastPing = Instant.now()
+
+    init {
+        OcppVersion.entries.forEach { version ->
+            telemetry.connections(version) { sessions.values.count { version(it) == version } }
+        }
+    }
 
     override fun start() {
         running = true
@@ -54,9 +61,7 @@ class OcppGateway(
         return listOf(OcppVersion.V201.subprotocol, OcppVersion.V16.subprotocol)
     }
 
-    private fun identity(session: WebSocketSession): StationIdentity {
-        return session.attributes["station"] as StationIdentity
-    }
+    private fun identity(session: WebSocketSession): StationIdentity? = session.attributes["station"] as? StationIdentity
 
     private fun version(session: WebSocketSession): OcppVersion =
         session.attributes["ocpp"] as? OcppVersion ?: OcppVersion.V16
@@ -68,7 +73,11 @@ class OcppGateway(
         }
         session.setTextMessageSizeLimit(262144)
         activity[session.id] = Instant.now()
-        val station = identity(session)
+        val station =
+            identity(session) ?: run {
+                session.close(CloseStatus.POLICY_VIOLATION)
+                return
+            }
         val previous = sessions.put(station, session)
         previous?.close(CloseStatus.POLICY_VIOLATION)
         queue.interrupted(station)
@@ -76,9 +85,10 @@ class OcppGateway(
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
-        val station = identity(session)
         activity.remove(session.id)
         ponged.remove(session.id)
+        val station = identity(session) ?: return
+        telemetry.disconnected(version(session), status.code)
 
         if (sessions.remove(station, session)) {
             updateConnectivity(station, false)
@@ -158,43 +168,60 @@ class OcppGateway(
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         if (session.attributes.containsKey(UNSUPPORTED_PROTOCOL)) return
-        val station = identity(session)
+        val station = identity(session) ?: return
         val version = version(session)
         activity[session.id] = Instant.now()
         var id = ""
         var response = false
+        var kind = "invalid"
+        var action: String? = null
+        var observation: io.micrometer.observation.Observation? = null
 
         try {
             val frame = db.json.readTree(message.payload)
             response = frame.isArray && frame.size() > 0 && frame[0].isIntegralNumber && frame[0].intValue() in 3..4
+            // L’identifiant est lu avant la validation : une trame mal formée reçoit une CallError
+            // portant son identifiant, que la borne peut rapprocher de sa demande.
+            if (frame.isArray && frame.size() > 1 && frame[1].isString) {
+                id = frame[1].asText().takeIf { it.isNotBlank() && it.length <= 36 }.orEmpty()
+            }
             validateFrame(frame)
-            id = frame[1].asText()
 
             when (frame[0].intValue()) {
                 2 -> {
+                    kind = "call"
                     if (frame.size() != 4 || !frame[2].isString) {
                         throw OcppFault("FormationViolation", "Appel OCPP invalide.")
                     }
+                    action = frame[2].asText()
                     handling.add(station)
+                    observation = telemetry.call(station, action, id, version)
                     try {
                         val answer =
-                            service.call(
-                                station.tenant,
-                                station.station,
-                                id,
-                                frame[2].asText(),
-                                frame[3],
-                                session.attributes["connection"].toString(),
-                                version,
-                            )
+                            observation.openScope().use {
+                                service.call(
+                                    station.tenant,
+                                    station.station,
+                                    id,
+                                    action,
+                                    frame[3],
+                                    session.attributes["connection"].toString(),
+                                    version,
+                                )
+                            }
+                        telemetry.outcome(observation, "ok")
+                        observation = null
                         send(session, answer)
+                        telemetry.frame("outbound", "result", action, version, answer.length)
                     } finally {
                         handling.remove(station)
                     }
                 }
                 3,
                 4 -> {
-                    queue.complete(station, frame)
+                    kind = if (frame[0].intValue() == 3) "result" else "error"
+                    val completed = queue.complete(station, frame)
+                    telemetry.command(completed, version, if (kind == "result") "accepted" else "error")
                 }
                 else -> {
                     throw OcppFault(
@@ -204,6 +231,7 @@ class OcppGateway(
                 }
             }
         } catch (fault: OcppFault) {
+            observation?.let { telemetry.outcome(it, fault.code, fault) }
             if (response) {
                 log.warn("Réponse OCPP ignorée (borne {}/{}, message '{}') : {}", station.tenant, station.station, id, fault.message)
             } else if (version == OcppVersion.V201) {
@@ -217,6 +245,7 @@ class OcppGateway(
                 sendError(session, id, fault.code, fault.message)
             }
         } catch (error: Exception) {
+            observation?.let { telemetry.outcome(it, "InternalError", error) }
             if (response) {
                 log.warn("Réponse OCPP non traitée (borne {}/{}, message '{}')", station.tenant, station.station, id, error)
                 return
@@ -228,13 +257,15 @@ class OcppGateway(
                 id,
                 error,
             )
+            // Une trame illisible n’entraîne jamais la fermeture de la connexion : la borne
+            // se reconnecterait en boucle. OCPP 1.6 n’a pas de CallError sans identifiant.
             if (id.isNotBlank()) {
                 sendError(session, id, "InternalError", "Le message n’a pas pu être traité.")
             } else if (version == OcppVersion.V201) {
                 sendError(session, "-1", "RpcFrameworkError", "Le message n’a pas pu être lu.")
-            } else {
-                session.close(CloseStatus.BAD_DATA)
             }
+        } finally {
+            telemetry.frame("inbound", kind, action, version, message.payloadLength)
         }
     }
 
@@ -260,7 +291,7 @@ class OcppGateway(
             val seen = activity[session.id] ?: now
             val limit = if (session.id in ponged) PING_SECONDS * MISSED_PINGS else SILENT_SECONDS
             if (seen.isBefore(now.minusSeconds(limit))) {
-                log.warn("Connexion OCPP sans réponse fermée (borne {})", identity(session).station)
+                log.warn("Connexion OCPP sans réponse fermée (borne {})", identity(session)?.station)
                 runCatching { session.close(CloseStatus.SESSION_NOT_RELIABLE) }
                 return@forEach
             }
@@ -273,7 +304,13 @@ class OcppGateway(
     }
 
     private fun sendError(session: WebSocketSession, id: String, code: String, message: String) {
-        send(session, db.encode(listOf(4, id, code, message, emptyMap<String, Any>())))
+        val frame = db.encode(listOf(4, id, code, message, emptyMap<String, Any>()))
+        try {
+            send(session, frame)
+            telemetry.frame("outbound", "error", null, version(session), frame.length)
+        } catch (error: Exception) {
+            log.debug("CallError OCPP non envoyée", error)
+        }
     }
 
     private fun send(session: WebSocketSession, frame: String) {
@@ -303,18 +340,12 @@ class OcppGateway(
                         return@forEach
                     }
                 try {
-                    send(
-                        session,
-                        db.encode(
-                            listOf(
-                                2,
-                                command.id.toString(),
-                                wire.action,
-                                wire.payload,
-                            )
-                        ),
-                    )
+                    val frame = db.encode(listOf(2, command.id.toString(), wire.action, wire.payload))
+                    send(session, frame)
+                    telemetry.frame("outbound", "call", wire.action, version, frame.length)
+                    telemetry.command(wire.action, version, "sent")
                 } catch (error: Exception) {
+                    telemetry.command(wire.action, version, "failed")
                     log.warn(
                         "Envoi de la commande {} à la borne {} impossible",
                         command.id,

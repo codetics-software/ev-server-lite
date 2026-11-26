@@ -29,6 +29,9 @@ import java.util.Base64
 import java.util.Date
 import java.util.UUID
 import java.util.concurrent.CompletionException
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.CompletionStage
+import io.micrometer.core.instrument.MeterRegistry
 import java.util.concurrent.TimeUnit
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.BasicConstraints
@@ -96,6 +99,7 @@ constructor(
     private val passwords: PasswordEncoder,
     private val accounts: AccountService,
     private val ocpp: OcppService,
+    private val meters: MeterRegistry,
     @LocalServerPort private val port: Int,
 ) {
     private lateinit var mvc: MockMvc
@@ -542,5 +546,130 @@ constructor(
         assertTrue(
             commands.findAll().none { it.stationId == "CP-09" && it.request.contains(secret) && it.state.name !in setOf("QUEUED", "SENT") }
         )
+    }
+
+    private class Frames : WebSocket.Listener {
+        val received = LinkedBlockingQueue<String>()
+        private val buffer = StringBuilder()
+
+        override fun onText(socket: WebSocket, data: CharSequence, last: Boolean): CompletionStage<*>? {
+            buffer.append(data)
+            if (last) {
+                received += buffer.toString()
+                buffer.setLength(0)
+            }
+            socket.request(1)
+            return null
+        }
+    }
+
+    private fun open(id: String, headers: Map<String, String> = emptyMap()): Pair<WebSocket, Frames> {
+        val frames = Frames()
+        val builder = client.newWebSocketBuilder().subprotocols("ocpp1.6")
+        headers.forEach { (name, value) -> builder.header(name, value) }
+        val socket =
+            builder.buildAsync(URI("ws://localhost:$port/ocpp/${tenant.slug}/$id"), frames).get(10, TimeUnit.SECONDS)
+        sockets += socket
+        return socket to frames
+    }
+
+    private fun rejectedCount(reason: String): Double =
+        meters.find("ocpp.handshakes").tag("outcome", "rejected").tag("reason", reason).counters().sumOf { it.count() }
+
+    @Test
+    fun `profil 0 sur TLS accepte une borne sans mot de passe ou avec un en-tete residuel`() {
+        station("CP-WSS-0", profile = 0)
+        val tls = mapOf("X-Forwarded-Proto" to "https")
+        val residual =
+            listOf(
+                emptyMap(),
+                mapOf("Authorization" to "Basic "),
+                mapOf("Authorization" to "Basic " + Base64.getEncoder().encodeToString("admin:".toByteArray())),
+                mapOf("Authorization" to "Basic !!pas-du-base64!!"),
+                mapOf("Authorization" to basic("CP-WSS-0", "mot-de-passe-oublie")),
+            )
+        residual.forEach { headers ->
+            assertTrue(connect("CP-WSS-0", tls + headers), "en-tête $headers refusé")
+            assertEquals(0, reload("CP-WSS-0").connectionSecurityProfile)
+            sockets.forEach { it.abort() }
+            Thread.sleep(150)
+        }
+        assertTrue(rejections("CP-WSS-0").isEmpty())
+    }
+
+    @Test
+    fun `un en-tete illisible reste refuse au-dessus du profil 0`() {
+        station("CP-WSS-1")
+        station("CP-WSS-2", profile = 2)
+        val before = rejectedCount("invalid_authorization")
+        assertFalse(connect("CP-WSS-1", mapOf("Authorization" to "Basic !!pas-du-base64!!")))
+        assertFalse(
+            connect("CP-WSS-2", mapOf("Authorization" to "Basic " + Base64.getEncoder().encodeToString("admin:".toByteArray()), "X-Forwarded-Proto" to "https"))
+        )
+        assertTrue("en-tête d’authentification invalide" in rejections("CP-WSS-1"))
+        assertTrue("en-tête d’authentification invalide" in rejections("CP-WSS-2"))
+        assertEquals(before + 2, rejectedCount("invalid_authorization"))
+    }
+
+    @Test
+    fun `profil 2 sur wss avec mot de passe se connecte et repond aux messages`() {
+        station("CP-WSS-3", profile = 2)
+        val (socket, frames) = open("CP-WSS-3", mapOf("Authorization" to basic("CP-WSS-3"), "X-Forwarded-Proto" to "https"))
+        socket.sendText(db.encode(listOf(2, "b1", "BootNotification", mapOf("chargePointVendor" to "V", "chargePointModel" to "M"))), true)
+        val boot = db.decode(frames.received.poll(10, TimeUnit.SECONDS)!!)
+        assertEquals("Accepted", boot[2]["status"].asText())
+        assertEquals(2, reload("CP-WSS-3").connectionSecurityProfile)
+        assertTrue(meters.find("ocpp.handshakes").tag("outcome", "accepted").counters().sumOf { it.count() } >= 1.0)
+    }
+
+    @Test
+    fun `une trame illisible ou incomplete ne ferme jamais la connexion`() {
+        station("CP-JSON", profile = 0)
+        val (socket, frames) = open("CP-JSON")
+        val garbage =
+            listOf(
+                "pas du json",
+                "{}",
+                "[]",
+                "[2]",
+                """[2, "m1", "BootNotification"]""",
+                """[2, "m2", "BootNotification", {}]""",
+                """[2, "m3", "StatusNotification", {"connectorId": "x"}]""",
+                """[2, "m4", "StartTransaction", null]""",
+                """[2, "m5", "MeterValues", {"connectorId": 1, "meterValue": [{}]}]""",
+                """[2, "m6", "StopTransaction", {"transactionId": 999999}]""",
+                """[2, "m7", "Inconnue", {}]""",
+                """[9, "m8", "Heartbeat", {}]""",
+                """[3, "pas-une-commande", {}]""",
+                """[4, "x"]""",
+                "[" .repeat(3000) + "]".repeat(3000),
+            )
+        garbage.forEach { socket.sendText(it, true).get(5, TimeUnit.SECONDS) }
+        socket.sendText("""[2, "hb", "Heartbeat", {}]""", true).get(5, TimeUnit.SECONDS)
+
+        val deadline = System.currentTimeMillis() + 15000
+        var heartbeat: JsonNode? = null
+        val replied = mutableListOf<String>()
+        while (heartbeat == null && System.currentTimeMillis() < deadline) {
+            val frame = db.decode(frames.received.poll(1, TimeUnit.SECONDS) ?: continue)
+            replied += frame[1].asText()
+            if (frame[0].intValue() == 3 && frame[1].asText() == "hb") heartbeat = frame
+        }
+        assertNotNull(heartbeat, "la connexion doit rester ouverte et répondre après des trames invalides")
+        assertFalse(socket.isInputClosed)
+        // Chaque appel portant un identifiant reçoit une réponse (CallResult ou CallError).
+        listOf("m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8").forEach { id -> assertTrue(id in replied, "réponse attendue pour $id : $replied") }
+        assertTrue(reload("CP-JSON").connected)
+    }
+
+    @Test
+    fun `l’adresse d’enregistrement automatique suit OCPP_PUBLIC_URL`() {
+        val body =
+            mvc.perform(json(post("/api/v1/registration-tokens"), admin, mapOf("description" to "Bornes wss")))
+                .andExpect(status().isOk)
+                .andReturn()
+                .response
+                .contentAsString
+        assertEquals("wss://ocpp.example.test/ocpp/${tenant.slug}/{identifiant-borne}", db.decode(body)["ocpp_url"].asText())
     }
 }

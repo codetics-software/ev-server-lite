@@ -40,7 +40,7 @@ Chaque borne a un profil de sécurité OCPP 1.6 (1 par défaut). Une borne peut 
 
 | Profil | Exigence |
 |---|---|
-| 0 | Aucune authentification. Réservé aux bornes existantes placées dans ce profil, et seulement si `OCPP_ALLOW_UNAUTHENTICATED=true`. |
+| 0 | Aucune authentification, en `ws://` ou `wss://`. Réservé aux bornes existantes placées dans ce profil, et seulement si `OCPP_ALLOW_UNAUTHENTICATED=true`. Un en-tête `Authorization` résiduel (vide, utilisateur par défaut du fabricant, mot de passe périmé) est ignoré. |
 | 1 | Authentification HTTP Basic : identifiant de la borne et mot de passe (`AuthorizationKey`, 40 caractères hexadécimaux). |
 | 2 | Profil 1 sur TLS, terminé par le serveur ou par un mandataire de `OCPP_TRUSTED_PROXIES` qui envoie `X-Forwarded-Proto: https`. |
 | 3 | TLS et certificat client. La chaîne est vérifiée par rapport à `OCPP_CLIENT_CA` et à l’autorité de signature ; le nom commun doit être l’identifiant de la borne, ou l’empreinte SHA-256 doit être celle épinglée. |

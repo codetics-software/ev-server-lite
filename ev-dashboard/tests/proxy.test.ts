@@ -81,6 +81,27 @@ describe("dashboard proxy", () => {
     ]);
   });
 
+  it("forwards a valid W3C trace context and drops malformed ones", async () => {
+    const fetch = vi.fn().mockImplementation(() => Promise.resolve(upstream()));
+    vi.stubGlobal("fetch", fetch);
+    const parent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01";
+    await proxy(
+      request("api/v1/stations", { headers: { traceparent: parent, tracestate: "caddy=1" } }),
+      "api/v1/stations",
+    );
+    let sent = new Headers(fetch.mock.calls[0][1].headers);
+    expect(sent.get("traceparent")).toBe(parent);
+    expect(sent.get("tracestate")).toBe("caddy=1");
+
+    await proxy(
+      request("api/v1/stations", { headers: { traceparent: "00-not-a-trace-id-01", tracestate: "a=1" } }),
+      "api/v1/stations",
+    );
+    sent = new Headers(fetch.mock.calls[1][1].headers);
+    expect(sent.get("traceparent")).toBeNull();
+    expect(sent.get("tracestate")).toBeNull();
+  });
+
   it("refuses writes from another origin with a translated problem", async () => {
     const fetch = vi.fn();
     vi.stubGlobal("fetch", fetch);

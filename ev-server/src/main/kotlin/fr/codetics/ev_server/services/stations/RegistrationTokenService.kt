@@ -154,10 +154,13 @@ class RegistrationTokenService(
             token.expiresAt,
             token.revokedAt,
             token.createdAt,
-            "${ocppBase()}/ocpp/$slug/{identifiant-borne}",
+            "${ocppBase()}/$slug/{identifiant-borne}",
             token.revokedAt == null && token.expiresAt?.isBefore(Instant.now()) != true,
         )
 
-    private fun ocppBase() =
-        properties.ocpi.publicUrl.trimEnd('/').replaceFirst("https://", "wss://").replaceFirst("http://", "ws://")
+    /** `OCPP_PUBLIC_URL` (adresse wss:// réelle des bornes) en priorité, sinon déduite de `OCPI_PUBLIC_URL`. */
+    private fun ocppBase(): String =
+        properties.ocpp.publicUrl.trim().trimEnd('/').ifBlank { null }
+            ?: (properties.ocpi.publicUrl.trimEnd('/').replaceFirst("https://", "wss://").replaceFirst("http://", "ws://") +
+                "/ocpp")
 }

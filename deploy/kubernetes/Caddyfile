@@ -1,13 +1,19 @@
 {
 	email {$ACME_EMAIL}
+	# Bornes sans SNI : certificat de APP_HOST au lieu d’une poignée de main TLS coupée.
+	default_sni {$APP_HOST}
 	servers {
 		protocols h1 h2
 	}
 }
 
-# Tableau de bord, API, notifications Stripe, OCPI et bornes en profils 1 et 2.
+# Tableau de bord, API, notifications Stripe, OCPI et bornes en profils 0, 1 et 2.
 {$APP_HOST} {
-	encode zstd gzip
+	# Certificat RSA et TLS 1.2/1.3 : compatibles avec les piles TLS des bornes (docs/ocpp-wss.md).
+	tls {
+		key_type rsa2048
+		protocols tls1.2 tls1.3
+	}
 
 	@protocols path /ocpp/* /ocpi/*
 	handle @protocols {
@@ -19,12 +25,14 @@
 
 	@app path /api/v1/*
 	handle @app {
+		encode zstd gzip
 		reverse_proxy server:8080 {
 			header_up -X-Client-Cert
 		}
 	}
 
 	handle {
+		encode zstd gzip
 		reverse_proxy dashboard:3000
 	}
 }

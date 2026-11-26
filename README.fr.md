@@ -194,6 +194,8 @@ wss://adresse-du-serveur/ocpp/{espace}/{identifiant-borne}
 Authorization: Basic <base64(identifiant-borne:mot-de-passe)>
 ```
 
+Pour `wss://` (TLS), les réglages acceptés par les bornes, les profils de sécurité et le diagnostic d’une connexion refusée sont décrits dans [docs/ocpp-wss.md](docs/ocpp-wss.md) (en anglais).
+
 Le Plug & Charge (ISO 15118) demande des certificats V2G déposés avant le démarrage du serveur : voir [Certificats ISO 15118](docs/deploiement/README.md#certificats-iso-15118-plug--charge).
 
 En détection automatique, le serveur retient la première version proposée par la borne dans `Sec-WebSocket-Protocol`. Une version imposée refuse les connexions qui ne la proposent pas : conformément à OCPP-J, le serveur termine la poignée de main sans sous-protocole puis ferme la connexion. Les bornes existantes restent en OCPP 1.6 imposé.
@@ -211,6 +213,8 @@ Les commandes sont persistées et suivies jusqu’à la réponse ou au dépassem
 | Déploiement (tous hébergeurs) | [docs/deploiement/README.md](docs/deploiement/README.md) |
 | Marque blanche | [docs/marque-blanche.md](docs/marque-blanche.md) |
 | Prise en charge d’OCPP 2.0.1 | [docs/ocpp-2.0.1.md](docs/ocpp-2.0.1.md) |
+| Bornes en `wss://` (TLS) | [docs/ocpp-wss.md](docs/ocpp-wss.md) (en anglais) |
+| Observabilité (OpenTelemetry) | [docs/observability.md](docs/observability.md) (en anglais) |
 | Tableau de bord | [ev-dashboard/README.md](ev-dashboard/README.md) |
 | Application iOS | [ev-app-ios/README.md](ev-app-ios/README.md) |
 | Application Android | [ev-app-android/README.md](ev-app-android/README.md) |

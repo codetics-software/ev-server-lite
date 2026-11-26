@@ -112,6 +112,8 @@ In production, use HTTPS and PostgreSQL or MongoDB. The reverse proxy must forwa
 - [Deployment guide](docs/deploiement/README.md): container images, OCPP ingress, security profiles, environment variables, scaling, backups.
 - Cloud guides: [Google Cloud](docs/deploiement/gcp.md), [AWS](docs/deploiement/aws.md), [Azure](docs/deploiement/azure.md), [Scaleway](docs/deploiement/scaleway.md), [Oracle Cloud](docs/deploiement/oracle-cloud.md).
 - [ISO 15118 certificates](docs/deploiement/README.md#certificats-iso-15118-plug--charge) for Plug & Charge.
+- [Connecting stations over `wss://`](docs/ocpp-wss.md): TLS settings that stations accept, security profiles, diagnosing refused connections.
+- [Observability](docs/observability.md): OpenTelemetry traces, metrics and logs for every request and OCPP message.
 
 **Prefer not to install it yourself?** Codetics deploys the server, dashboard, database, HTTPS, station connection and Stripe, then builds and submits the apps under your name on the App Store and Google Play, at a fixed price, on the cloud of your choice. [Learn more](https://codetics.fr/fr/supervision-recharge-lite) or [request a deployment](https://codetics.fr/fr/contact?project=mobility).
 
@@ -126,6 +128,8 @@ The detailed guides are written in French.
 | Deployment (all clouds) | [docs/deploiement/README.md](docs/deploiement/README.md) |
 | White-label customization | [docs/marque-blanche.md](docs/marque-blanche.md) |
 | OCPP 2.0.1 support | [docs/ocpp-2.0.1.md](docs/ocpp-2.0.1.md) |
+| Stations over `wss://` (TLS) | [docs/ocpp-wss.md](docs/ocpp-wss.md) |
+| Observability (OpenTelemetry) | [docs/observability.md](docs/observability.md) |
 | Web dashboard | [ev-dashboard/README.md](ev-dashboard/README.md) |
 | iOS app | [ev-app-ios/README.md](ev-app-ios/README.md) |
 | Android app | [ev-app-android/README.md](ev-app-android/README.md) |

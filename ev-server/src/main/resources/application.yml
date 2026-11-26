@@ -57,6 +57,37 @@ management:
       show-details: never
       probes:
         enabled: true
+  # OpenTelemetry : traces (requêtes HTTP, ouvertures et messages OCPP), métriques et journaux
+  # exportés en OTLP/HTTP vers OTEL_EXPORTER_OTLP_ENDPOINT. Rien n’est envoyé sans OTEL_ENABLED=true.
+  tracing:
+    sampling:
+      probability: ${OTEL_TRACES_SAMPLING_PROBABILITY:1.0}
+    export:
+      otlp:
+        enabled: ${OTEL_ENABLED:false}
+  logging:
+    export:
+      otlp:
+        enabled: ${OTEL_ENABLED:false}
+  otlp:
+    metrics:
+      export:
+        enabled: ${OTEL_ENABLED:false}
+        url: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/metrics
+        step: ${OTEL_METRICS_STEP:30s}
+  opentelemetry:
+    resource-attributes:
+      "[service.name]": ${OTEL_SERVICE_NAME:ev-server}
+      "[service.namespace]": ev-supervision
+      "[deployment.environment.name]": ${OTEL_ENVIRONMENT:production}
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/logs
 springdoc:
   api-docs:
     path: /api/v1/openapi
